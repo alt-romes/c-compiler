@@ -18,17 +18,17 @@ extern int yylex();
 %%
 
 line:
-   exp EL    { printf("%d\n", $1); }
+   exp EL    { return $1; }
 
 exp:
    term                 { $$ = $1; }
-   | term PLUS term     { $$ = $1 + $3; }
-   | term MINUS term    { $$ = $1 - $3; }
+   | term PLUS exp     { $$ = $1 + $3; }
+   | term MINUS exp    { $$ = $1 - $3; }
 
 term:
     fact                { $$ = $1; }
-    | fact MUL fact     { $$ = $1 * $3; }     
-    | fact DIV fact     { $$ = $1 * $3; }
+    | fact MUL term     { $$ = $1 * $3; }     
+    | fact DIV term     { $$ = $1 * $3; }
 
 fact:
     Num                 { $$ = $1; }
@@ -39,7 +39,8 @@ fact:
 
 int main(void) {
     printf("Enter expression:\n");
-    yyparse();
+    int n = yyparse();
+    printf("%d\n", n);
     return 0;
 }
 
