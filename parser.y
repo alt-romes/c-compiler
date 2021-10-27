@@ -8,7 +8,7 @@
 int yylex(); // defined by lex
 void yyerror();
 
-extern node_t* root;
+extern node_t* _root;
 
 %}
 
@@ -27,7 +27,7 @@ extern node_t* root;
 %%
 
 line:
-   exp _EL    { root = $1; return 0; }
+   exp _EL    { _root = $1; return 0; }
 
 exp:
    term                { $$ = $1; }
@@ -42,7 +42,7 @@ term:
 fact:
     _Num                 { $$ = create_node_literal(NUM, &$1); }
     | _LPAR exp _RPAR     { $$ = $2; }
-    | _SUB fact        { $$ = create_node1(UMINUS, $1); }
+    | _SUB fact        { $$ = create_node1(UMINUS, $2); }
 
 %%
 
