@@ -5,6 +5,13 @@
 
 int eval(const node_t* node) {
     switch (node->type) {
+
+        // TODO: Environment and evaluate defintions and Ids
+        /* case ID: */
+        /*     // ... */
+        /* case DEF: */
+        /*     // ... */
+
         case NUM:
             return node->num_value;
 

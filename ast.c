@@ -53,5 +53,25 @@ node_t* create_node_def(node_type_t type, const char* id, const node_t* l, const
 
 void free_ast(node_t* node) {
 
-    printf("TODO: Free memory!!!\n");
+    switch (node->type) {
+        case DEF:
+        case ADD:
+        case SUB:
+        case MUL:
+        case DIV:
+            // TODO: to const or not to const? should the data structure have const children?
+            free_ast((node_t*)node->children.left);
+            free_ast((node_t*)node->children.right);
+            free((void*)node);
+            break;
+        case UMINUS:
+            free_ast((node_t*)node->child);
+            free((void*)node);
+            break;
+        case NUM:
+        case ID:
+            free((void*)node);
+            break;
+    }
+
 }
