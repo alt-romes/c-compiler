@@ -11,7 +11,12 @@ extern YYSTYPE yylval;
 "/"       return _DIV;
 "("       return _LPAR;
 ")"       return _RPAR;
-[0-9]+    { yylval = atoi(yytext); return _Num; }
+"def"     return _DEF;
+"="       return _EQ;
+"in"      return _IN;
+"end"     return _END;
+[0-9]+    { yylval.int_v = atoi(yytext); return _Num; }
+[a-zA-Z][a-zA-Z0-9]*    { yylval.string_v = yytext; return _Id; }
 [ \t]     ;
 "\n"      return _EL;
 

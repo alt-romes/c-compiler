@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "ast.h"
 
-#define YYSTYPE node_t*
+/* #define YYSTYPE node_t* */
 
 int yylex(); // defined by lex
 void yyerror();
@@ -11,6 +11,12 @@ void yyerror();
 extern node_t* _root;
 
 %}
+
+%union {
+    int int_v;
+    char* string_v;
+    struct node* node_v;
+}
 
 %token _Id
 %token _Num
@@ -21,6 +27,14 @@ extern node_t* _root;
 %token _LPAR
 %token _RPAR
 %token _EL
+%token _DEF
+%token _EQ
+%token _IN
+%token _END
+
+%type <int_v> _Num
+%type <string_v> _Id
+%type <node_v> line exp term fact def
 
 %start line
 
@@ -41,8 +55,13 @@ term:
 
 fact:
     _Num                 { $$ = create_node_literal(NUM, &$1); }
+    | _Id               { $$ = create_node_literal(ID, &$1); }
     | _LPAR exp _RPAR     { $$ = $2; }
     | _SUB fact        { $$ = create_node1(UMINUS, $2); }
+    | def               { $$ = $1; }
+
+def:
+   _DEF _Id _EQ exp _IN exp _END { $$ = create_node_def(DEF, $2, $4, $6); }
 
 %%
 

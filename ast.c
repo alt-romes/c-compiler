@@ -41,6 +41,15 @@ node_t* create_node2(node_type_t type, const node_t* l, const node_t* r) {
     return node;
 }
 
+node_t* create_node_def(node_type_t type, const char* id, const node_t* l, const node_t* r) {
+    
+    node_t* node = new_node(type);
+    node->def.id = id;
+    node->def.left = l;
+    node->def.right = r;
+    return node;
+}
+
 
 void free_ast(node_t* node) {
 
