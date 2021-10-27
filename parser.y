@@ -1,48 +1,49 @@
 %{
 #include <stdio.h>
+#include "ast.h"
+
+#define YYSTYPE node_t*
+
+int yylex();
 void yyerror();
-extern int yylex();
+
+extern node_t* root;
+
 %}
-%token Id
-%token Num
-%token PLUS
-%token MINUS
-%token MUL
-%token DIV
-%token LPAR
-%token RPAR
-%token EL
+
+%token _Id
+%token _Num
+%token _ADD
+%token _SUB
+%token _MUL
+%token _DIV
+%token _LPAR
+%token _RPAR
+%token _EL
 
 %start line
 
 %%
 
 line:
-   exp EL    { return $1; }
+   exp _EL    { root = $1; return 0; }
 
 exp:
-   term                 { $$ = $1; }
-   | term PLUS exp     { $$ = $1 + $3; }
-   | term MINUS exp    { $$ = $1 - $3; }
+   term                { $$ = $1; }
+   | term _ADD exp     { $$ = create_node2(ADD, $1, $3); }
+   | term _SUB exp    { $$ = create_node2(SUB, $1, $3); }
 
 term:
     fact                { $$ = $1; }
-    | fact MUL term     { $$ = $1 * $3; }     
-    | fact DIV term     { $$ = $1 * $3; }
+    | fact _MUL term     { $$ = create_node2(MUL, $1, $3); }     
+    | fact _DIV term     { $$ = create_node2(DIV, $1, $3); }
 
 fact:
-    Num                 { $$ = $1; }
-    | LPAR exp RPAR     { $$ = $2; }
-    | MINUS fact        { $$ = -$2; }
+    _Num                 { $$ = create_node_literal(NUM, &$1); }
+    | _LPAR exp _RPAR     { $$ = $2; }
+    | _SUB fact        { $$ = create_node1(UMINUS, $1); }
 
 %%
-
-int main(void) {
-    printf("Enter expression:\n");
-    int n = yyparse();
-    printf("%d\n", n);
-    return 0;
-}
 
 void yyerror() {
     printf("Syntax error!\n");

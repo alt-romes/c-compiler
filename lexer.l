@@ -1,19 +1,19 @@
 %{
 #include "y.tab.h"
-extern int yylval;
+extern YYSTYPE yylval;
 %}
 
 %%
 
-"+"       return PLUS;
-"-"       return MINUS;
-"*"       return MUL;
-"/"       return DIV;
-"("       return LPAR;
-")"       return RPAR;
-[0-9]+    { yylval = atoi(yytext); return Num; }
+"+"       return _ADD;
+"-"       return _SUB;
+"*"       return _MUL;
+"/"       return _DIV;
+"("       return _LPAR;
+")"       return _RPAR;
+[0-9]+    { yylval = atoi(yytext); return _Num; }
 [ \t]     ;
-"\n"      return EL;
+"\n"      return _EL;
 
 %%
 
