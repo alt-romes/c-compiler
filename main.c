@@ -2,7 +2,7 @@
 #include "ast.h"
 /* #include "parser.h" */
 
-int yyparse(); // Defined in the yacc output
+int yyparse(); // defined by yacc
 
 node_t* root;
 

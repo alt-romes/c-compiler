@@ -1,10 +1,11 @@
 %{
+
 #include <stdio.h>
 #include "ast.h"
 
 #define YYSTYPE node_t*
 
-int yylex();
+int yylex(); // defined by lex
 void yyerror();
 
 extern node_t* root;

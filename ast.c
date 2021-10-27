@@ -42,7 +42,7 @@ node_t* create_node2(node_type_t type, const node_t* l, const node_t* r) {
 }
 
 
-void free_ast(node_t* root) {
+void free_ast(node_t* node) {
 
     printf("TODO: Free memory!!!\n");
 }
