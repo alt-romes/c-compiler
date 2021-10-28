@@ -16,9 +16,9 @@ extern YYSTYPE yylval;
 "in"      return _IN;
 "end"     return _END;
 [0-9]+    { yylval.int_v = atoi(yytext); return _Num; }
-[a-zA-Z][a-zA-Z0-9]*    { yylval.string_v = yytext; return _Id; }
 [ \t]     ;
 "\n"      return _EL;
+[a-zA-Z][a-zA-Z0-9]*    { yylval.string_v = strdup(yytext); return _Id; }
 
 %%
 

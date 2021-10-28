@@ -1,4 +1,4 @@
-COMMON=ast.c lex.yy.c y.tab.c parse_utils.c
+COMMON=ast.c lex.yy.c y.tab.c parse_utils.c environment.c
 
 all: interpreter
 

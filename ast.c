@@ -14,10 +14,11 @@ node_t* create_node_literal(node_type_t type, const void* literal_value) {
     
     switch (type) {
         case NUM:
-            node->num_value = *(int*)literal_value;
+            node->num_value = (int)(intptr_t)literal_value;
             break;
         case ID:
-            node->id_value = *(char**)literal_value;
+            node->id_value = (char*)literal_value;
+            printf("assigned to node id_value: %s\n", node->id_value);
             break;
         default:
             fprintf(stderr, "ERROR: Literal node should have type NUM or ID!\n");
@@ -41,7 +42,9 @@ node_t* create_node2(node_type_t type, const node_t* l, const node_t* r) {
     return node;
 }
 
-node_t* create_node_def(node_type_t type, const char* id, const node_t* l, const node_t* r) {
+node_t* create_node_def(node_type_t type, char* id, const node_t* l, const node_t* r) {
+
+    printf("create node def with id (%s)!\n", id);
     
     node_t* node = new_node(type);
     node->def.id = id;
@@ -55,6 +58,10 @@ void free_ast(node_t* node) {
 
     switch (node->type) {
         case DEF:
+            free(node->def.id);
+            free((node_t*)node->def.left);
+            free((node_t*)node->def.right);
+            break;
         case ADD:
         case SUB:
         case MUL:
@@ -62,16 +69,17 @@ void free_ast(node_t* node) {
             // TODO: to const or not to const? should the data structure have const children?
             free_ast((node_t*)node->children.left);
             free_ast((node_t*)node->children.right);
-            free((void*)node);
             break;
         case UMINUS:
             free_ast((node_t*)node->child);
-            free((void*)node);
+            break;
+        case ID:
+            free(node->id_value);
             break;
         case NUM:
-        case ID:
-            free((void*)node);
             break;
     }
+
+    free((void*)node);
 
 }

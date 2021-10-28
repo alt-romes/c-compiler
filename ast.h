@@ -23,7 +23,7 @@ typedef struct node {
             const struct node* right;
         } children;
         struct {
-            const char* id;
+            char* id;
             const struct node* left;
             const struct node* right;
         } def;
@@ -33,7 +33,7 @@ typedef struct node {
 node_t* create_node_literal(node_type_t type, const void* literal_value);
 node_t* create_node1(node_type_t type, const node_t* n);
 node_t* create_node2(node_type_t type, const node_t* l, const node_t* r);
-node_t* create_node_def(node_type_t type, const char* id, const node_t* l, const node_t* r);
+node_t* create_node_def(node_type_t type, char* id, const node_t* l, const node_t* r);
 
 void free_ast(node_t* root);
 
