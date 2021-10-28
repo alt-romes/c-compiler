@@ -1,34 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ast.h"
+#include "environment.h"
 #include "parse_utils.h"
 
-int eval(const node_t* node) {
+int eval(const node_t* node, environment_t* e) {
     switch (node->type) {
 
-        // TODO: Environment and evaluate defintions and Ids
-        /* case ID: */
-        /*     // ... */
-        /* case DEF: */
-        /*     // ... */
+        case ID:
+            return (int)(intptr_t)find(e, node->id_value);
+
+        case DEF: {
+            environment_t* scope_env = beginScope(e);
+            assoc(scope_env, node->def.id, (void*)(intptr_t)eval(node->def.left, e));
+            return eval(node->def.right, scope_env);
+        }
 
         case NUM:
             return node->num_value;
 
         case ADD:
-            return eval(node->children.left) + eval(node->children.right);
+            return eval(node->children.left, e) + eval(node->children.right, e);
 
         case SUB:
-            return eval(node->children.left) - eval(node->children.right);
+            return eval(node->children.left, e) - eval(node->children.right, e);
 
         case MUL:
-            return eval(node->children.left) * eval(node->children.right);
+            return eval(node->children.left, e) * eval(node->children.right, e);
 
         case DIV:
-            return eval(node->children.left) / eval(node->children.right);
+            return eval(node->children.left, e) / eval(node->children.right, e);
 
         case UMINUS:
-            return - eval(node->child);
+            return - eval(node->child, e);
 
         default:
             fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
@@ -42,7 +46,7 @@ int main(int argc, char *argv[]) {
 
     node_t* root = parse_root();
 
-    int val = eval(root);
+    int val = eval(root, newEnvironment());
 
     printf("Result: %d\n", val);
 
