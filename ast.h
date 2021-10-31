@@ -17,23 +17,23 @@ typedef struct node {
     union {
         int num_value;
         char* id_value;
-        const struct node* child;
+        struct node* child;
         struct {
-            const struct node* left;
-            const struct node* right;
+            struct node* left;
+            struct node* right;
         } children;
         struct {
             char* id;
-            const struct node* left;
-            const struct node* right;
+            struct node* left;
+            struct node* right;
         } def;
     };
 } node_t;
 
-node_t* create_node_literal(node_type_t type, const void* literal_value);
-node_t* create_node1(node_type_t type, const node_t* n);
-node_t* create_node2(node_type_t type, const node_t* l, const node_t* r);
-node_t* create_node_def(node_type_t type, char* id, const node_t* l, const node_t* r);
+node_t* create_node_literal(node_type_t type, void* literal_value);
+node_t* create_node1(node_type_t type, node_t* n);
+node_t* create_node2(node_type_t type, node_t* l, node_t* r);
+node_t* create_node_def(node_type_t type, char* id, node_t* l, node_t* r);
 
 void free_ast(node_t* root);
 

@@ -1,46 +1,30 @@
 #include <iostream>
-#include <llvm/ADT/APFloat.h>
-#include <llvm/ADT/STLExtras.h>
-#include <llvm/IR/BasicBlock.h>
+#include <llvm/ADT/APInt.h>
 #include <llvm/IR/Constants.h>
-#include <llvm/IR/DerivedTypes.h>
-#include <llvm/IR/Function.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
-#include <llvm/IR/Type.h>
-#include <llvm/IR/Verifier.h>
 #include "llvm.h"
 
 #undef IRBuilder
 using namespace std;
 
-LLVMContext* initialize_context() {
-    /* auto p = (unique_ptr<LLVMContext>*)malloc(sizeof(unique_ptr<LLVMContext>)); */
-    /* *p = make_unique<LLVMContext>(); */
-    /* return p->get(); */
+LLVMContext* initialize_context() { return new LLVMContext(); }
 
-    /* LLVMContext* p = (LLVMContext*)malloc(sizeof(LLVMContext)); */
-    return new LLVMContext();
-}
+Module* initialize_module(char* str, LLVMContext* lc) { return new Module(str, *lc); }
 
-Module* initialize_module(char* str, LLVMContext* lc) {
-    return new Module(str, *lc);
-}
+IRBuilder<>* initialize_builder(LLVMContext* lc) { return new IRBuilder<>(*lc); }
 
-IRBuilder<>* initialize_builder(LLVMContext* lc) {
-    return new IRBuilder<>(*lc);
-}
+void print_module_llvm(Module* m) { m->print(errs(), nullptr); }
 
-void print_module_llvm(Module* m) {
-    m->print(errs(), nullptr);
-}
+void print_llvmvalue(LLVMValue* v) { v->print(errs()); }
 
-void print_value_llvm(LLVMValue* v) {
-    v->print(errs());
-}
+void free_llvm(void* p) { free(p); }
 
-void print_int(LLVMContext* lc, int x) {
-    ConstantInt::get(*lc, APInt(32, x))->print(errs()); 
-    cout << "\n";
-}
+LLVMValue* constant_int(LLVMContext* lc, int x) { return ConstantInt::get(*lc, APInt(32, x)); }
+
+LLVMValue* build_add(IRBuilder<>* b, LLVMValue* l, LLVMValue* r) { return b->CreateAdd(l, r); }
+LLVMValue* build_sub(IRBuilder<>* b, LLVMValue* l, LLVMValue* r) { return b->CreateSub(l, r); }
+LLVMValue* build_mul(IRBuilder<>* b, LLVMValue* l, LLVMValue* r) { return b->CreateMul(l, r); }
+LLVMValue* build_div(IRBuilder<>* b, LLVMValue* l, LLVMValue* r) { return b->CreateSDiv(l, r); }
+

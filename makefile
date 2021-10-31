@@ -8,9 +8,12 @@ LDFLAGS=`llvm-config --ldflags --system-libs --libs core`
 COMMON=ast.c lex.yy.c y.tab.c parse_utils.c environment.c
 COMMON_OBJS=$(COMMON:%.c=%.o)
 
-all: compiler
+all: compiler interpreter
 
-compiler: llvm.o interpreter.o $(COMMON_OBJS)
+compiler: compiler.o llvm.o $(COMMON_OBJS)
+	$(LD) $(LDFLAGS) $^ -o $@
+
+interpreter: interpreter.o $(COMMON_OBJS)
 	$(LD) $(LDFLAGS) $^ -o $@
 
 y.tab.c y.tab.h: parser.y

@@ -8,7 +8,7 @@ node_t* new_node(node_type_t type) {
     return node;
 }
 
-node_t* create_node_literal(node_type_t type, const void* literal_value) {
+node_t* create_node_literal(node_type_t type, void* literal_value) {
     
     node_t* node = new_node(type);
     
@@ -26,14 +26,14 @@ node_t* create_node_literal(node_type_t type, const void* literal_value) {
     return node;
 }
 
-node_t* create_node1(node_type_t type, const node_t* n) {
+node_t* create_node1(node_type_t type, node_t* n) {
 
     node_t* node = new_node(type);
     node->child = n;
     return node;
 }
 
-node_t* create_node2(node_type_t type, const node_t* l, const node_t* r) {
+node_t* create_node2(node_type_t type, node_t* l, node_t* r) {
      
     node_t* node = new_node(type);
     node->children.left = l;
@@ -41,7 +41,7 @@ node_t* create_node2(node_type_t type, const node_t* l, const node_t* r) {
     return node;
 }
 
-node_t* create_node_def(node_type_t type, char* id, const node_t* l, const node_t* r) {
+node_t* create_node_def(node_type_t type, char* id, node_t* l, node_t* r) {
 
     node_t* node = new_node(type);
     node->def.id = id;

@@ -36,9 +36,15 @@ IRBuilder* initialize_builder(LLVMContext*);
 LLVMValue* codegen(node_t*, IRBuilder*);
 
 void print_module_llvm(Module*);
-void print_value_llvm(LLVMValue*);
-void print_int(LLVMContext*, int);
+void print_llvmvalue(LLVMValue*);
 
+void free_llvm(void*);
+
+LLVMValue* constant_int(LLVMContext*, int);
+LLVMValue* build_add(IRBuilder*, LLVMValue*, LLVMValue*);
+LLVMValue* build_sub(IRBuilder*, LLVMValue*, LLVMValue*);
+LLVMValue* build_mul(IRBuilder*, LLVMValue*, LLVMValue*);
+LLVMValue* build_div(IRBuilder*, LLVMValue*, LLVMValue*);
 
 #ifdef __cplusplus
 }
