@@ -18,7 +18,6 @@ node_t* create_node_literal(node_type_t type, const void* literal_value) {
             break;
         case ID:
             node->id_value = (char*)literal_value;
-            printf("assigned to node id_value: %s\n", node->id_value);
             break;
         default:
             fprintf(stderr, "ERROR: Literal node should have type NUM or ID!\n");
@@ -44,8 +43,6 @@ node_t* create_node2(node_type_t type, const node_t* l, const node_t* r) {
 
 node_t* create_node_def(node_type_t type, char* id, const node_t* l, const node_t* r) {
 
-    printf("create node def with id (%s)!\n", id);
-    
     node_t* node = new_node(type);
     node->def.id = id;
     node->def.left = l;

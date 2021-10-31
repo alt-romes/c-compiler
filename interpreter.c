@@ -3,6 +3,7 @@
 #include "ast.h"
 #include "environment.h"
 #include "parse_utils.h"
+#include "llvm.h"
 
 int eval(const node_t* node, environment_t* e) {
     switch (node->type) {
@@ -51,6 +52,8 @@ int main(int argc, char *argv[]) {
     printf("Result: %d\n", val);
 
     free_ast(root);
+
+    print_int(initialize_context(), 16);
 
     return 0;
 }
