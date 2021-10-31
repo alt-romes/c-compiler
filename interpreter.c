@@ -4,6 +4,7 @@
 #include "environment.h"
 #include "parse_utils.h"
 #include "llvm.h"
+#include <llvm-c/Core.h>
 
 int eval(const node_t* node, environment_t* e) {
     switch (node->type) {
@@ -55,5 +56,12 @@ int main(int argc, char *argv[]) {
 
     print_int(initialize_context(), 16);
 
+    /* LLVMContextRef lc = LLVMContextCreate(); */
+    /* LLVMModuleRef mod = LLVMModuleCreateWithName("llvm!"); */
+
     return 0;
 }
+
+
+
+

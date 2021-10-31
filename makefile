@@ -1,15 +1,17 @@
-LLVMCONFIGFLAGS=`llvm-config --cxxflags --ldflags --system-libs --libs core`
+CC=clang
+CFLAGS=`llvm-config --cflags`
+CXX=clang++
+CXXFLAGS=`llvm-config --cxxflags`
+LD=clang++
+LDFLAGS=`llvm-config --ldflags --system-libs --libs core`
 
 COMMON=ast.c lex.yy.c y.tab.c parse_utils.c environment.c
 COMMON_OBJS=$(COMMON:%.c=%.o)
 
-all: llvm
+all: compiler
 
-interpreter.o $(COMMON_OBJS): interpreter.c $(COMMON)
-	gcc -c $^ # -o $@
-
-compiler: compiler.c $(COMMON)
-	gcc $^ -o $@
+compiler: llvm.o interpreter.o $(COMMON_OBJS)
+	$(LD) $(LDFLAGS) $^ -o $@
 
 y.tab.c y.tab.h: parser.y
 	yacc -d $<
@@ -17,13 +19,19 @@ y.tab.c y.tab.h: parser.y
 lex.yy.c: lexer.l y.tab.h
 	lex $<
 
-llvm: llvm.cpp interpreter.o $(COMMON_OBJS)
-	g++ $(LLVMCONFIGFLAGS) $^ -o $@ 
-
 .PHONY: clean
 clean:
 	rm *.o
 	rm y.tab.c
 	rm y.tab.h
 	rm lex.yy.c
+	rm compiler
 	rm interpreter
+
+# In fact, these are close to the default rules, no need to write them, the default rules specificy the same
+# %.o: %.c
+# 	$(CC) $(CFLAGS) -c $< -o $@
+
+# %.o: %.cpp
+# 	$(CXX) $(CXXFLAGS) -c $< -o $@ 
+
