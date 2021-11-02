@@ -3,7 +3,7 @@
 #include "ast.h"
 #include "parse_utils.h"
 
-void compile(node_t* node) {
+void compile8bcpu(node_t* node) {
 
     switch (node->type) {
 
@@ -11,25 +11,25 @@ void compile(node_t* node) {
             printf("psh $%d\n", node->num_value);
 
         case ADD:
-            compile(node->children.left);
-            compile(node->children.right);
+            compile8bcpu(node->children.left);
+            compile8bcpu(node->children.right);
             printf("pop RB\n");
             printf("pop RC\n");
-            printf("add RB RC");
+            printf("add RB RC\n");
             printf("lod ACR RB\n");
             printf("psh RB\n");
 
         case SUB:
-            compile(node->children.left);
-            compile(node->children.right);
+            compile8bcpu(node->children.left);
+            compile8bcpu(node->children.right);
             printf("pop RB\n");
             printf("pop RC\n");
-            printf("sub RB RC");
+            printf("sub RB RC\n");
             printf("lod ACR RB\n");
             printf("psh RB\n");
         case MUL:
-            compile(node->children.left);
-            compile(node->children.right);
+            compile8bcpu(node->children.left);
+            compile8bcpu(node->children.right);
             printf("pop RB\n"); // a
             printf("pop RC\n"); // b
 
@@ -48,7 +48,7 @@ void compile(node_t* node) {
         //case DIV:
 
         case UMINUS:
-            compile(node->child);
+            compile8bcpu(node->child);
             printf("pop RB\n");
             printf("neg RB\n");
             printf("psh RB\n");
@@ -62,12 +62,12 @@ void compile(node_t* node) {
 
 int main(int argc, char *argv[]) {
 
-    printf("Input an expression to compile: ");
+    printf("Input an expression to compile8bcpu: ");
     node_t* root = parse_root();
 
 
     printf("Result:\n");
 
-    compile(root);
+    compile8bcpu(root);
     return 0;
 }

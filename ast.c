@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ast.h"
+#include <stdint.h>
 
 node_t* new_node(node_type_t type) {
     node_t* node = malloc(sizeof(node_t));

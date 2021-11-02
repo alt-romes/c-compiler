@@ -1,6 +1,7 @@
 %{
 
 #include <stdio.h>
+#include <stdint.h>
 #include "ast.h"
 
 /* #define YYSTYPE node_t* */
