@@ -45,6 +45,70 @@ LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node) {
     }
 }
 
+void compile8bcpu(node_t* node) {
+
+    switch (node->type) {
+
+        case NUM:
+            printf("psh $%d\n", node->num_value);
+            break;
+
+        case ADD:
+            compile8bcpu(node->children.left);
+            compile8bcpu(node->children.right);
+            printf("pop RB\n");
+            printf("pop RC\n");
+            printf("add RB RC\n");
+            printf("lod ACR RB\n");
+            printf("psh RB\n");
+            break;
+
+        case SUB:
+            compile8bcpu(node->children.left);
+            compile8bcpu(node->children.right);
+            printf("pop RB\n");
+            printf("pop RC\n");
+            printf("sub RB RC\n");
+            printf("lod ACR RB\n");
+            printf("psh RB\n");
+            break;
+
+        case MUL:
+            compile8bcpu(node->children.left);
+            compile8bcpu(node->children.right);
+            printf("pop RB\n"); // a
+            printf("pop RC\n"); // b
+
+            printf("lod $0 RD\n"); // res
+            printf("loop_start:\n");
+            printf("add RD RB\n"); // res += a
+            printf("lod ACR RD\n");
+            printf("dec RC\n"); // b--
+            printf("jmpz loop_end\n");
+            printf("lod ACR RC\n");
+            printf("jmp loop_start\n");
+            printf("loop_end:\n");
+            
+
+            printf("psh RD\n");
+            break;
+
+        //case DIV:
+
+        case UMINUS:
+            compile8bcpu(node->child);
+            printf("pop RB\n");
+            printf("neg RB\n");
+            printf("psh RB\n");
+            break;
+
+        default:
+            fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
+            exit(1);
+            //return NULL;
+    }
+}
+
 LLVMContext* lc;
 Module* mod;
 IRBuilder* builder;
@@ -60,6 +124,8 @@ int main(int argc, char *argv[]) {
 
     printf("Result:\n");
 
+    compile8bcpu(root);
+    printf("hlt\n");
     LLVMValue* c = compile(lc, builder, root);
 
     print_llvmvalue(c);
