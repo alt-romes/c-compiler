@@ -5,7 +5,7 @@
 #include "ast.h"
 #include "parse_utils.h"
 #include "llvm.h"
-#include "dcpuCodeBlock.h"
+#include "dcpuIR.h"
 
 
 LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node) {
@@ -102,8 +102,8 @@ int main(int argc, char *argv[]) {
     printf("Result:\n");
 
     compile_dcpu(root);
-    printCodeBlock();
-    freeCodeBlock();
+    dcpu_print();
+    dcpu_free();
 
     LLVMValue* c = compile(lc, builder, root);
 

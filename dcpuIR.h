@@ -1,10 +1,10 @@
-#ifndef _DCPU_CODE_BLOCK
-#define _DCPU_CODE_BLOCK
+#ifndef _DCPU_IR
+#define _DCPU_IR
 
 #include "ast.h"
 
-void printCodeBlock();
-void freeCodeBlock();
+void dcpu_print();
+void dcpu_free();
 
 void emit_num(int num_value);
 void emit_add();

@@ -5,7 +5,7 @@ CXXFLAGS=`llvm-config --cxxflags`
 LD=clang++
 LDFLAGS=`llvm-config --ldflags --system-libs --libs core`
 
-COMMON=ast.c lex.yy.c y.tab.c parse_utils.c environment.c dcpuCodeBlock.c
+COMMON=ast.c lex.yy.c y.tab.c parse_utils.c environment.c dcpuIR.c
 COMMON_OBJS=$(COMMON:%.c=%.o)
 
 all: compiler interpreter

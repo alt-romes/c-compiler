@@ -1,4 +1,4 @@
-#include "dcpuCodeBlock.h"
+#include "dcpuIR.h"
 
 #include <stdlib.h>
 #include<stdio.h>
@@ -32,7 +32,7 @@ void newInstruction(const char* inst_format, ...) {
     last = in;
 }
 
-void printCodeBlock() {
+void dcpu_print() {
 
     inode* in = first;
     while(in != NULL) {
@@ -45,7 +45,7 @@ void printCodeBlock() {
     printf("hlt\n");
 }
 
-void freeCodeBlock() {
+void dcpu_free() {
 
     inode* in = first;
     while(in != NULL) {
