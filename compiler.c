@@ -5,6 +5,7 @@
 #include "ast.h"
 #include "parse_utils.h"
 #include "llvm.h"
+#include "dcpuCodeBlock.h"
 
 
 LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node) {
@@ -45,61 +46,37 @@ LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node) {
     }
 }
 
-void compile8bcpu(node_t* node) {
+void compile_dcpu(node_t* node) {
 
     switch (node->type) {
 
         case NUM:
-            printf("psh $%d\n", node->num_value);
+            emit_num(node->num_value);
             break;
 
         case ADD:
-            compile8bcpu(node->children.left);
-            compile8bcpu(node->children.right);
-            printf("pop RB\n");
-            printf("pop RC\n");
-            printf("add RB RC\n");
-            printf("lod ACR RB\n");
-            printf("psh RB\n");
+            compile_dcpu(node->children.left);
+            compile_dcpu(node->children.right);
+            emit_add();
             break;
 
         case SUB:
-            compile8bcpu(node->children.left);
-            compile8bcpu(node->children.right);
-            printf("pop RB\n");
-            printf("pop RC\n");
-            printf("sub RB RC\n");
-            printf("lod ACR RB\n");
-            printf("psh RB\n");
+            compile_dcpu(node->children.left);
+            compile_dcpu(node->children.right);
+            emit_sub();
             break;
 
         case MUL:
-            compile8bcpu(node->children.left);
-            compile8bcpu(node->children.right);
-            printf("pop RB\n"); // a
-            printf("pop RC\n"); // b
-
-            printf("lod $0 RD\n"); // res
-            printf("loop_start:\n");
-            printf("add RD RB\n"); // res += a
-            printf("lod ACR RD\n");
-            printf("dec RC\n"); // b--
-            printf("jmpz loop_end\n");
-            printf("lod ACR RC\n");
-            printf("jmp loop_start\n");
-            printf("loop_end:\n");
-            
-
-            printf("psh RD\n");
+            compile_dcpu(node->children.left);
+            compile_dcpu(node->children.right);
+            emit_mul();
             break;
 
         //case DIV:
 
         case UMINUS:
-            compile8bcpu(node->child);
-            printf("pop RB\n");
-            printf("neg RB\n");
-            printf("psh RB\n");
+            compile_dcpu(node->child);
+            emit_uminus();
             break;
 
         default:
@@ -124,8 +101,10 @@ int main(int argc, char *argv[]) {
 
     printf("Result:\n");
 
-    compile8bcpu(root);
-    printf("hlt\n");
+    compile_dcpu(root);
+    printCodeBlock();
+    freeCodeBlock();
+
     LLVMValue* c = compile(lc, builder, root);
 
     print_llvmvalue(c);
