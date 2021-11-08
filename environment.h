@@ -14,6 +14,8 @@ typedef struct environment {
     int size;
 } environment_t;
 
+realloc
+
 environment_t* newEnvironment();
 
 environment_t* beginScope(environment_t* e);

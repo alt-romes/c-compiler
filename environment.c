@@ -22,10 +22,7 @@ environment_t* endScope(environment_t* e) {
 
 void assoc(environment_t* e, char* id, void* val) {
     if (!e->size % DEFAULT_ENVIRONMENT_SIZE) {
-        struct association* new_associations = malloc((e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct {char* id; void* val;} *));
-        for (int i=0; i<e->size; i++)
-            new_associations[i] = e->associations[i];
-        free(e->associations);
+        struct association* new_associations = realloc(e->associations, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct association));
         e->associations = new_associations;
     }
     e->associations[e->size].id = id;
