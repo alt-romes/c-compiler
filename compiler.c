@@ -5,8 +5,6 @@
 #include "ast.h"
 #include "parse_utils.h"
 #include "llvm.h"
-#include "dcpuIR.h"
-
 
 LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node) {
     switch (node->type) {
@@ -46,46 +44,6 @@ LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node) {
     }
 }
 
-void compile_dcpu(node_t* node) {
-
-    switch (node->type) {
-
-        case NUM:
-            emit_num(((num_node_t*)node)->value);
-            break;
-
-        case ADD:
-            compile_dcpu(((binary_node_t*)node)->left);
-            compile_dcpu(((binary_node_t*)node)->right);
-            emit_add();
-            break;
-
-        case SUB:
-            compile_dcpu(((binary_node_t*)node)->left);
-            compile_dcpu(((binary_node_t*)node)->right);
-            emit_sub();
-            break;
-
-        case MUL:
-            compile_dcpu(((binary_node_t*)node)->left);
-            compile_dcpu(((binary_node_t*)node)->right);
-            emit_mul();
-            break;
-
-        //case DIV:
-
-        case UMINUS:
-            compile_dcpu(((unary_node_t*)node)->child);
-            emit_uminus();
-            break;
-
-        default:
-            fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
-            exit(1);
-            //return NULL;
-    }
-}
-
 LLVMContext* lc;
 Module* mod;
 IRBuilder* builder;
@@ -100,10 +58,6 @@ int main(int argc, char *argv[]) {
     builder = initialize_builder(lc);
 
     printf("Result:\n");
-
-    compile_dcpu(root);
-    dcpu_print();
-    dcpu_free();
 
     LLVMValue* c = compile(lc, builder, root);
 

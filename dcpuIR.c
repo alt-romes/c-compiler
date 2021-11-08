@@ -27,7 +27,8 @@ void newInstruction(const char* inst_format, ...) {
     if(last == NULL)
         first = in;
     else
-        last->next = in;
+        last->next = in; // TODO: Initialized va_list 'args' is leaked
+                         //       [clang-analyzer-valist.Unterminated]
 
     last = in;
 }
