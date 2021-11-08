@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 /* #include <llvm-c/Core.h> */
 #include "ast.h"
 #include "parse_utils.h"
 #include "llvm.h"
+#include "dcpuIR.h"
 
 
 LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node) {
@@ -44,6 +46,46 @@ LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node) {
     }
 }
 
+void compile_dcpu(node_t* node) {
+
+    switch (node->type) {
+
+        case NUM:
+            emit_num(node->num_value);
+            break;
+
+        case ADD:
+            compile_dcpu(node->children.left);
+            compile_dcpu(node->children.right);
+            emit_add();
+            break;
+
+        case SUB:
+            compile_dcpu(node->children.left);
+            compile_dcpu(node->children.right);
+            emit_sub();
+            break;
+
+        case MUL:
+            compile_dcpu(node->children.left);
+            compile_dcpu(node->children.right);
+            emit_mul();
+            break;
+
+        //case DIV:
+
+        case UMINUS:
+            compile_dcpu(node->child);
+            emit_uminus();
+            break;
+
+        default:
+            fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
+            exit(1);
+            //return NULL;
+    }
+}
+
 LLVMContext* lc;
 Module* mod;
 IRBuilder* builder;
@@ -58,6 +100,10 @@ int main(int argc, char *argv[]) {
     builder = initialize_builder(lc);
 
     printf("Result:\n");
+
+    compile_dcpu(root);
+    dcpu_print();
+    dcpu_free();
 
     LLVMValue* c = compile(lc, builder, root);
 

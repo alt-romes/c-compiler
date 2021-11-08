@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "ast.h"
 #include "environment.h"
 #include "parse_utils.h"
