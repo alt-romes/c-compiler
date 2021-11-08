@@ -22,19 +22,19 @@ LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node) {
         /* } */
 
         case NUM:
-            return constant_int(lc, node->num_value);
+            return constant_int(lc, ((num_node_t*)node)->value);
 
         case ADD:
-            return build_add(b, compile(lc, b, node->children.left), compile(lc, b, node->children.right));
+            return build_add(b, compile(lc, b, ((binary_node_t*)node)->left), compile(lc, b, ((binary_node_t*)node)->right));
 
         case SUB:
-            return build_sub(b, compile(lc, b, node->children.left), compile(lc, b, node->children.right));
+            return build_sub(b, compile(lc, b, ((binary_node_t*)node)->left), compile(lc, b, ((binary_node_t*)node)->right));
 
         case MUL:
-            return build_mul(b, compile(lc, b, node->children.left), compile(lc, b, node->children.right));
+            return build_mul(b, compile(lc, b, ((binary_node_t*)node)->left), compile(lc, b, ((binary_node_t*)node)->right));
 
         case DIV:
-            return build_div(b, compile(lc, b, node->children.left), compile(lc, b, node->children.right));
+            return build_div(b, compile(lc, b, ((binary_node_t*)node)->left), compile(lc, b, ((binary_node_t*)node)->right));
 
         /* case UMINUS: */
         /*     return - eval(node->child, e); */
@@ -51,31 +51,31 @@ void compile_dcpu(node_t* node) {
     switch (node->type) {
 
         case NUM:
-            emit_num(node->num_value);
+            emit_num(((num_node_t*)node)->value);
             break;
 
         case ADD:
-            compile_dcpu(node->children.left);
-            compile_dcpu(node->children.right);
+            compile_dcpu(((binary_node_t*)node)->left);
+            compile_dcpu(((binary_node_t*)node)->right);
             emit_add();
             break;
 
         case SUB:
-            compile_dcpu(node->children.left);
-            compile_dcpu(node->children.right);
+            compile_dcpu(((binary_node_t*)node)->left);
+            compile_dcpu(((binary_node_t*)node)->right);
             emit_sub();
             break;
 
         case MUL:
-            compile_dcpu(node->children.left);
-            compile_dcpu(node->children.right);
+            compile_dcpu(((binary_node_t*)node)->left);
+            compile_dcpu(((binary_node_t*)node)->right);
             emit_mul();
             break;
 
         //case DIV:
 
         case UMINUS:
-            compile_dcpu(node->child);
+            compile_dcpu(((unary_node_t*)node)->child);
             emit_uminus();
             break;
 

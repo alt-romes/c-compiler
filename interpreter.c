@@ -9,31 +9,31 @@ int eval(const node_t* node, environment_t* e) {
     switch (node->type) {
 
         case ID:
-            return (int)(intptr_t)find(e, node->id_value);
+            return (int)(intptr_t)find(e, ((id_node_t*)node)->value);
 
         case DEF: {
             environment_t* scope_env = beginScope(e);
-            assoc(scope_env, node->def.id, (void*)(intptr_t)eval(node->def.left, e));
-            return eval(node->def.right, scope_env);
+            assoc(scope_env, ((def_node_t*)node)->id, (void*)(intptr_t)eval(((def_node_t*)node)->left, e));
+            return eval(((def_node_t*)node)->right, scope_env);
         }
 
         case NUM:
-            return node->num_value;
+            return ((num_node_t*)node)->value;
 
         case ADD:
-            return eval(node->children.left, e) + eval(node->children.right, e);
+            return eval(((binary_node_t*)node)->left, e) + eval(((binary_node_t*)node)->right, e);
 
         case SUB:
-            return eval(node->children.left, e) - eval(node->children.right, e);
+            return eval(((binary_node_t*)node)->left, e) - eval(((binary_node_t*)node)->right, e);
 
         case MUL:
-            return eval(node->children.left, e) * eval(node->children.right, e);
+            return eval(((binary_node_t*)node)->left, e) * eval(((binary_node_t*)node)->right, e);
 
         case DIV:
-            return eval(node->children.left, e) / eval(node->children.right, e);
+            return eval(((binary_node_t*)node)->left, e) / eval(((binary_node_t*)node)->right, e);
 
         case UMINUS:
-            return - eval(node->child, e);
+            return - eval(((unary_node_t*)node)->child, e);
 
         default:
             fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
