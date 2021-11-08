@@ -3,8 +3,32 @@
 #include "ast.h"
 
 node_t* new_node(node_type_t type) {
-    node_t* node = malloc(sizeof(node_t));
+
+    node_t* node;
+
+    switch (type) {
+        case DEF:
+            node = malloc(sizeof(def_node_t));
+            break;
+        case ADD:
+        case SUB:
+        case MUL:
+        case DIV:
+            node = malloc(sizeof(binary_node_t));
+            break;
+        case UMINUS:
+            node = malloc(sizeof(unary_node_t));
+            break;
+        case ID:
+            node = malloc(sizeof(id_node_t));
+            break;
+        case NUM:
+            node = malloc(sizeof(num_node_t));
+            break;
+    }
+
     node->type = type;
+
     return node;
 }
 
@@ -14,40 +38,41 @@ node_t* create_node_literal(node_type_t type, void* literal_value) {
     
     switch (type) {
         case NUM:
-            node->num_value = (int)(intptr_t)literal_value;
+            ((num_node_t*)node)->value = (int)(intptr_t)literal_value;
             break;
         case ID:
-            node->id_value = (char*)literal_value;
+            ((id_node_t*)node)->value = (char*)literal_value;
             break;
         default:
             fprintf(stderr, "ERROR: Literal node should have type NUM or ID!\n");
             exit(1);
     }
+
     return node;
 }
 
 node_t* create_node1(node_type_t type, node_t* n) {
 
-    node_t* node = new_node(type);
+    unary_node_t* node = (unary_node_t*)new_node(type);
     node->child = n;
-    return node;
+    return (node_t*)node;
 }
 
 node_t* create_node2(node_type_t type, node_t* l, node_t* r) {
      
-    node_t* node = new_node(type);
-    node->children.left = l;
-    node->children.right = r;
-    return node;
+    binary_node_t* node = (binary_node_t*)new_node(type);
+    node->left = l;
+    node->right = r;
+    return (node_t*)node;
 }
 
 node_t* create_node_def(node_type_t type, char* id, node_t* l, node_t* r) {
 
-    node_t* node = new_node(type);
-    node->def.id = id;
-    node->def.left = l;
-    node->def.right = r;
-    return node;
+    def_node_t* node = (def_node_t*)new_node(type);
+    node->id = id;
+    node->left = l;
+    node->right = r;
+    return (node_t*)node;
 }
 
 
@@ -55,28 +80,26 @@ void free_ast(node_t* node) {
 
     switch (node->type) {
         case DEF:
-            free(node->def.id);
-            free((node_t*)node->def.left);
-            free((node_t*)node->def.right);
+            free(((def_node_t*)node)->id);
+            free(((def_node_t*)node)->left);
+            free(((def_node_t*)node)->right);
             break;
         case ADD:
         case SUB:
         case MUL:
         case DIV:
-            // TODO: to const or not to const? should the data structure have const children?
-            free_ast((node_t*)node->children.left);
-            free_ast((node_t*)node->children.right);
+            free_ast(((binary_node_t*)node)->left);
+            free_ast(((binary_node_t*)node)->right);
             break;
         case UMINUS:
-            free_ast((node_t*)node->child);
+            free_ast(((unary_node_t*)node)->child);
             break;
         case ID:
-            free(node->id_value);
+            free(((id_node_t*)node)->value);
             break;
         case NUM:
             break;
     }
 
-    free((void*)node);
-
+    free(node);
 }
