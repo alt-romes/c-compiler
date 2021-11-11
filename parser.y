@@ -57,7 +57,8 @@ fact
 
 
 compound_statement  // also known as "block"
-    : '{' declaration_list statement_list '}'   { $$ = create_node_block(BLOCK, $2, $3); }
+    : '{' statement_list '}'                    { $$ = $2; }
+    | '{' declaration_list statement_list '}'   { $$ = create_node_block(BLOCK, $2, $3); }
 
 declaration_list
     : declaration                               { $$ = $1; }

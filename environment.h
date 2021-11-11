@@ -25,6 +25,4 @@ void* find(environment_t* e, char* id);
 
 environment_t* merge_environment(environment_t* src, environment_t* dst); // merge two environments by copying all associations from src to dst, freeing src, and keeping dst's parent
 
-void free_environment(environment_t*);
-
 #endif

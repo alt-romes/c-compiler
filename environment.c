@@ -49,17 +49,8 @@ environment_t* merge_environment(environment_t* src, environment_t* dst) {
     for (int i = 0; i < src->size; i++)
         assoc(dst, src->associations[i].id, src->associations[i].val);
 
-    free_environment(src);
+    free(src->associations);
+    free(src);
     
     return dst;
-}
-
-void free_environment(environment_t* e) {
-    for (int i = 0; i < e->size; i++) {
-        free(e->associations[i].id);
-        if (e->associations[i].val != NULL)
-            free(e->associations[i].val);
-    }
-    free(e->associations);
-    free(e);
 }

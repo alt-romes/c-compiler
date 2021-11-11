@@ -82,7 +82,15 @@ void free_ast(node_t* node) {
 
     switch (node->type) {
         case BLOCK: {
-                free_environment(((block_node_t*)node)->declarations_ast_env);
+                environment_t* dae = ((block_node_t*)node)->declarations_ast_env;
+                for (int i = 0; i < dae->size; i++) {
+                    free(dae->associations[i].id);
+                    if (dae->associations[i].val != NULL)
+                        free(dae->associations[i].val);
+                }
+
+                free(dae->associations);
+                free(dae);
                 free(((block_node_t*)node)->body);
                 break;
             }
