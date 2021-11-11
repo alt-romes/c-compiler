@@ -1,6 +1,8 @@
 #ifndef _AST_H
 #define _AST_H
 
+#include "environment.h"
+
 /*
  * All `*_node` structures must start with a node_type_t field so that they can
  * be cast from and to `struct node`
@@ -14,8 +16,8 @@ typedef enum node_type {
     MUL,
     DIV,
     UMINUS,
-    DEF
-} node_type_t ;
+    BLOCK
+} node_type_t;
 
 typedef struct node {
     node_type_t type;
@@ -42,17 +44,16 @@ typedef struct binary_node {
     struct node* right;
 } binary_node_t;
 
-typedef struct def_node {
+typedef struct block_node {
     node_type_t type;
-    char* id;
-    struct node* left;
-    struct node* right;
-} def_node_t;
+    environment_t* declarations_ast_env;
+    struct node* body;
+} block_node_t;
 
-node_t* create_node_literal(node_type_t type, void* literal_value);
-node_t* create_node1(node_type_t type, node_t* n);
-node_t* create_node2(node_type_t type, node_t* l, node_t* r);
-node_t* create_node_def(node_type_t type, char* id, node_t* l, node_t* r);
+node_t* create_node_literal(node_type_t, void* literal_value);
+node_t* create_node1(node_type_t, node_t*);
+node_t* create_node2(node_type_t, node_t*, node_t*);
+node_t* create_node_block(node_type_t, environment_t*, node_t*);
 
 void free_ast(node_t* root);
 

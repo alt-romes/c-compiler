@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ast.h"
 #include <stdint.h>
+#include "environment.h"
+#include "ast.h"
 
 node_t* new_node(node_type_t type) {
 
     node_t* node;
 
     switch (type) {
-        case DEF:
-            node = malloc(sizeof(def_node_t));
+        case BLOCK:
+            node = malloc(sizeof(block_node_t));
             break;
         case ADD:
         case SUB:
@@ -67,24 +68,24 @@ node_t* create_node2(node_type_t type, node_t* l, node_t* r) {
     return (node_t*)node;
 }
 
-node_t* create_node_def(node_type_t type, char* id, node_t* l, node_t* r) {
+node_t* create_node_block(node_type_t type, environment_t* declarations_ast_env, node_t* b) {
 
-    def_node_t* node = (def_node_t*)new_node(type);
-    node->id = id;
-    node->left = l;
-    node->right = r;
+    block_node_t* node = (block_node_t*)new_node(type);
+    node->declarations_ast_env = declarations_ast_env;
+    node->body = b;
     return (node_t*)node;
 }
 
 
 void free_ast(node_t* node) {
 
+
     switch (node->type) {
-        case DEF:
-            free(((def_node_t*)node)->id);
-            free(((def_node_t*)node)->left);
-            free(((def_node_t*)node)->right);
-            break;
+        case BLOCK: {
+                free_environment(((block_node_t*)node)->declarations_ast_env);
+                free(((block_node_t*)node)->body);
+                break;
+            }
         case ADD:
         case SUB:
         case MUL:
