@@ -11,10 +11,19 @@ int eval(const node_t* node, environment_t* e) {
         case ID:
             return (int)(intptr_t)find(e, ((id_node_t*)node)->value);
 
-        case DEF: {
+        case BLOCK: {
             environment_t* scope_env = beginScope(e);
-            assoc(scope_env, ((def_node_t*)node)->id, (void*)(intptr_t)eval(((def_node_t*)node)->left, e));
-            return eval(((def_node_t*)node)->right, scope_env);
+            
+            block_node_t* bnode = (block_node_t*)node;
+            environment_t* dae  = bnode->declarations_ast_env; // this id->ast_node environment is freed when the whole ast is freed
+
+            // For each declaration in this scope create an association in this scope's evaluation environment
+            for (int i = 0; i < dae->size; i++)
+                // TODO .val could be NULL
+                assoc(scope_env, dae->associations[i].id, (void*)(intptr_t)eval(dae->associations[i].val, e));
+
+            // TODO free scope_env?
+            return eval(((block_node_t*)node)->body, scope_env);
         }
 
         case NUM:
@@ -48,6 +57,7 @@ int main(int argc, char *argv[]) {
     node_t* root = parse_root();
 
     int val = eval(root, newEnvironment());
+    // TODO free this newEnv
 
     printf("Result: %d\n", val);
 

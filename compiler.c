@@ -1,7 +1,7 @@
+/* #include <llvm-c/Core.h> */
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-/* #include <llvm-c/Core.h> */
 #include "ast.h"
 #include "parse_utils.h"
 #include "llvm.h"
