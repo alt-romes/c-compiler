@@ -3,9 +3,8 @@
 
 int yyparse(); // defined by yacc
 
-node_t* _root;
-
 node_t* parse_root() {
-    yyparse();
-    return _root;
+    node_t* root = 0;
+    yyparse(&root);
+    return root;
 }

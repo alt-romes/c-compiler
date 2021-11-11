@@ -8,8 +8,6 @@
 int yylex(); // defined by lex
 void yyerror();
 
-extern node_t* _root;
-
 %}
 
 %union {
@@ -21,22 +19,20 @@ extern node_t* _root;
 }
 
 %token _INT
-%token _EL
 %token _Num
 %token _IDENTIFIER
 
 %type <int_v> _Num
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed
-%type <node_v> line initializer statement_list exp term fact compound_statement
+%type <node_v> init initializer statement_list exp term fact compound_statement
 %type <environment_v> declaration_list declaration init_declarator_list
 %type <association_v> init_declarator
 
-%start line
+%parse-param {node_t** root}
+
+%start init
 
 %%
-
-line
-   : exp _EL                                    { _root = $1; return 0; }
 
 exp
    : term                                       { $$ = $1; }
@@ -55,6 +51,10 @@ fact
     | '(' exp ')'                               { $$ = $2; }
     | '-' fact                                  { $$ = create_node1(UMINUS, $2); }
 
+
+init
+    : statement_list                            { *root = $1; }
+    | compound_statement                        { *root = $1; }
 
 compound_statement  // also known as "block"
     : '{' statement_list '}'                    { $$ = $2; }
@@ -85,10 +85,11 @@ initializer
     : exp                                       { $$ = $1; }
 
 statement_list
-    : exp                                       { $$ = $1; }
+    : exp ';'                                   { $$ = $1; }
 
 %%
 
-void yyerror() {
-    printf("Syntax error!\n");
+void yyerror(const char* str) {
+    fprintf(stderr,"Syntax error: %s\n",str);
 }
+

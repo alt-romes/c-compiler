@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     node_t* root = parse_root();
 
     int val = eval(root, newEnvironment());
-    // TODO free this newEnv
+    // TODO free this newEnvironment()
 
     printf("Result: %d\n", val);
 
