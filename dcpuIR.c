@@ -6,6 +6,7 @@
 #include <stdarg.h>
 
 typedef  struct _inode inode;
+int loopCounter = 0;
 
 struct _inode {
 
@@ -81,15 +82,17 @@ void emit_mul(){
     newInstruction("pop RB\n"); // a
     newInstruction("pop RC\n"); // b
     newInstruction("lod $0 RD\n"); // res
-    newInstruction("loop_start:\n");
+    newInstruction("loop_start_%d:\n", loopCounter);
     newInstruction("add RD RB\n"); // res += a
     newInstruction("lod ACR RD\n");
     newInstruction("dec RC\n"); // b--
-    newInstruction("jmpz loop_end\n");
+    newInstruction("jmpz loop_end_%d\n", loopCounter);
     newInstruction("lod ACR RC\n");
-    newInstruction("jmp loop_start\n");
-    newInstruction("loop_end:\n");
+    newInstruction("jmp loop_start_%d\n", loopCounter);
+    newInstruction("loop_end_%d:\n", loopCounter);
     newInstruction("psh RD\n");
+
+    loopCounter++;
 }
 void emit_div(){
 	
