@@ -17,7 +17,12 @@ environment_t* beginScope(environment_t* e) {
 }
 
 environment_t* endScope(environment_t* e) {
-    return e->parent;
+    environment_t* p = e->parent;
+
+    free(e->associations);
+    free(e);
+
+    return p;
 }
 
 environment_t* assoc(environment_t* e, char* id, void* val) {

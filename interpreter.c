@@ -15,15 +15,19 @@ int eval(const node_t* node, environment_t* e) {
             environment_t* scope_env = beginScope(e);
             
             block_node_t* bnode = (block_node_t*)node;
-            environment_t* dae  = bnode->declarations_ast_env; // this id->ast_node environment is freed when the whole ast is freed
+            environment_t* dae  = bnode->declarations_ast_env;  // this id->ast_node environment is freed when the whole ast is freed
+                                                                // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it)
 
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++)
                 // TODO .val could be NULL
                 assoc(scope_env, dae->associations[i].id, (void*)(intptr_t)eval(dae->associations[i].val, e));
 
-            // TODO free scope_env?
-            return eval(((block_node_t*)node)->body, scope_env);
+            int val = eval(((block_node_t*)node)->body, scope_env);
+
+            endScope(scope_env); // free the scope environment and its association array
+
+            return val;
         }
 
         case NUM:
@@ -56,12 +60,15 @@ int main(int argc, char *argv[]) {
 
     node_t* root = parse_root();
 
-    int val = eval(root, newEnvironment());
-    // TODO free this newEnvironment()
+    environment_t* topenv = newEnvironment();
 
-    printf("Result: %d\n", val);
+    int val = eval(root, topenv);
+
+    free(topenv);
 
     free_ast(root);
+
+    printf("Result: %d\n", val);
 
     return 0;
 }
