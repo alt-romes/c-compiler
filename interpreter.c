@@ -9,31 +9,44 @@ int eval(const node_t* node, environment_t* e) {
     switch (node->type) {
 
         case ID:
-            return (int)(intptr_t)find(e, node->id_value);
+            return (int)(intptr_t)find(e, ((id_node_t*)node)->value);
 
-        case DEF: {
+        case BLOCK: {
             environment_t* scope_env = beginScope(e);
-            assoc(scope_env, node->def.id, (void*)(intptr_t)eval(node->def.left, e));
-            return eval(node->def.right, scope_env);
+            
+            block_node_t* bnode = (block_node_t*)node;
+            environment_t* dae  = bnode->declarations_ast_env;  // this id->ast_node environment is freed when the whole ast is freed
+                                                                // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it)
+
+            // For each declaration in this scope create an association in this scope's evaluation environment
+            for (int i = 0; i < dae->size; i++)
+                // TODO .val could be NULL
+                assoc(scope_env, dae->associations[i].id, (void*)(intptr_t)eval(dae->associations[i].val, e));
+
+            int val = eval(((block_node_t*)node)->body, scope_env);
+
+            endScope(scope_env); // free the scope environment and its association array
+
+            return val;
         }
 
         case NUM:
-            return node->num_value;
+            return ((num_node_t*)node)->value;
 
         case ADD:
-            return eval(node->children.left, e) + eval(node->children.right, e);
+            return eval(((binary_node_t*)node)->left, e) + eval(((binary_node_t*)node)->right, e);
 
         case SUB:
-            return eval(node->children.left, e) - eval(node->children.right, e);
+            return eval(((binary_node_t*)node)->left, e) - eval(((binary_node_t*)node)->right, e);
 
         case MUL:
-            return eval(node->children.left, e) * eval(node->children.right, e);
+            return eval(((binary_node_t*)node)->left, e) * eval(((binary_node_t*)node)->right, e);
 
         case DIV:
-            return eval(node->children.left, e) / eval(node->children.right, e);
+            return eval(((binary_node_t*)node)->left, e) / eval(((binary_node_t*)node)->right, e);
 
         case UMINUS:
-            return - eval(node->child, e);
+            return - eval(((unary_node_t*)node)->child, e);
 
         default:
             fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
@@ -47,11 +60,15 @@ int main(int argc, char *argv[]) {
 
     node_t* root = parse_root();
 
-    int val = eval(root, newEnvironment());
+    environment_t* topenv = newEnvironment();
 
-    printf("Result: %d\n", val);
+    int val = eval(root, topenv);
+
+    free(topenv);
 
     free_ast(root);
+
+    printf("Result: %d\n", val);
 
     return 0;
 }

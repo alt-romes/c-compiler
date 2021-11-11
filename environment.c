@@ -17,19 +17,23 @@ environment_t* beginScope(environment_t* e) {
 }
 
 environment_t* endScope(environment_t* e) {
-    return e->parent;
+    environment_t* p = e->parent;
+
+    free(e->associations);
+    free(e);
+
+    return p;
 }
 
-void assoc(environment_t* e, char* id, void* val) {
+environment_t* assoc(environment_t* e, char* id, void* val) {
     if (!e->size % DEFAULT_ENVIRONMENT_SIZE) {
-        struct association* new_associations = malloc((e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct {char* id; void* val;} *));
-        for (int i=0; i<e->size; i++)
-            new_associations[i] = e->associations[i];
-        free(e->associations);
+        struct association* new_associations = realloc(e->associations, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct association));
         e->associations = new_associations;
     }
     e->associations[e->size].id = id;
     e->associations[e->size++].val = val;
+
+    return e;
 }
 
 void* find(environment_t* e, char* id) {
@@ -43,4 +47,15 @@ void* find(environment_t* e, char* id) {
         fprintf(stderr, "Identifier (%s) not found in the context!\n", id);
         exit(1);
     }
+}
+
+environment_t* merge_environment(environment_t* src, environment_t* dst) {
+
+    for (int i = 0; i < src->size; i++)
+        assoc(dst, src->associations[i].id, src->associations[i].val);
+
+    free(src->associations);
+    free(src);
+    
+    return dst;
 }

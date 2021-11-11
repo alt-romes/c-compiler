@@ -1,0 +1,10 @@
+{
+    int x = 2, y = 2;
+    int g = 1;
+    {
+        int x = x + y + g, g = 2;
+        int y = g+y;
+        y+x+g;
+    };
+}
+
