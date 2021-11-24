@@ -50,7 +50,7 @@ IRBuilder* builder;
 
 int main(int argc, char *argv[]) {
 
-    printf("Input an expression to compile: ");
+    printf("Input an expression to compile then EOF (<C-d>): ");
     node_t* root = parse_root();
 
     lc = initialize_context();

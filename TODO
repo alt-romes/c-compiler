@@ -1,1 +1,3 @@
 refactor ast environment with association list to save space used on the unused parent field
+
+the declaration_list and init_list is pretty confusing and badly defined ... rewrite.

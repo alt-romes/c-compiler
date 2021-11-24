@@ -76,7 +76,6 @@ node_t* create_node_block(node_type_t type, environment_t* declarations_ast_env,
     return (node_t*)node;
 }
 
-
 void free_ast(node_t* node) {
 
 
