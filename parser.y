@@ -65,7 +65,16 @@ declaration_list
     | declaration_list declaration              { $$ = merge_environment($2, $1); }
 
 declaration
-    : _INT init_declarator_list ';'             { $$ = $2; }
+    : declaration_specifiers init_declarator_list ';'             { $$ = $2; }
+
+// TODO
+declaration_specifiers
+    : type_specifier
+    | type_qualifier type_specifiers
+
+type_specifier
+    : _INT
+    | _CONST
 
 init_declarator_list
     : init_declarator                           { $$ = assoc(newEnvironment(), $1.id, $1.val); }

@@ -1,9 +1,11 @@
 {
     int x = 2, y = 2;
+
     {
         int x = 5*x, y = x*y;
         int g = 5;
         y+x+g;
     };
+
 }
 
