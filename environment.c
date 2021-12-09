@@ -6,6 +6,7 @@
 environment_t* newEnvironment() { 
     environment_t* e = malloc(sizeof(environment_t));
     e->parent = NULL;
+    e->associations = NULL;
     return e;
 }
 
@@ -40,6 +41,8 @@ void* find(environment_t* e, char* id) {
     for (int i=e->size-1; i>=0; i--)
         if (!strcmp(e->associations[i].id, id))
             return e->associations[i].val;
+
+    printf("Association for %s not found in this scope!\n", id);
 
     if (e->parent != NULL)
         return find(e->parent, id);

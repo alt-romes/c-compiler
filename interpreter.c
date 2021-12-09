@@ -58,16 +58,17 @@ int main(int argc, char *argv[]) {
 
     printf("Input an expression: ");
 
+    printf("Parsing...\n");
     node_t* root = parse_root();
 
     environment_t* topenv = newEnvironment();
 
+    printf("Evaluating...\n");
     int val = eval(root, topenv);
 
-    printf("Freeing top environment\n");
     free(topenv);
 
-    printf("Freeing AST\n");
+    printf("Freeing AST...\n");
     free_ast(root);
 
     printf("Result: %d\n", val);
