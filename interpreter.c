@@ -15,13 +15,13 @@ int eval(const node_t* node, environment_t* e) {
             environment_t* scope_env = beginScope(e);
             
             block_node_t* bnode = (block_node_t*)node;
-            environment_t* dae  = bnode->declarations_ast_env;  // this id->ast_node environment is freed when the whole ast is freed
-                                                                // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it)
+            declaration_list_t* dae  = bnode->declaration_list;  // this declaration_list is freed when the whole ast is freed
+                                                                 // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it)
 
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++)
                 // TODO .val could be NULL
-                assoc(scope_env, dae->associations[i].id, (void*)(intptr_t)eval(dae->associations[i].val, scope_env));
+                assoc(scope_env, dae->declarations[i].id, (void*)(intptr_t)eval(dae->declarations[i].node, scope_env));
 
             int val = eval(((block_node_t*)node)->body, scope_env);
 

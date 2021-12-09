@@ -9,27 +9,27 @@
 LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node, environment_t* e) {
     switch (node->type) {
 
-        case ID:
-            return (int)(intptr_t)find(e, ((id_node_t*)node)->value);
+        /* case ID: */
+        /*     return (int)(intptr_t)find(e, ((id_node_t*)node)->value); */
 
-        case BLOCK: {
-            environment_t* scope_env = beginScope(e);
+        /* case BLOCK: { */
+        /*     environment_t* scope_env = beginScope(e); */
             
-            block_node_t* bnode = (block_node_t*)node;
-            environment_t* dae  = bnode->declarations_ast_env;  // this id->ast_node environment is freed when the whole ast is freed
-                                                                // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it)
+        /*     block_node_t* bnode = (block_node_t*)node; */
+        /*     declaration_list_t* dae  = bnode->declaration_list;  // this id->ast_node environment is freed when the whole ast is freed */
+        /*                                                         // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it) */
 
-            // For each declaration in this scope create an association in this scope's evaluation environment
-            for (int i = 0; i < dae->size; i++)
-                // TODO .val could be NULL
-                assoc(scope_env, dae->associations[i].id, (void*)(intptr_t)eval(dae->associations[i].val, scope_env));
+        /*     // For each declaration in this scope create an association in this scope's evaluation environment */
+        /*     for (int i = 0; i < dae->size; i++) */
+        /*         // TODO .val could be NULL */
+        /*         assoc(scope_env, dae->declarations[i].id, (void*)(intptr_t)eval(dae->declarations[i].node, scope_env)); */
 
-            int val = eval(((block_node_t*)node)->body, scope_env);
+        /*     int val = eval(((block_node_t*)node)->body, scope_env); */
 
-            endScope(scope_env); // free the scope environment and its association array
+        /*     endScope(scope_env); // free the scope environment and its association array */
 
-            return val;
-        }
+        /*     return val; */
+        /* } */
 
         case NUM:
             return constant_int(lc, ((num_node_t*)node)->value);

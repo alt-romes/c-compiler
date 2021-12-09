@@ -3,10 +3,10 @@
 
 #define DEFAULT_ENVIRONMENT_SIZE 10
 
-typedef struct association {
+struct association {
     char* id;
     void* val;
-} association;
+};
 
 typedef struct environment {
     struct environment* parent;
@@ -22,7 +22,5 @@ environment_t* endScope(environment_t* e);
 environment_t* assoc(environment_t* e, char* id, void* val); // returns the environment passed as the first argument
 
 void* find(environment_t* e, char* id);
-
-environment_t* merge_environment(environment_t* src, environment_t* dst); // merge two environments by copying all associations from src to dst, freeing src, and keeping dst's parent
 
 #endif
