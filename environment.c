@@ -37,7 +37,7 @@ environment_t* assoc(environment_t* e, char* id, void* val) {
 
 void* find(environment_t* e, char* id) {
 
-    for (int i=e->size-1; i>=0; i++)
+    for (int i=e->size-1; i>=0; i--)
         if (!strcmp(e->associations[i].id, id))
             return e->associations[i].val;
 

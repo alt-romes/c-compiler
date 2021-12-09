@@ -64,8 +64,10 @@ int main(int argc, char *argv[]) {
 
     int val = eval(root, topenv);
 
+    printf("Freeing top environment\n");
     free(topenv);
 
+    printf("Freeing AST\n");
     free_ast(root);
 
     printf("Result: %d\n", val);

@@ -118,10 +118,15 @@ void free_ast(node_t* node) {
 declaration_list_t* create_declaration_list() { return malloc(sizeof(declaration_list_t));}
 
 declaration_list_t* declaration_list_assoc(declaration_list_t* e, struct declaration d) {
+
+    printf("Assoc\n");
+
     if (!e->size % DEFAULT_ENVIRONMENT_SIZE)
         e->declarations = realloc(e->declarations, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct declaration));
 
     e->declarations[e->size++] = d;
+
+    printf("Finished assoc\n");
 
     return e;
 }
