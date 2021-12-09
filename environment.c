@@ -42,12 +42,10 @@ void* find(environment_t* e, char* id) {
         if (!strcmp(e->associations[i].id, id))
             return e->associations[i].val;
 
-    printf("Association for %s not found in this scope!\n", id);
-
     if (e->parent != NULL)
         return find(e->parent, id);
     else {
-        fprintf(stderr, "Identifier (%s) not found in the context!\n", id);
+        fprintf(stderr, "Error: Identifier (%s) not found in the context!\n", id);
         exit(1);
     }
 }

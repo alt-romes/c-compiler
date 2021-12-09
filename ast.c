@@ -123,30 +123,22 @@ declaration_list_t* create_declaration_list() {
 
 declaration_list_t* declaration_list_assoc(declaration_list_t* e, struct declaration d) {
 
-    printf("New declaration in %p: %s, {%d, %d}, %p\n", e, d.id, d.ds.tq, d.ds.ts, d.node);
-
     if (!e->size % DEFAULT_ENVIRONMENT_SIZE)
         // CAREFUL: e->declarations must be initially NULL for realloc to behave as malloc!
         e->declarations = realloc(e->declarations, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct declaration));
 
     e->declarations[e->size++] = d;
 
-    printf("Finished adding declaration %s\n", d.id);
-
     return e;
 }
 
 declaration_list_t* declaration_list_merge(declaration_list_t* src, declaration_list_t* dst) {
-
-    printf("Merging declaration list %p into %p\n", src, dst);
 
     for (int i = 0; i < src->size; i++)
         declaration_list_assoc(dst, src->declarations[i]);
 
     free(src->declarations);
     free(src);
-
-    printf("Finished merge\n");
     
     return dst;
 }
