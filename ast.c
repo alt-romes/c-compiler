@@ -139,7 +139,7 @@ declaration_list_t* declaration_list_merge(declaration_list_t* src, declaration_
 
 declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, struct declaration_specifiers ds) {
     
-    for (struct declaration* d = decs->declarations; d < d+decs->size; d++) d->ds = ds;
+    for (struct declaration* d = decs->declarations, * lim = d + decs->size; d < lim; d++) d->ds = ds;
 
     return decs;
 }

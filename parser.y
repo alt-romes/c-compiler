@@ -67,7 +67,7 @@ declaration_list
     | declaration_list declaration                    { $$ = declaration_list_merge($2, $1); }
 
 declaration
-    : declaration_specifiers init_declarator_list ';' { $$ = add_declaration_specifiers($1, $2); }
+    : declaration_specifiers init_declarator_list ';' { $$ = add_declaration_specifiers($2, $1); }
 
 declaration_specifiers
     : type_specifier                                  { $$ = (struct declaration_specifiers){ .tq = -1, .ts = $1}; }

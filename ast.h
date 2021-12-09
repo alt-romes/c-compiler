@@ -33,6 +33,7 @@ typedef struct declaration_list {
 declaration_list_t* create_declaration_list();
 declaration_list_t* declaration_list_assoc(declaration_list_t* e, struct declaration d);
 declaration_list_t* declaration_list_merge(declaration_list_t* src, declaration_list_t* dst); // merge two environments by copying all associations from src to dst, freeing src, and keeping dst's parent
+declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, struct declaration_specifiers ds);
 
 /*
  * All `*_node` structures must start with a node_type_t field so that they can

@@ -20,7 +20,7 @@ int eval(const node_t* node, environment_t* e) {
 
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++)
-                // TODO .val could be NULL
+                // TODO .node could be NULL
                 assoc(scope_env, dae->declarations[i].id, (void*)(intptr_t)eval(dae->declarations[i].node, scope_env));
 
             int val = eval(((block_node_t*)node)->body, scope_env);
