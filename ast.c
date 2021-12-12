@@ -9,6 +9,9 @@ node_t* new_node(node_type_t type) {
     node_t* node;
 
     switch (type) {
+        case FUNCTION:
+            node = malloc(sizeof(function_node_t));
+            break;
         case BLOCK:
             node = malloc(sizeof(block_node_t));
             break;
@@ -76,23 +79,35 @@ node_t* create_node_block(node_type_t type, declaration_list_t* declaration_list
     return (node_t*)node;
 }
 
+node_t* create_node_function(node_type_t type, char* name, node_t* b) {
+
+    function_node_t* node = (function_node_t*)new_node(type);
+    node->name = name;
+    node->body = b;
+    return (node_t*)node;
+}
+
 void free_ast(node_t* node) {
 
-
     switch (node->type) {
+        case FUNCTION: {
+            free(((function_node_t*)node)->name);
+            free(((function_node_t*)node)->body);
+            break;
+        }
         case BLOCK: {
-                declaration_list_t* dae = ((block_node_t*)node)->declaration_list;
-                for (int i = 0; i < dae->size; i++) {
-                    free(dae->declarations[i].id);
-                    if (dae->declarations[i].node != NULL)
-                        free(dae->declarations[i].node);
-                }
-
-                free(dae->declarations);
-                free(dae);
-                free(((block_node_t*)node)->body);
-                break;
+            declaration_list_t* dae = ((block_node_t*)node)->declaration_list;
+            for (int i = 0; i < dae->size; i++) {
+                free(dae->declarations[i].id);
+                if (dae->declarations[i].node != NULL)
+                    free(dae->declarations[i].node);
             }
+
+            free(dae->declarations);
+            free(dae);
+            free(((block_node_t*)node)->body);
+            break;
+        }
         case ADD:
         case SUB:
         case MUL:

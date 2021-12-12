@@ -48,7 +48,8 @@ typedef enum node_type {
     MUL,
     DIV,
     UMINUS,
-    BLOCK
+    BLOCK,
+    FUNCTION
 } node_type_t;
 
 typedef struct node {
@@ -82,10 +83,18 @@ typedef struct block_node {
     struct node* body;
 } block_node_t;
 
+typedef struct function_node {
+    node_type_t type;
+    // TODO: Function Type :=) ?
+    char* name;
+    struct node* body;
+} function_node_t;
+
 node_t* create_node_literal(node_type_t, void* literal_value);
 node_t* create_node1(node_type_t, node_t*);
 node_t* create_node2(node_type_t, node_t*, node_t*);
 node_t* create_node_block(node_type_t, declaration_list_t*, node_t*);
+node_t* create_node_function(node_type_t, char*, node_t*);
 
 void free_ast(node_t* root);
 

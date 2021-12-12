@@ -25,7 +25,7 @@ void yyerror();
 
 %type <int_v> _NUM type_specifier type_qualifier
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
-%type <node_v> init initializer statement_list exp term fact compound_statement
+%type <node_v> initializer statement_list exp term fact compound_statement function_definition
 %type <declaration_list_v> declaration_list declaration init_declarator_list
 %type <declaration_v> init_declarator
 %type <declaration_specifiers_v> declaration_specifiers
@@ -53,10 +53,12 @@ fact
     | '(' exp ')'                                     { $$ = $2; }
     | '-' fact                                        { $$ = create_node1(UMINUS, $2); }
 
-
 init
-    : statement_list                                  { *root = $1; }
-    | compound_statement                              { *root = $1; }
+    : function_definition                             { *root = $1; }
+
+function_definition
+    // TODO: HOW TO HANDLE DECLARATION SPECIFIERS FOR FUNCTIONS?
+    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $2, $3); }
 
 compound_statement  // also known as "block"
     : '{' statement_list '}'                          { $$ = $2; }

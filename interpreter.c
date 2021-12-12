@@ -1,12 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
+#include <assert.h>
 #include "ast.h"
 #include "environment.h"
 #include "parse_utils.h"
 
 int eval(const node_t* node, environment_t* e) {
     switch (node->type) {
+
+        case FUNCTION:
+            return eval(((function_node_t*)node)->body, e);
 
         case ID:
             return (int)(intptr_t)find(e, ((id_node_t*)node)->value);
