@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "ast.h"
 
 int yylex(); // defined by lex
@@ -88,7 +89,7 @@ init_declarator_list
 
 init_declarator
     : declarator                                      { $$ = (struct declaration){ .id = $1, EMPTY_DEC_SPECS, .node = NULL }; }
-    | declarator '=' initializer                      { $$ = (struct declaration){ .id = $1, EMPTY_DEC_SPECS, .node = $3   }; }
+    | declarator '=' initializer                      { $$ = (struct declaration){ .id = $1, EMPTY_DEC_SPECS, .node = $3 }; }
 
 declarator
     : direct_declarator                               { $$ = $1; }
@@ -105,6 +106,8 @@ statement_list
 %%
 
 void yyerror(const char* str) {
-    fprintf(stderr,"Syntax error: %s\n",str);
+    fprintf(stderr,"Syntax error: %s\n", str);
+    fprintf(stderr,"Exiting...");
+    exit(2);
 }
 

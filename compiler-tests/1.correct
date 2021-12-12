@@ -1,6 +1,8 @@
-Input an expression to compile then EOF (<C-d>): Result:
-define i32 @fn() {
+[ Parsing ]
+[ Setup ]
+[ Compiling ]
+define i32 @main() {
 entry:
   ret i32 2
 }
-
+[ Cleaning ]

@@ -7,6 +7,7 @@ environment_t* newEnvironment() {
     environment_t* e = malloc(sizeof(environment_t));
     e->parent = NULL;
     e->associations = NULL;
+    e->size = 0;
     return e;
 }
 

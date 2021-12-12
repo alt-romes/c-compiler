@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include "environment.h"
@@ -133,6 +134,7 @@ void free_ast(node_t* node) {
 declaration_list_t* create_declaration_list() {
     declaration_list_t* dl = malloc(sizeof(declaration_list_t));
     dl->declarations = NULL; // Important because realloc requires a NULL pointer to behave as malloc
+    dl->size = 0;            // Important to set because when attempting to associate a value if it's an undefined value things can go wrong
     return dl;
 }
 

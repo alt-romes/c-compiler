@@ -14,7 +14,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
         case FUNCTION: {
             // TODO: Add return type from AST
             LLVMTypeRef ftype = LLVMFunctionType(LLVMInt32Type(), NULL, 0, 0);
-            LLVMValueRef fun = LLVMAddFunction(m, "fn", ftype);
+            LLVMValueRef fun = LLVMAddFunction(m, ((function_node_t*)node)->name, ftype);
             LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fun, "entry");
             LLVMPositionBuilderAtEnd(b, entry);
             // TODO: arguments environment
@@ -70,26 +70,25 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
     }
 }
 
-/* LLVMContext* lc; */
-/* Module* mod; */
-/* IRBuilder* builder; */
-
 int main(int argc, char *argv[]) {
 
-    printf("Input an expression to compile then EOF (<C-d>): ");
+    printf("[ Parsing ]\n");
     node_t* root = parse_root();
 
+    printf("[ Setup ]\n");
     LLVMModuleRef mod = LLVMModuleCreateWithName("llvm!"); // new, empty module in the global context
     LLVMBuilderRef builder = LLVMCreateBuilder();          // builder in the global context starting at entry
 
     environment_t* env = newEnvironment();
 
+    printf("[ Compiling ]\n");
     LLVMValueRef c = compile(mod, builder, root, env);
 
     free(env);
 
-    printf("Result:\n%s\n", LLVMPrintValueToString(c)); 
+    printf("%s", LLVMPrintValueToString(c)); 
 
+    printf("[ Cleaning ]\n");
     free_ast(root);
 
     char *error = NULL;
