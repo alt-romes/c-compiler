@@ -45,7 +45,8 @@ clean:
 	-rm dcpu
 
 test:
-	./run-tests.sh
+	./run-tests.sh interpreter
+	./run-tests.sh compiler
 
 # In fact, these are close to the default rules, no need to write them, the default rules specificy the same
 # %.o: %.c

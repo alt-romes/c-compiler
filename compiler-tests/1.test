@@ -1,0 +1,5 @@
+int main {
+    const int x = 1, y = 2, z = 3;
+    const int i = 4;
+    x * y;
+}

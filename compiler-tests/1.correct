@@ -1,0 +1,6 @@
+Input an expression to compile then EOF (<C-d>): Result:
+define i32 @fn() {
+entry:
+  ret i32 2
+}
+

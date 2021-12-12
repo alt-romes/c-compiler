@@ -26,29 +26,40 @@ $ ./run-tests.sh
 ```
 testing-docs
 
+if [ "$1" = "interpreter" ]
+then
+    TESTS_FOLDER=interpreter-tests
+else
+    TESTS_FOLDER=compiler-tests
+fi
 
 # Define tests to run
 tests=()
 # Fill tests array
-while IFS='' read -r line; do tests+=("$line"); done < <(find tests -maxdepth 1 -name '*.test' | sed 's/tests\///' | sed 's/\.test//')
+while IFS='' read -r line; do tests+=("$line"); done < <(find "$TESTS_FOLDER" -maxdepth 1 -name '*.test' | sed "s/$TESTS_FOLDER\///" | sed 's/\.test//')
 
 # Define command to run tests here
 run_command() {
     test_name=$1
-    ./interpreter < tests/"$test_name".test
+    if [ "$TESTS_FOLDER" = "interpreter-tests" ]
+    then
+        ./interpreter < "$TESTS_FOLDER/$test_name.test"
+    else
+        ./compiler < "$TESTS_FOLDER/$test_name.test"
+    fi
 }
 
-if [ "$1" ]
+if [ "$2" ]
 then
     # If an argument is supplied run that test and output to stdout
-    if [ "$1" = "--save" ] || [ "$1" = "-s" ]
+    if [ "$2" = "--save" ] || [ "$2" = "-s" ]
     then
-        if [ -z "$2" ]; then exit 2; fi
+        if [ -z "$3" ]; then exit 2; fi
         # If --save or -s is used, save the output to the .correct file
-        run_command "$2" | tee tests/"$2".correct
+        run_command "$3" | tee "$TESTS_FOLDER/$3.correct"
         echo "Saved test result as correct."
     else
-        run_command "$1"
+        run_command "$2"
     fi
     exit 0
 fi
@@ -56,7 +67,7 @@ fi
 if for t in "${tests[@]}"
 do
     echo "Running test: $t" &&
-        if ! (diff -b tests/"$t".correct <(run_command "$t")); then
+        if ! (diff -b "$TESTS_FOLDER/$t".correct <(run_command "$t")); then
             echo "Test failed: $t" &&
             exit 1
         fi
