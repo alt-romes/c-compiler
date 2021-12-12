@@ -66,6 +66,7 @@ declaration_list
     : declaration                                     { $$ = $1; }
     | declaration_list declaration                    { $$ = declaration_list_merge($2, $1); }
 
+// TODO: Should declaration be an AST Node ? In our other language it isn't, the block just has a list of definitions... but would it make sense?
 declaration
     : declaration_specifiers init_declarator_list ';' { $$ = add_declaration_specifiers($2, $1); }
 

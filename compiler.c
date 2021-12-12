@@ -4,9 +4,10 @@
 #include <stdint.h>
 #include "ast.h"
 #include "parse_utils.h"
-#include "llvm.h"
+/* #include "llvm.h" */
+#include <llvm-c/Core.h>
 
-LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node, environment_t* e) {
+LLVMValueRef compile(LLVMBuilderRef b, node_t* node, environment_t* e) {
     switch (node->type) {
 
         /* case ID: */
@@ -32,19 +33,19 @@ LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node, environment_t* e
         /* } */
 
         case NUM:
-            return constant_int(lc, ((num_node_t*)node)->value);
+            return LLVMConstInt(LLVMInt32Type(), ((num_node_t*)node)->value, 0 /* LLVMBool for SignExtend? TODO: What is SignExtend */);
 
         case ADD:
-            return build_add(b, compile(lc, b, ((binary_node_t*)node)->left, e), compile(lc, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildAdd(b, compile(b, ((binary_node_t*)node)->left, e), compile(b, ((binary_node_t*)node)->right, e), "addtmp");
 
         case SUB:
-            return build_sub(b, compile(lc, b, ((binary_node_t*)node)->left, e), compile(lc, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildSub(b, compile(b, ((binary_node_t*)node)->left, e), compile(b, ((binary_node_t*)node)->right, e), "subtmp");
 
         case MUL:
-            return build_mul(b, compile(lc, b, ((binary_node_t*)node)->left, e), compile(lc, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildMul(b, compile(b, ((binary_node_t*)node)->left, e), compile(b, ((binary_node_t*)node)->right, e), "multmp");
 
         case DIV:
-            return build_div(b, compile(lc, b, ((binary_node_t*)node)->left, e), compile(lc, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildSDiv(b, compile(b, ((binary_node_t*)node)->left, e), compile(b, ((binary_node_t*)node)->right, e), "sdivtmp");
 
         /* case UMINUS: */
         /*     return - eval(node->child, e); */
@@ -56,36 +57,33 @@ LLVMValue* compile(LLVMContext* lc, IRBuilder* b, node_t* node, environment_t* e
     }
 }
 
-LLVMContext* lc;
-Module* mod;
-IRBuilder* builder;
+/* LLVMContext* lc; */
+/* Module* mod; */
+/* IRBuilder* builder; */
 
 int main(int argc, char *argv[]) {
 
     printf("Input an expression to compile then EOF (<C-d>): ");
     node_t* root = parse_root();
 
-    lc = initialize_context();
-    mod = initialize_module("llvm!", lc);
-    builder = initialize_builder(lc);
+    LLVMModuleRef mod = LLVMModuleCreateWithName("llvm!"); // new, empty module in the global context
+    LLVMBuilderRef builder = LLVMCreateBuilder();          // builder in the global context starting at entry
 
-    printf("Result:\n");
+    /* LLVMBasicBlockRef entry = LLVMAppendBasicBlock(sum, "entry"); // basic block */
+    /* LLVMPositionBuilderAtEnd(builder, entry); */
 
     environment_t* env = newEnvironment();
 
-    LLVMValue* c = compile(lc, builder, root, env);
+    LLVMValueRef c = compile(builder, root, env);
 
     free(env);
 
-    print_llvmvalue(c);
-
-    printf("\n");
+    printf("Result:\n%s\n", LLVMPrintValueToString(c)); 
 
     free_ast(root);
 
-    free_llvm((void*)lc);
-    free_llvm((void*)mod);
-    free_llvm((void*)builder);
+    LLVMDisposeBuilder(builder);
+    LLVMDisposeModule(mod);
 
     return 0;
 }

@@ -34,7 +34,7 @@ y.tab.c y.tab.h: parser.y
 lex.yy.c: lexer.l y.tab.h
 	lex $<
 
-.PHONY: clean
+.PHONY: clean test
 clean:
 	-rm *.o
 	-rm y.tab.c
@@ -43,6 +43,9 @@ clean:
 	-rm compiler
 	-rm interpreter
 	-rm dcpu
+
+test:
+	./run-tests.sh
 
 # In fact, these are close to the default rules, no need to write them, the default rules specificy the same
 # %.o: %.c
