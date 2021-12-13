@@ -46,15 +46,17 @@ struct LLVMValueRefPair {
 
 struct LLVMValueRefPair sextBinaryIntOpOperands(LLVMBuilderRef b, LLVMValueRef left, LLVMValueRef right) {
 
-    LLVMTypeRef rt = LLVMTypeOf(right);
     LLVMTypeRef lt = LLVMTypeOf(left);
+    LLVMTypeRef rt = LLVMTypeOf(right);
     unsigned lis = LLVMGetIntTypeWidth(lt);  // left int size
     unsigned ris = LLVMGetIntTypeWidth(rt); // right int size
 
+    printf("left size: %d, right size: %d\n", lis, ris);
+
     if (lis < ris)
-        left = LLVMBuildSExt(b, left, rt, "sexttmp"); // Sign extend left type to match right type size
-    else if (ris > lis)
-        right = LLVMBuildSExt(b, right, lt, "sexttmp"); // Sign extend right type to match left type size
+        left = LLVMBuildSExt(b, left, rt, "sextlefttmp"); // Sign extend left type to match right type size
+    else if (lis > ris)
+        right = LLVMBuildSExt(b, right, lt, "sextrighttmp"); // Sign extend right type to match left type size
 
     return (struct LLVMValueRefPair){ left, right };
 }
@@ -63,12 +65,23 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
     switch (node->type) {
 
         case FUNCTION: {
-            LLVMTypeRef ftype = LLVMFunctionType(type2LLVMType(((function_node_t*)node)->function_type), NULL, 0, 0);
+            LLVMTypeRef fun_type = type2LLVMType(((function_node_t*)node)->function_type);
+            LLVMTypeRef ftype = LLVMFunctionType(fun_type, NULL, 0, 0);
             LLVMValueRef fun = LLVMAddFunction(m, ((function_node_t*)node)->name, ftype);
             LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fun, "entry");
             LLVMPositionBuilderAtEnd(b, entry);
             // TODO: arguments environment
             LLVMValueRef body_value = compile(m, b, ((function_node_t*)node)->body, e);
+            LLVMTypeRef body_type = LLVMTypeOf(body_value);
+
+            if (body_type != fun_type) // body type and function return type are different
+                // if they both are ints, truncate or extend return value
+                if (LLVMGetTypeKind(body_type) == LLVMIntegerTypeKind && LLVMGetTypeKind(fun_type) == LLVMIntegerTypeKind) {
+                    if (LLVMGetIntTypeWidth(body_type) < LLVMGetIntTypeWidth(fun_type))
+                        body_value = LLVMBuildSExt(b, body_value, fun_type, "sexttmp");
+                    else
+                        body_value = LLVMBuildTrunc(b, body_value, fun_type, "trunctmp");
+                }
 
             LLVMBuildRet(b, body_value);
 
@@ -108,6 +121,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
         }
 
         case NUM:
+            // TODO: chars are unsigned, how to?
             return LLVMConstInt(type2LLVMType(((num_node_t*)node)->num_type), ((num_node_t*)node)->value, 1 /* LLVMBool for SignExtend? TODO: What is SignExtend */);
 
         case ADD: {

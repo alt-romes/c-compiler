@@ -1,0 +1,14 @@
+[ Parsing ]
+[ Setup ]
+[ Compiling ]
+left size: 16, right size: 8
+[ Cleaning ]
+[ Printing ]
+[ Module ]
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i16 @main() {
+entry:
+  ret i16 128
+}
