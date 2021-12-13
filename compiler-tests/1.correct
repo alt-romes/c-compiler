@@ -3,3 +3,11 @@
 [ Compiling ]
 [ Cleaning ]
 [ Printing ]
+[ Module ]
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i32 @main() {
+entry:
+  ret i32 4
+}

@@ -10,7 +10,7 @@
 #include "ast.h"
 #include "parse_utils.h"
 
-#define NOOPTIMIZE
+#define OPTIMIZE
 
 #ifdef OPTIMIZE
 LLVMPassManagerRef pass_manager; // Define as global because so much parameter passing is a write-time and run-time overhead :P
@@ -118,16 +118,15 @@ int main(int argc, char *argv[]) {
     environment_t* env = newEnvironment();
 
     printf("[ Compiling ]\n");
-    LLVMValueRef compiled = compile(module, builder, root, env);
+    compile(module, builder, root, env);
 
     printf("[ Cleaning ]\n");
     free(env);
     free_ast(root);
 
-    /* printf("%s", LLVMPrintValueToString(compiled)); */ 
-
     printf("[ Printing ]\n");
-    LLVMDumpModule(module);
+    char* module_string = LLVMPrintModuleToString(module);
+    printf("[ Module ]\n%s", module_string);
 
     char *error = NULL;
     LLVMVerifyModule(module, LLVMAbortProcessAction, &error);
@@ -139,8 +138,6 @@ int main(int argc, char *argv[]) {
 #ifdef OPTIMIZE
     LLVMDisposePassManager(pass_manager);
 #endif
-
-    /* llvm_optimize(mod); */
 
     return 0;
 }
