@@ -1,8 +1,5 @@
 [ Parsing ]
 [ Setup ]
 [ Compiling ]
-define i32 @main() {
-entry:
-  ret i32 4
-}
 [ Cleaning ]
+[ Printing ]

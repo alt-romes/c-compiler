@@ -46,6 +46,8 @@ LLVMValue* build_sub(IRBuilder*, LLVMValue*, LLVMValue*);
 LLVMValue* build_mul(IRBuilder*, LLVMValue*, LLVMValue*);
 LLVMValue* build_div(IRBuilder*, LLVMValue*, LLVMValue*);
 
+void llvm_optimize(LLVMModuleRef);
+
 #ifdef __cplusplus
 }
 #endif

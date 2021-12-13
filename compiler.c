@@ -1,12 +1,32 @@
-/* #include <llvm-c/Core.h> */
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "ast.h"
-#include "parse_utils.h"
-/* #include "llvm.h" */
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
+#include <llvm-c/Target.h>
+#include <llvm-c/Transforms/Scalar.h>
+#include <llvm-c/Transforms/Utils.h>
+#include "llvm.h"
+#include "ast.h"
+#include "parse_utils.h"
+
+#define NOOPTIMIZE
+
+#ifdef OPTIMIZE
+LLVMPassManagerRef pass_manager; // Define as global because so much parameter passing is a write-time and run-time overhead :P
+
+void create_llvm_pass_manager(LLVMModuleRef module) {
+    pass_manager = LLVMCreateFunctionPassManagerForModule(module);
+
+    /* LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass_manager); */
+    LLVMAddPromoteMemoryToRegisterPass(pass_manager);
+    LLVMAddInstructionCombiningPass(pass_manager);
+    LLVMAddReassociatePass(pass_manager);
+    LLVMAddGVNPass(pass_manager);
+    LLVMAddCFGSimplificationPass(pass_manager);
+    LLVMInitializeFunctionPassManager(pass_manager);
+}
+#endif
 
 LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environment_t* e) {
     switch (node->type) {
@@ -20,11 +40,20 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             // TODO: arguments environment
             LLVMBuildRet(b, compile(m, b, ((function_node_t*)node)->body, e));
 
+            LLVMVerifyFunction(fun, LLVMAbortProcessAction);
+
+#ifdef OPTIMIZE
+            // Run optimizations!
+            LLVMRunFunctionPassManager(pass_manager, fun);
+#endif
+
             return fun;
         }
 
-        case ID:
-            return (LLVMValueRef)find(e, ((id_node_t*)node)->value);
+        case ID: {
+            LLVMValueRef alloca = (LLVMValueRef)find(e, ((id_node_t*)node)->value);
+            return LLVMBuildLoad2(b, LLVMGetAllocatedType(alloca), alloca, "loadtmp");
+        }
 
         case BLOCK: {
             environment_t* scope_env = beginScope(e);
@@ -34,9 +63,12 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
                                                                 // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it)
 
             // For each declaration in this scope create an association in this scope's evaluation environment
-            for (int i = 0; i < dae->size; i++)
+            for (int i = 0; i < dae->size; i++) {
                 // TODO .val could be NULL
-                assoc(scope_env, dae->declarations[i].id, compile(m, b, dae->declarations[i].node, scope_env));
+                LLVMValueRef alloca = LLVMBuildAlloca(b, LLVMInt32Type() /* TODO: Use declaration type */, "allocatmp");
+                LLVMBuildStore(b, compile(m, b, dae->declarations[i].node, scope_env), alloca);
+                assoc(scope_env, dae->declarations[i].id, alloca);
+            }
 
             LLVMValueRef val = compile(m, b, ((block_node_t*)node)->body, scope_env);
 
@@ -76,27 +108,39 @@ int main(int argc, char *argv[]) {
     node_t* root = parse_root();
 
     printf("[ Setup ]\n");
-    LLVMModuleRef mod = LLVMModuleCreateWithName("llvm!"); // new, empty module in the global context
+    LLVMModuleRef module = LLVMModuleCreateWithName("llvm!"); // new, empty module in the global context
     LLVMBuilderRef builder = LLVMCreateBuilder();          // builder in the global context starting at entry
+
+#ifdef OPTIMIZE
+    create_llvm_pass_manager(module); // Initialize global pass_manager
+#endif
 
     environment_t* env = newEnvironment();
 
     printf("[ Compiling ]\n");
-    LLVMValueRef c = compile(mod, builder, root, env);
-
-    free(env);
-
-    printf("%s", LLVMPrintValueToString(c)); 
+    LLVMValueRef compiled = compile(module, builder, root, env);
 
     printf("[ Cleaning ]\n");
+    free(env);
     free_ast(root);
 
+    /* printf("%s", LLVMPrintValueToString(compiled)); */ 
+
+    printf("[ Printing ]\n");
+    LLVMDumpModule(module);
+
     char *error = NULL;
-    LLVMVerifyModule(mod, LLVMAbortProcessAction, &error);
+    LLVMVerifyModule(module, LLVMAbortProcessAction, &error);
     LLVMDisposeMessage(error);
 
     LLVMDisposeBuilder(builder);
-    LLVMDisposeModule(mod);
+    LLVMDisposeModule(module);
+
+#ifdef OPTIMIZE
+    LLVMDisposePassManager(pass_manager);
+#endif
+
+    /* llvm_optimize(mod); */
 
     return 0;
 }
