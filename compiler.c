@@ -6,9 +6,9 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/Transforms/Utils.h>
-#include "llvm.h"
 #include "ast.h"
 #include "parse_utils.h"
+/* #include "llvm.h" */
 
 #define OPTIMIZE
 
@@ -28,25 +28,55 @@ void create_llvm_pass_manager(LLVMModuleRef module) {
 }
 #endif
 
+LLVMTypeRef type2LLVMType(type_specifier_t ts) {
+
+    switch (ts) {
+        case INT:
+            return LLVMInt32Type();
+        case SHORT:
+            return LLVMInt16Type();
+        case CHAR:
+            return LLVMInt8Type();
+    }
+}
+
+struct LLVMValueRefPair {
+    LLVMValueRef left, right;
+};
+
+struct LLVMValueRefPair sextBinaryIntOpOperands(LLVMBuilderRef b, LLVMValueRef left, LLVMValueRef right) {
+
+    LLVMTypeRef rt = LLVMTypeOf(right);
+    LLVMTypeRef lt = LLVMTypeOf(left);
+    unsigned lis = LLVMGetIntTypeWidth(lt);  // left int size
+    unsigned ris = LLVMGetIntTypeWidth(rt); // right int size
+
+    if (lis < ris)
+        left = LLVMBuildSExt(b, left, rt, "sexttmp"); // Sign extend left type to match right type size
+    else if (ris > lis)
+        right = LLVMBuildSExt(b, right, lt, "sexttmp"); // Sign extend right type to match left type size
+
+    return (struct LLVMValueRefPair){ left, right };
+}
+
 LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environment_t* e) {
     switch (node->type) {
 
         case FUNCTION: {
-            // TODO: Add return type from AST
-            LLVMTypeRef ftype = LLVMFunctionType(LLVMInt32Type(), NULL, 0, 0);
+            LLVMTypeRef ftype = LLVMFunctionType(type2LLVMType(((function_node_t*)node)->function_type), NULL, 0, 0);
             LLVMValueRef fun = LLVMAddFunction(m, ((function_node_t*)node)->name, ftype);
             LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fun, "entry");
             LLVMPositionBuilderAtEnd(b, entry);
             // TODO: arguments environment
-            LLVMBuildRet(b, compile(m, b, ((function_node_t*)node)->body, e));
+            LLVMValueRef body_value = compile(m, b, ((function_node_t*)node)->body, e);
+
+            LLVMBuildRet(b, body_value);
 
             LLVMVerifyFunction(fun, LLVMAbortProcessAction);
-
 #ifdef OPTIMIZE
             // Run optimizations!
             LLVMRunFunctionPassManager(pass_manager, fun);
 #endif
-
             return fun;
         }
 
@@ -64,8 +94,8 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
 
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++) {
-                // TODO .val could be NULL
-                LLVMValueRef alloca = LLVMBuildAlloca(b, LLVMInt32Type() /* TODO: Use declaration type */, "allocatmp");
+                // TODO .val could be NULL?
+                LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].ds.ts), "allocatmp");
                 LLVMBuildStore(b, compile(m, b, dae->declarations[i].node, scope_env), alloca);
                 assoc(scope_env, dae->declarations[i].id, alloca);
             }
@@ -78,19 +108,35 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
         }
 
         case NUM:
-            return LLVMConstInt(LLVMInt32Type(), ((num_node_t*)node)->value, 0 /* LLVMBool for SignExtend? TODO: What is SignExtend */);
+            return LLVMConstInt(type2LLVMType(((num_node_t*)node)->num_type), ((num_node_t*)node)->value, 1 /* LLVMBool for SignExtend? TODO: What is SignExtend */);
 
-        case ADD:
-            return LLVMBuildAdd(b, compile(m, b, ((binary_node_t*)node)->left, e), compile(m, b, ((binary_node_t*)node)->right, e), "addtmp");
+        case ADD: {
+            struct LLVMValueRefPair vpair = sextBinaryIntOpOperands(b,
+                    compile(m, b, ((binary_node_t*)node)->left, e),
+                    compile(m, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildAdd(b, vpair.left, vpair.right, "addtmp");
+        }
 
-        case SUB:
-            return LLVMBuildSub(b, compile(m, b, ((binary_node_t*)node)->left, e), compile(m, b, ((binary_node_t*)node)->right, e), "subtmp");
+        case SUB: {
+            struct LLVMValueRefPair vpair = sextBinaryIntOpOperands(b,
+                    compile(m, b, ((binary_node_t*)node)->left, e),
+                    compile(m, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildSub(b, vpair.left, vpair.right, "subtmp");
+        }
 
-        case MUL:
-            return LLVMBuildMul(b, compile(m, b, ((binary_node_t*)node)->left, e), compile(m, b, ((binary_node_t*)node)->right, e), "multmp");
+        case MUL: {
+            struct LLVMValueRefPair vpair = sextBinaryIntOpOperands(b,
+                    compile(m, b, ((binary_node_t*)node)->left, e),
+                    compile(m, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildMul(b, vpair.left, vpair.right, "multmp");
+        }
 
-        case DIV:
-            return LLVMBuildSDiv(b, compile(m, b, ((binary_node_t*)node)->left, e), compile(m, b, ((binary_node_t*)node)->right, e), "sdivtmp");
+        case DIV: {
+            struct LLVMValueRefPair vpair = sextBinaryIntOpOperands(b,
+                    compile(m, b, ((binary_node_t*)node)->left, e),
+                    compile(m, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildSDiv(b, vpair.left, vpair.right, "sdivtmp");
+        }
 
         case UMINUS:
             return LLVMBuildNeg(b, compile(m, b, ((unary_node_t*)node)->child, e), "negtmp");

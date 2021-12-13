@@ -10,7 +10,9 @@ typedef enum type_qualifier {
 } type_qualifier_t;
 
 typedef enum type_specifier {
-    INT = 22
+    INT = 22,
+    SHORT = 23,
+    CHAR = 24,
 } type_specifier_t;
 
 #define EMPTY_DEC_SPECS { .tq = -1, .ts = -1 }
@@ -58,6 +60,7 @@ typedef struct node {
 
 typedef struct num_node {
     node_type_t type;
+    type_specifier_t num_type;
     int value;
 } num_node_t;
 
@@ -85,16 +88,16 @@ typedef struct block_node {
 
 typedef struct function_node {
     node_type_t type;
-    // TODO: Function Type :=) ?
+    enum type_specifier function_type;
     char* name;
     struct node* body;
 } function_node_t;
 
-node_t* create_node_literal(node_type_t, void* literal_value);
+node_t* create_node_literal(node_type_t, type_specifier_t, void* literal_value);
 node_t* create_node1(node_type_t, node_t*);
 node_t* create_node2(node_type_t, node_t*, node_t*);
 node_t* create_node_block(node_type_t, declaration_list_t*, node_t*);
-node_t* create_node_function(node_type_t, char*, node_t*);
+node_t* create_node_function(node_type_t, type_specifier_t, char*, node_t*);
 
 void free_ast(node_t* root);
 

@@ -38,14 +38,16 @@ node_t* new_node(node_type_t type) {
     return node;
 }
 
-node_t* create_node_literal(node_type_t type, void* literal_value) {
+node_t* create_node_literal(node_type_t type, type_specifier_t ts, void* literal_value) {
     
     node_t* node = new_node(type);
     
     switch (type) {
-        case NUM:
+        case NUM: {
+            ((num_node_t*)node)->num_type = ts;
             ((num_node_t*)node)->value = (int)(intptr_t)literal_value;
             break;
+        }
         case ID:
             ((id_node_t*)node)->value = (char*)literal_value;
             break;
@@ -80,9 +82,10 @@ node_t* create_node_block(node_type_t type, declaration_list_t* declaration_list
     return (node_t*)node;
 }
 
-node_t* create_node_function(node_type_t type, char* name, node_t* b) {
+node_t* create_node_function(node_type_t type, type_specifier_t ts, char* name, node_t* b) {
 
     function_node_t* node = (function_node_t*)new_node(type);
+    node->function_type = ts;
     node->name = name;
     node->body = b;
     return (node_t*)node;
@@ -162,7 +165,15 @@ declaration_list_t* declaration_list_merge(declaration_list_t* src, declaration_
 
 declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, struct declaration_specifiers ds) {
     
-    for (struct declaration* d = decs->declarations, * lim = d + decs->size; d < lim; d++) d->ds = ds;
+    for (struct declaration* d = decs->declarations, * lim = d + decs->size; d < lim; d++) {
+        d->ds = ds;
+        switch (d->node->type) {
+            case NUM:
+                ((num_node_t*)d->node)->num_type = ds.ts;
+                break;
+            default: /* do nothing */ ;
+        }
+    }
 
     return decs;
 }

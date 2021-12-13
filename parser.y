@@ -19,7 +19,7 @@ void yyerror();
     struct declaration_specifiers declaration_specifiers_v;
 }
 
-%token _INT
+%token _INT _SHORT _CHAR
 %token _CONST
 %token _NUM
 %token _IDENTIFIER
@@ -49,8 +49,8 @@ term
 
 fact
     : compound_statement                              { $$ = $1; }
-    | _NUM                                            { $$ = create_node_literal(NUM, (void*)(intptr_t)$1); }
-    | _IDENTIFIER                                     { $$ = create_node_literal(ID, $1); }
+    | _NUM                                            { $$ = create_node_literal(NUM, INT /* int32 by default, overriden by declaration type */, (void*)(intptr_t)$1); }
+    | _IDENTIFIER                                     { $$ = create_node_literal(ID, -1, $1); }
     | '(' exp ')'                                     { $$ = $2; }
     | '-' fact                                        { $$ = create_node1(UMINUS, $2); }
 
@@ -58,8 +58,8 @@ init
     : function_definition                             { *root = $1; }
 
 function_definition
-    // TODO: HOW TO HANDLE DECLARATION SPECIFIERS FOR FUNCTIONS?
-    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $2, $3); }
+    // TODO: HOW TO HANDLE DECLARATION SPECIFIERS FOR FUNCTIONS? AND WHAT TO DO WITH CONST?
+    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1.ts, $2, $3); }
 
 compound_statement  // also known as "block"
     : '{' statement_list '}'                          { $$ = $2; }
@@ -81,7 +81,9 @@ type_qualifier
     : _CONST                                          { $$ = CONST; }
 
 type_specifier
-    : _INT                                            { $$ = INT; }
+    : _INT                                            { $$ = INT;   }
+    | _SHORT                                          { $$ = SHORT; }
+    | _CHAR                                           { $$ = CHAR;  }
 
 init_declarator_list
     : init_declarator                                 { $$ = declaration_list_assoc(create_declaration_list(), $1); }
