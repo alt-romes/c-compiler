@@ -51,12 +51,12 @@ struct LLVMValueRefPair sextBinaryIntOpOperands(LLVMBuilderRef b, LLVMValueRef l
     unsigned lis = LLVMGetIntTypeWidth(lt);  // left int size
     unsigned ris = LLVMGetIntTypeWidth(rt); // right int size
 
-    printf("left size: %d, right size: %d\n", lis, ris);
-
+    // TODO: extension depends on whether number is signed or unsigned
     if (lis < ris)
-        left = LLVMBuildSExt(b, left, rt, "sextlefttmp"); // Sign extend left type to match right type size
+        // TODO: Como ter o tipo do nó compilado sem ser com LLVM?
+        left = (is_int_type_unsigned(CHAR) ? LLVMBuildZExt : LLVMBuildSExt)(b, left, rt, "sextlefttmp"); // Sign extend left type to match right type size
     else if (lis > ris)
-        right = LLVMBuildSExt(b, right, lt, "sextrighttmp"); // Sign extend right type to match left type size
+        right = (is_int_type_unsigned(CHAR) ? LLVMBuildZExt : LLVMBuildSExt)(b, right, lt, "sextrighttmp"); // Sign extend right type to match left type size
 
     return (struct LLVMValueRefPair){ left, right };
 }
@@ -78,7 +78,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
                 // if they both are ints, truncate or extend return value
                 if (LLVMGetTypeKind(body_type) == LLVMIntegerTypeKind && LLVMGetTypeKind(fun_type) == LLVMIntegerTypeKind) {
                     if (LLVMGetIntTypeWidth(body_type) < LLVMGetIntTypeWidth(fun_type))
-                        body_value = LLVMBuildSExt(b, body_value, fun_type, "sexttmp");
+                        body_value = LLVMBuildZExt(b, body_value, fun_type, "sexttmp"); // TODO: SExt?
                     else
                         body_value = LLVMBuildTrunc(b, body_value, fun_type, "trunctmp");
                 }
@@ -120,9 +120,10 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return val;
         }
 
-        case NUM:
-            // TODO: chars are unsigned, how to?
-            return LLVMConstInt(type2LLVMType(((num_node_t*)node)->num_type), ((num_node_t*)node)->value, 1 /* LLVMBool for SignExtend? TODO: What is SignExtend */);
+        case NUM: {
+            
+            return LLVMConstInt(type2LLVMType(((num_node_t*)node)->num_type), ((num_node_t*)node)->value, ((num_node_t*)node)->num_type == CHAR ? 0 : 1 /* TODO: reunderstand sign extension */ );
+        }
 
         case ADD: {
             struct LLVMValueRefPair vpair = sextBinaryIntOpOperands(b,

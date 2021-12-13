@@ -10,5 +10,5 @@ source_filename = "llvm!"
 
 define i16 @main() {
 entry:
-  ret i16 128
+  ret i16 0
 }

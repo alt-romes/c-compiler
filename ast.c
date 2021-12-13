@@ -177,3 +177,12 @@ declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, struct 
 
     return decs;
 }
+
+int is_int_type_unsigned(enum type_specifier ts) {
+    switch (ts) {
+        case CHAR:
+            return 1;
+        default:
+            return 0;
+    }
+}

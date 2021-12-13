@@ -15,6 +15,8 @@ typedef enum type_specifier {
     CHAR = 24,
 } type_specifier_t;
 
+int is_int_type_unsigned(enum type_specifier);
+
 #define EMPTY_DEC_SPECS { .tq = -1, .ts = -1 }
 struct declaration_specifiers {
     type_qualifier_t tq;
