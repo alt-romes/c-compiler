@@ -10,9 +10,12 @@ typedef enum type_qualifier {
 } type_qualifier_t;
 
 typedef enum type_specifier {
-    INT = 22,
-    SHORT = 23,
-    CHAR = 24,
+    CHAR = 0b1,
+    SHORT = 0b10,
+    INT = 0b100,
+    LONG = 0b1000,
+    SIGNED = 0,
+    UNSIGNED = 0b1000000
 } type_specifier_t;
 
 int is_int_type_unsigned(enum type_specifier);
@@ -58,39 +61,44 @@ typedef enum node_type {
 
 typedef struct node {
     node_type_t type;
+    type_specifier_t ts;
 } node_t;
 
 typedef struct num_node {
     node_type_t type;
-    type_specifier_t num_type;
+    type_specifier_t ts;
     int value;
 } num_node_t;
 
 typedef struct id_node {
     node_type_t type;
+    type_specifier_t ts;
     char* value;
 } id_node_t;
 
 typedef struct unary_node {
     node_type_t type;
+    type_specifier_t ts;
     struct node* child;
 } unary_node_t;
 
 typedef struct binary_node {
     node_type_t type;
+    type_specifier_t ts;
     struct node* left;
     struct node* right;
 } binary_node_t;
 
 typedef struct block_node {
     node_type_t type;
+    type_specifier_t ts;
     declaration_list_t* declaration_list;
     struct node* body;
 } block_node_t;
 
 typedef struct function_node {
     node_type_t type;
-    enum type_specifier function_type;
+    type_specifier_t ts;
     char* name;
     struct node* body;
 } function_node_t;

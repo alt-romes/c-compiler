@@ -19,7 +19,7 @@ void yyerror();
     struct declaration_specifiers declaration_specifiers_v;
 }
 
-%token _INT _SHORT _CHAR
+%token _INT _SHORT _CHAR _UNSIGNED _SIGNED
 %token _CONST
 %token _NUM
 %token _IDENTIFIER
@@ -76,14 +76,18 @@ declaration
 declaration_specifiers
     : type_specifier                                  { $$ = (struct declaration_specifiers){ .tq = -1, .ts = $1}; }
     | type_qualifier type_specifier                   { $$ = (struct declaration_specifiers){ .tq = $1, .ts = $2}; }
+    // TODO: ? 
+    /* | type_specifier declaration_specifiers           { $$ = (struct declaration_specifiers){ .tq = $1, .ts = $2}; } */
+    /* | type_qualifier declaration_specifiers           { $$ = (struct declaration_specifiers){ .tq = $1, .ts = $2}; } */
 
 type_qualifier
     : _CONST                                          { $$ = CONST; }
 
 type_specifier
-    : _INT                                            { $$ = INT;   }
-    | _SHORT                                          { $$ = SHORT; }
-    | _CHAR                                           { $$ = CHAR;  }
+    : _INT                                            { $$ = INT;       }
+    | _SHORT                                          { $$ = SHORT;     }
+    | _CHAR                                           { $$ = CHAR;      }
+    | _UNSIGNED                                       { $$ = UNSIGNED;  }
 
 init_declarator_list
     : init_declarator                                 { $$ = declaration_list_assoc(create_declaration_list(), $1); }
