@@ -6,7 +6,7 @@
 /* Declaration List */
 
 typedef enum type_qualifier {
-    CONST = 21
+    CONST = 0x8000
 } type_qualifier_t;
 
 typedef enum type_specifier {
@@ -17,8 +17,6 @@ typedef enum type_specifier {
     SIGNED = 0,
     UNSIGNED = 0b1000000
 } type_specifier_t;
-
-int is_int_type_unsigned(enum type_specifier);
 
 #define EMPTY_DEC_SPECS { .tq = -1, .ts = -1 }
 struct declaration_specifiers {

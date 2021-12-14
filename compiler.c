@@ -13,10 +13,16 @@
 
 #define NOOPTIMIZE
 
-type_specifier_t get_larger_type(type_specifier_t l, type_specifier_t r) {
+/* Returns 0 if the same, negative if l is smaller, positive if l is larger */
+int type_compare(type_specifier_t l, type_specifier_t r) {
 
     // TODO: is the result of binary operation on numbers signed or unsigned?
-    return (l & 0xf) < (r & 0xf) ? r : l;
+    return (l & 0xf) - (r & 0xf);
+}
+
+char is_int_type_unsigned(type_specifier_t t) {
+
+    return t & UNSIGNED;
 }
 
 type_specifier_t typecheck(node_t* node, environment_t* e) {
@@ -65,7 +71,7 @@ type_specifier_t typecheck(node_t* node, environment_t* e) {
             type_specifier_t l = typecheck(((binary_node_t*)node)->left, e);
             type_specifier_t r = typecheck(((binary_node_t*)node)->right, e);
             // TODO: assert both types are "addable"... (aren't they all?)
-            t = get_larger_type(l, r);
+            t = type_compare(l, r) < 0 ? r : l;
             break;
         }
         case UMINUS: {
@@ -95,14 +101,18 @@ void create_llvm_pass_manager(LLVMModuleRef module) {
 
 LLVMTypeRef type2LLVMType(type_specifier_t ts) {
 
-    switch (ts) {
+    switch (ts & 0xf) {
         case INT:
             return LLVMInt32Type();
         case SHORT:
             return LLVMInt16Type();
         case CHAR:
             return LLVMInt8Type();
+        default:
+            fprintf(stderr, "type2LLVM undefined for ts: %d\n", ts);
+            exit(1);
     }
+
 }
 
 struct LLVMValueRefPair {
@@ -116,14 +126,24 @@ struct LLVMValueRefPair sextBinaryIntOpOperands(LLVMBuilderRef b, LLVMValueRef l
     unsigned lis = LLVMGetIntTypeWidth(lt);  // left int size
     unsigned ris = LLVMGetIntTypeWidth(rt); // right int size
 
-    // TODO: extension depends on whether number is signed or unsigned
-    if (lis < ris)
-        // TODO: Como ter o tipo do nó compilado sem ser com LLVM?
-        left = (is_int_type_unsigned(CHAR) ? LLVMBuildZExt : LLVMBuildSExt)(b, left, rt, "sextlefttmp"); // Sign extend left type to match right type size
-    else if (lis > ris)
-        right = (is_int_type_unsigned(CHAR) ? LLVMBuildZExt : LLVMBuildSExt)(b, right, lt, "sextrighttmp"); // Sign extend right type to match left type size
+    /* // TODO: extension depends on whether number is signed or unsigned */
+    /* if (lis < ris) */
+    /*     // TODO: Como ter o tipo do nó compilado sem ser com LLVM? */
+    /*     left = (is_int_type_unsigned(CHAR) ? LLVMBuildZExt : LLVMBuildSExt)(b, left, rt, "sextlefttmp"); // Sign extend left type to match right type size */
+    /* else if (lis > ris) */
+    /*     right = (is_int_type_unsigned(CHAR) ? LLVMBuildZExt : LLVMBuildSExt)(b, right, lt, "sextrighttmp"); // Sign extend right type to match left type size */
 
     return (struct LLVMValueRefPair){ left, right };
+}
+
+LLVMValueRef ext_or_trunc(LLVMBuilderRef b, type_specifier_t dst_type, type_specifier_t src_type, LLVMValueRef src) {
+
+    if (type_compare(src_type, dst_type) < 0)
+        src = (is_int_type_unsigned(src_type) ? LLVMBuildZExt : LLVMBuildSExt)(b, src, type2LLVMType(dst_type), "extsrctmp");
+    else if (type_compare(src_type, dst_type) > 0)
+        src = LLVMBuildTrunc(b, src, type2LLVMType(dst_type), "sextrighttmp"); // Sign extend right type to match left type size
+
+    return src;
 }
 
 LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environment_t* e) {
@@ -174,7 +194,8 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             for (int i = 0; i < dae->size; i++) {
                 // TODO .val could be NULL?
                 LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].ds.ts), "allocatmp");
-                LLVMBuildStore(b, compile(m, b, dae->declarations[i].node, scope_env), alloca);
+                LLVMValueRef assignment_val = compile(m, b, dae->declarations[i].node, scope_env);
+                LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].ds.ts, dae->declarations[i].node->ts, assignment_val), alloca);
                 assoc(scope_env, dae->declarations[i].id, alloca);
             }
 
