@@ -38,7 +38,7 @@ node_t* new_node(node_type_t type) {
     return node;
 }
 
-node_t* create_node_literal(node_type_t type, type_specifier_t ts, void* literal_value) {
+node_t* create_node_literal(node_type_t type, enum type ts, void* literal_value) {
     
     node_t* node = new_node(type);
     
@@ -82,7 +82,7 @@ node_t* create_node_block(node_type_t type, declaration_list_t* declaration_list
     return (node_t*)node;
 }
 
-node_t* create_node_function(node_type_t type, type_specifier_t ts, char* name, node_t* b) {
+node_t* create_node_function(node_type_t type, enum type ts, char* name, node_t* b) {
 
     function_node_t* node = (function_node_t*)new_node(type);
     node->ts = ts;
@@ -163,18 +163,9 @@ declaration_list_t* declaration_list_merge(declaration_list_t* src, declaration_
     return dst;
 }
 
-declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, struct declaration_specifiers ds) {
+declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, enum type et) {
     
-    for (struct declaration* d = decs->declarations, * lim = d + decs->size; d < lim; d++) d->ds = ds;
+    for (struct declaration* d = decs->declarations, * lim = d + decs->size; d < lim; d++) d->et = et;
 
     return decs;
-}
-
-int is_int_type_unsigned(enum type_specifier ts) {
-    switch (ts) {
-        case CHAR:
-            return 1;
-        default:
-            return 0;
-    }
 }

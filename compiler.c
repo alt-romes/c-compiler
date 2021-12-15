@@ -8,80 +8,11 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/Transforms/Utils.h>
 #include "ast.h"
+#include "typecheck.h"
 #include "parse_utils.h"
 /* #include "llvm.h" */
 
 #define NOOPTIMIZE
-
-/* Returns 0 if the same, negative if l is smaller, positive if l is larger */
-int type_compare(type_specifier_t l, type_specifier_t r) {
-
-    // TODO: is the result of binary operation on numbers signed or unsigned?
-    return (l & 0xf) - (r & 0xf);
-}
-
-char is_int_type_unsigned(type_specifier_t t) {
-
-    return t & UNSIGNED;
-}
-
-type_specifier_t typecheck(node_t* node, environment_t* e) {
-    type_specifier_t t;
-    switch (node->type) {
-        case FUNCTION: {
-            // TODO ... 
-            /* this doesn't need to be, only make sure that its castable from one to another assert((t = node->ts) == typecheck(((function_node_t*)node)->body, e)); */
-            t = node->ts; // function type is its return value... quite wrong but ..
-            break;
-        }
-        case ID: {
-            t = (int)(intptr_t)find(e, ((id_node_t*)node)->value);
-            node->ts = t; // Set this node's type to the one found in the environment
-            break;
-        }
-        case BLOCK: {
-             
-            environment_t* scope_env = beginScope(e);
-            
-            block_node_t* bnode = (block_node_t*)node;
-            declaration_list_t* dae = bnode->declaration_list;  // this id->ast_node environment is freed when the whole ast is freed
-                                                                // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it)
-
-            // For each declaration in this scope create an association in this scope's evaluation environment
-            for (int i = 0; i < dae->size; i++) {
-                dae->declarations[i].node->ts = dae->declarations[i].ds.ts;
-                assoc(scope_env, dae->declarations[i].id, (void*)(intptr_t)typecheck(dae->declarations[i].node, scope_env));
-            }
-
-            t = typecheck(((block_node_t*)node)->body, scope_env);
-
-            endScope(scope_env); // free the scope environment and its association array
-
-            break;
-        }
-        case NUM: {
-            // TODO: Min required value to hold this number?
-            t = INT;
-            break;
-        }
-        case ADD:
-        case SUB:
-        case MUL:
-        case DIV: {
-            type_specifier_t l = typecheck(((binary_node_t*)node)->left, e);
-            type_specifier_t r = typecheck(((binary_node_t*)node)->right, e);
-            // TODO: assert both types are "addable"... (aren't they all?)
-            t = type_compare(l, r) < 0 ? r : l;
-            break;
-        }
-        case UMINUS: {
-            t = typecheck(((unary_node_t*)node)->child, e);
-            // TODO: assert type is numeric...
-            break;
-        }
-    }
-    return t;
-}
 
 #ifdef OPTIMIZE
 LLVMPassManagerRef pass_manager; // Define as global because so much parameter passing is a write-time and run-time overhead :P
@@ -99,7 +30,7 @@ void create_llvm_pass_manager(LLVMModuleRef module) {
 }
 #endif
 
-LLVMTypeRef type2LLVMType(type_specifier_t ts) {
+LLVMTypeRef type2LLVMType(enum type ts) {
 
     switch (ts & 0xf) {
         case INT:
@@ -136,7 +67,7 @@ struct LLVMValueRefPair sextBinaryIntOpOperands(LLVMBuilderRef b, LLVMValueRef l
     return (struct LLVMValueRefPair){ left, right };
 }
 
-LLVMValueRef ext_or_trunc(LLVMBuilderRef b, type_specifier_t dst_type, type_specifier_t src_type, LLVMValueRef src) {
+LLVMValueRef ext_or_trunc(LLVMBuilderRef b, enum type dst_type, enum type src_type, LLVMValueRef src) {
 
     if (type_compare(src_type, dst_type) < 0)
         src = (is_int_type_unsigned(src_type) ? LLVMBuildZExt : LLVMBuildSExt)(b, src, type2LLVMType(dst_type), "extsrctmp");
@@ -193,9 +124,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++) {
                 // TODO .val could be NULL?
-                LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].ds.ts), "allocatmp");
+                LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].et), "allocatmp");
                 LLVMValueRef assignment_val = compile(m, b, dae->declarations[i].node, scope_env);
-                LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].ds.ts, dae->declarations[i].node->ts, assignment_val), alloca);
+                LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val), alloca);
                 assoc(scope_env, dae->declarations[i].id, alloca);
             }
 

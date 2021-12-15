@@ -5,7 +5,7 @@ CXXFLAGS=-Wall `llvm-config --cxxflags`
 LD=clang++
 LDFLAGS=-Wall `llvm-config --ldflags --system-libs --libs core`
 
-COMMON_SRCS=lex.yy.c y.tab.c ast.c parse_utils.c environment.c dcpuIR.c
+COMMON_SRCS=lex.yy.c y.tab.c ast.c parse_utils.c environment.c dcpuIR.c types.c typecheck.c
 COMMON_OBJS=$(COMMON_SRCS:%.c=%.o)
 
 INTERPRETER_SRCS=interpreter.c

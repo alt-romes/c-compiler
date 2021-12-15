@@ -16,7 +16,7 @@ void yyerror();
     struct node* node_v;
     struct declaration_list* declaration_list_v;
     struct declaration declaration_v;
-    struct declaration_specifiers declaration_specifiers_v;
+    enum type declaration_specifiers_v;
 }
 
 %token _INT _SHORT _CHAR _UNSIGNED _SIGNED
@@ -59,7 +59,7 @@ init
 
 function_definition
     // TODO: HOW TO HANDLE DECLARATION SPECIFIERS FOR FUNCTIONS? AND WHAT TO DO WITH CONST?
-    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1.ts, $2, $3); }
+    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1, $2, $3); }
 
 compound_statement  // also known as "block"
     : '{' statement_list '}'                          { $$ = $2; }
@@ -74,11 +74,9 @@ declaration
     : declaration_specifiers init_declarator_list ';' { $$ = add_declaration_specifiers($2, $1); }
 
 declaration_specifiers
-    : type_specifier                                  { $$ = (struct declaration_specifiers){ .tq = -1, .ts = $1}; }
-    | type_qualifier type_specifier                   { $$ = (struct declaration_specifiers){ .tq = $1, .ts = $2}; }
-    // TODO: ? 
-    /* | type_specifier declaration_specifiers           { $$ = (struct declaration_specifiers){ .tq = $1, .ts = $2}; } */
-    /* | type_qualifier declaration_specifiers           { $$ = (struct declaration_specifiers){ .tq = $1, .ts = $2}; } */
+    : type_specifier                                  { $$ = (enum type) $1; }
+    | type_specifier declaration_specifiers           { $$ = (enum type)($1 | $2); }
+    | type_qualifier declaration_specifiers           { $$ = (enum type)($1 | $2); }
 
 type_qualifier
     : _CONST                                          { $$ = CONST; }
