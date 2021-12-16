@@ -34,6 +34,7 @@ node_t* new_node(node_type_t type) {
     }
 
     node->type = type;
+    node->ts = 0;
 
     return node;
 }

@@ -14,7 +14,7 @@ int eval(const node_t* node, environment_t* e) {
             return eval(((function_node_t*)node)->body, e);
 
         case ID:
-            return (int)(intptr_t)find(e, ((id_node_t*)node)->value);
+            return find(e, ((id_node_t*)node)->value).integer;
 
         case BLOCK: {
             environment_t* scope_env = beginScope(e);
@@ -26,7 +26,7 @@ int eval(const node_t* node, environment_t* e) {
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++)
                 // TODO .node could be NULL
-                assoc(scope_env, dae->declarations[i].id, (void*)(intptr_t)eval(dae->declarations[i].node, scope_env));
+                assoc(scope_env, dae->declarations[i].id, (union association_v){ .integer = eval(dae->declarations[i].node, scope_env)});
 
             int val = eval(((block_node_t*)node)->body, scope_env);
 

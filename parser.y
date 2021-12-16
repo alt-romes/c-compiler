@@ -86,6 +86,7 @@ type_specifier
     | _SHORT                                          { $$ = SHORT;     }
     | _CHAR                                           { $$ = CHAR;      }
     | _UNSIGNED                                       { $$ = UNSIGNED;  }
+    | _SIGNED                                         { $$ = 0;  }
 
 init_declarator_list
     : init_declarator                                 { $$ = declaration_list_assoc(create_declaration_list(), $1); }

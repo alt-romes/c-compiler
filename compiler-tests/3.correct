@@ -1,7 +1,13 @@
 [ Parsing ]
+[ Type Checking ]
+found for x type 32833
+found for y type 2
 [ Setup ]
 [ Compiling ]
-left size: 8, right size: 16
+Adding 32833 with 2
+comparing type 32833 with 2
+left node is smaller
+fun type 1 body type 2
 [ Cleaning ]
 [ Printing ]
 [ Module ]
@@ -10,5 +16,14 @@ source_filename = "llvm!"
 
 define i8 @main() {
 entry:
-  ret i8 0
+  %allocatmp = alloca i8, align 1
+  store i8 -1, i8* %allocatmp, align 1
+  %allocatmp1 = alloca i16, align 2
+  store i16 1, i16* %allocatmp1, align 2
+  %loadtmp = load i8, i8* %allocatmp, align 1
+  %loadtmp2 = load i16, i16* %allocatmp1, align 2
+  %sextlefttmp = zext i8 %loadtmp to i16
+  %addtmp = add i16 %sextlefttmp, %loadtmp2
+  %truncsrctmp = trunc i16 %addtmp to i8
+  ret i8 %truncsrctmp
 }

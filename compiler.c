@@ -50,19 +50,21 @@ struct LLVMValueRefPair {
     LLVMValueRef left, right;
 };
 
-struct LLVMValueRefPair sextBinaryIntOpOperands(LLVMBuilderRef b, LLVMValueRef left, LLVMValueRef right) {
+struct LLVMValueRefPair ext_int_binaryop_operands(LLVMBuilderRef b, enum type lnt, LLVMValueRef left, enum type rnt, LLVMValueRef right) {
 
     LLVMTypeRef lt = LLVMTypeOf(left);
     LLVMTypeRef rt = LLVMTypeOf(right);
-    unsigned lis = LLVMGetIntTypeWidth(lt);  // left int size
-    unsigned ris = LLVMGetIntTypeWidth(rt); // right int size
 
-    /* // TODO: extension depends on whether number is signed or unsigned */
-    /* if (lis < ris) */
-    /*     // TODO: Como ter o tipo do nó compilado sem ser com LLVM? */
-    /*     left = (is_int_type_unsigned(CHAR) ? LLVMBuildZExt : LLVMBuildSExt)(b, left, rt, "sextlefttmp"); // Sign extend left type to match right type size */
-    /* else if (lis > ris) */
-    /*     right = (is_int_type_unsigned(CHAR) ? LLVMBuildZExt : LLVMBuildSExt)(b, right, lt, "sextrighttmp"); // Sign extend right type to match left type size */
+    printf("comparing type %d with %d\n", lnt, rnt);
+
+    if (type_compare(lnt, rnt) < 0) { // left is smaller than right
+        left = (is_int_type_unsigned(lnt) ? LLVMBuildZExt : LLVMBuildSExt)(b, left, rt, "sextlefttmp"); // Extend left type to match right type size
+        printf("left node is smaller\n");
+    }
+    else if (type_compare(lnt, rnt) > 0) { // left is larger than right
+        right = (is_int_type_unsigned(rnt) ? LLVMBuildZExt : LLVMBuildSExt)(b, right, lt, "sextrighttmp"); // Extend right type to match left type size
+        printf("left node is larger\n");
+    }
 
     return (struct LLVMValueRefPair){ left, right };
 }
@@ -72,7 +74,7 @@ LLVMValueRef ext_or_trunc(LLVMBuilderRef b, enum type dst_type, enum type src_ty
     if (type_compare(src_type, dst_type) < 0)
         src = (is_int_type_unsigned(src_type) ? LLVMBuildZExt : LLVMBuildSExt)(b, src, type2LLVMType(dst_type), "extsrctmp");
     else if (type_compare(src_type, dst_type) > 0)
-        src = LLVMBuildTrunc(b, src, type2LLVMType(dst_type), "sextrighttmp"); // Sign extend right type to match left type size
+        src = LLVMBuildTrunc(b, src, type2LLVMType(dst_type), "truncsrctmp"); // extend right type to match left type size
 
     return src;
 }
@@ -88,16 +90,20 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             LLVMPositionBuilderAtEnd(b, entry);
             // TODO: arguments environment
             LLVMValueRef body_value = compile(m, b, ((function_node_t*)node)->body, e);
-            LLVMTypeRef body_type = LLVMTypeOf(body_value);
 
-            if (body_type != fun_type) // body type and function return type are different
-                // if they both are ints, truncate or extend return value
-                if (LLVMGetTypeKind(body_type) == LLVMIntegerTypeKind && LLVMGetTypeKind(fun_type) == LLVMIntegerTypeKind) {
-                    if (LLVMGetIntTypeWidth(body_type) < LLVMGetIntTypeWidth(fun_type))
-                        body_value = LLVMBuildZExt(b, body_value, fun_type, "sexttmp"); // TODO: SExt?
-                    else
-                        body_value = LLVMBuildTrunc(b, body_value, fun_type, "trunctmp");
+            if (LLVMTypeOf(body_value) != fun_type) {// body type and function return type are different
+
+                if (LLVMGetTypeKind(LLVMTypeOf(body_value)) == LLVMIntegerTypeKind && // if they both are ints,
+                    LLVMGetTypeKind(fun_type) == LLVMIntegerTypeKind) {  // truncate or extend return value
+
+                    printf("fun type %d body type %d\n", node->ts, ((function_node_t*)node)->body->ts);
+                    body_value = ext_or_trunc(b, node->ts, ((function_node_t*)node)->body->ts, body_value);
                 }
+                else {
+                    fprintf(stderr, "Can't cast body value to return type:: TODO Move to typecheck\n");
+                    exit(2);
+                }
+            }
 
             LLVMBuildRet(b, body_value);
 
@@ -110,7 +116,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
         }
 
         case ID: {
-            LLVMValueRef alloca = (LLVMValueRef)find(e, ((id_node_t*)node)->value);
+            LLVMValueRef alloca = find(e, ((id_node_t*)node)->value).llvmref;
             return LLVMBuildLoad2(b, LLVMGetAllocatedType(alloca), alloca, "loadtmp");
         }
 
@@ -127,7 +133,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
                 LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].et), "allocatmp");
                 LLVMValueRef assignment_val = compile(m, b, dae->declarations[i].node, scope_env);
                 LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val), alloca);
-                assoc(scope_env, dae->declarations[i].id, alloca);
+                assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
             }
 
             LLVMValueRef val = compile(m, b, ((block_node_t*)node)->body, scope_env);
@@ -142,30 +148,40 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
         }
 
         case ADD: {
-            struct LLVMValueRefPair vpair = sextBinaryIntOpOperands(b,
+            printf("Adding %d with %d\n", ((binary_node_t*)node)->left->ts, ((binary_node_t*)node)->right->ts);
+            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
+                    ((binary_node_t*)node)->left->ts,
                     compile(m, b, ((binary_node_t*)node)->left, e),
+                    ((binary_node_t*)node)->right->ts,
                     compile(m, b, ((binary_node_t*)node)->right, e));
             return LLVMBuildAdd(b, vpair.left, vpair.right, "addtmp");
         }
 
         case SUB: {
-            struct LLVMValueRefPair vpair = sextBinaryIntOpOperands(b,
+            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
+                    ((binary_node_t*)node)->left->ts,
                     compile(m, b, ((binary_node_t*)node)->left, e),
+                    ((binary_node_t*)node)->right->ts,
                     compile(m, b, ((binary_node_t*)node)->right, e));
             return LLVMBuildSub(b, vpair.left, vpair.right, "subtmp");
         }
 
         case MUL: {
-            struct LLVMValueRefPair vpair = sextBinaryIntOpOperands(b,
+            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
+                    ((binary_node_t*)node)->left->ts,
                     compile(m, b, ((binary_node_t*)node)->left, e),
+                    ((binary_node_t*)node)->right->ts,
                     compile(m, b, ((binary_node_t*)node)->right, e));
             return LLVMBuildMul(b, vpair.left, vpair.right, "multmp");
         }
 
         case DIV: {
-            struct LLVMValueRefPair vpair = sextBinaryIntOpOperands(b,
+            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
+                    ((binary_node_t*)node)->left->ts,
                     compile(m, b, ((binary_node_t*)node)->left, e),
+                    ((binary_node_t*)node)->right->ts,
                     compile(m, b, ((binary_node_t*)node)->right, e));
+            // TODO: Depends on sign
             return LLVMBuildSDiv(b, vpair.left, vpair.right, "sdivtmp");
         }
 

@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
 #include "typecheck.h"
 
 enum type typecheck(struct node* node, struct environment* e) {
@@ -8,11 +10,13 @@ enum type typecheck(struct node* node, struct environment* e) {
             // TODO ... 
             /* this doesn't need to be, only make sure that its castable from one to another assert((t = node->ts) == typecheck(((function_node_t*)node)->body, e)); */
             t = node->ts; // function type is its return value... quite wrong but ..
+            typecheck(((function_node_t*)node)->body, e);
             break;
         }
         case ID: {
-            t = (int)(intptr_t)find(e, ((id_node_t*)node)->value);
+            t = find(e, ((id_node_t*)node)->value).type;
             node->ts = t; // Set this node's type to the one found in the environment
+            printf("found for %s type %d\n", ((id_node_t*)node)->value, t);
             break;
         }
         case BLOCK: {
@@ -26,18 +30,22 @@ enum type typecheck(struct node* node, struct environment* e) {
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++) {
                 dae->declarations[i].node->ts = dae->declarations[i].et;
-                assoc(scope_env, dae->declarations[i].id, (void*)(intptr_t)typecheck(dae->declarations[i].node, scope_env));
+                enum type tychkty = typecheck(dae->declarations[i].node, scope_env);
+                assert(tychkty == dae->declarations[i].node->ts);
+                assoc(scope_env, dae->declarations[i].id, (union association_v){ .type = tychkty });
             }
 
             t = typecheck(((block_node_t*)node)->body, scope_env);
 
             endScope(scope_env); // free the scope environment and its association array
 
+            node->ts = t;
+
             break;
         }
         case NUM: {
             // TODO: Min required value to hold this number?
-            t = INT;
+            t = node->ts == 0 ? INT : node->ts; // Use already assigned type for num (on declaration) if available
             break;
         }
         case ADD:

@@ -9,6 +9,8 @@ extern YYSTYPE yylval;
 "int"     return _INT;
 "short"   return _SHORT;
 "char"    return _CHAR;
+"unsigned"   return _UNSIGNED;
+"signed"   return _SIGNED;
 "const"   return _CONST;
 [ \t\n]+  ;
 [0-9]+    { yylval.int_v = atoi(yytext); return _NUM; }

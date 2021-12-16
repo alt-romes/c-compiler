@@ -27,7 +27,7 @@ environment_t* endScope(environment_t* e) {
     return p;
 }
 
-environment_t* assoc(environment_t* e, char* id, void* val) {
+environment_t* assoc(environment_t* e, char* id, union association_v val) {
     if (!e->size % DEFAULT_ENVIRONMENT_SIZE) {
         struct association* new_associations = realloc(e->associations, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct association));
         e->associations = new_associations;
@@ -37,7 +37,7 @@ environment_t* assoc(environment_t* e, char* id, void* val) {
     return e;
 }
 
-void* find(environment_t* e, char* id) {
+union association_v find(environment_t* e, char* id) {
 
     for (int i=e->size-1; i>=0; i--)
         if (!strcmp(e->associations[i].id, id))
