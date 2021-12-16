@@ -7,14 +7,13 @@ found for y type 2
 Adding 32833 with 2
 comparing type 32833 with 2
 left node is smaller
-fun type 1 body type 2
 [ Cleaning ]
 [ Printing ]
 [ Module ]
 ; ModuleID = 'llvm!'
 source_filename = "llvm!"
 
-define i8 @main() {
+define i16 @main() {
 entry:
-  ret i8 0
+  ret i16 256
 }

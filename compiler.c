@@ -12,7 +12,7 @@
 #include "parse_utils.h"
 /* #include "llvm.h" */
 
-#define NOOPTIMIZE
+#define OPTIMIZE
 
 #ifdef OPTIMIZE
 LLVMPassManagerRef pass_manager; // Define as global because so much parameter passing is a write-time and run-time overhead :P
