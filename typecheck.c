@@ -16,7 +16,6 @@ enum type typecheck(struct node* node, struct environment* e) {
         case ID: {
             t = find(e, ((id_node_t*)node)->value).type;
             node->ts = t; // Set this node's type to the one found in the environment
-            printf("found for %s type %d\n", ((id_node_t*)node)->value, t);
             break;
         }
         case BLOCK: {

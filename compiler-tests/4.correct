@@ -1,12 +1,7 @@
 [ Parsing ]
 [ Type Checking ]
-found for x type 32833
-found for y type 2
 [ Setup ]
 [ Compiling ]
-Adding 32833 with 2
-comparing type 32833 with 2
-left node is smaller
 [ Cleaning ]
 [ Printing ]
 [ Module ]

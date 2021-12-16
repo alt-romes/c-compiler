@@ -55,16 +55,10 @@ struct LLVMValueRefPair ext_int_binaryop_operands(LLVMBuilderRef b, enum type ln
     LLVMTypeRef lt = LLVMTypeOf(left);
     LLVMTypeRef rt = LLVMTypeOf(right);
 
-    printf("comparing type %d with %d\n", lnt, rnt);
-
-    if (type_compare(lnt, rnt) < 0) { // left is smaller than right
+    if (type_compare(lnt, rnt) < 0) // left is smaller than right
         left = (is_int_type_unsigned(lnt) ? LLVMBuildZExt : LLVMBuildSExt)(b, left, rt, "sextlefttmp"); // Extend left type to match right type size
-        printf("left node is smaller\n");
-    }
-    else if (type_compare(lnt, rnt) > 0) { // left is larger than right
+    else if (type_compare(lnt, rnt) > 0) // left is larger than right
         right = (is_int_type_unsigned(rnt) ? LLVMBuildZExt : LLVMBuildSExt)(b, right, lt, "sextrighttmp"); // Extend right type to match left type size
-        printf("left node is larger\n");
-    }
 
     return (struct LLVMValueRefPair){ left, right };
 }
@@ -91,12 +85,11 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             // TODO: arguments environment
             LLVMValueRef body_value = compile(m, b, ((function_node_t*)node)->body, e);
 
-            if (LLVMTypeOf(body_value) != fun_type) {// body type and function return type are different
+            if (LLVMTypeOf(body_value) != fun_type) { // body type and function return type are different
 
                 if (LLVMGetTypeKind(LLVMTypeOf(body_value)) == LLVMIntegerTypeKind && // if they both are ints,
                     LLVMGetTypeKind(fun_type) == LLVMIntegerTypeKind) {  // truncate or extend return value
 
-                    printf("fun type %d body type %d\n", node->ts, ((function_node_t*)node)->body->ts);
                     body_value = ext_or_trunc(b, node->ts, ((function_node_t*)node)->body->ts, body_value);
                 }
                 else {
@@ -148,7 +141,6 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
         }
 
         case ADD: {
-            printf("Adding %d with %d\n", ((binary_node_t*)node)->left->ts, ((binary_node_t*)node)->right->ts);
             struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
                     ((binary_node_t*)node)->left->ts,
                     compile(m, b, ((binary_node_t*)node)->left, e),
