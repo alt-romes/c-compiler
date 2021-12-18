@@ -22,12 +22,14 @@ node_t* new_node(node_type_t type) {
         case DIV:
             node = malloc(sizeof(binary_node_t));
             break;
+        case LOGICAL_NOT:
         case UMINUS:
             node = malloc(sizeof(unary_node_t));
             break;
         case ID:
             node = malloc(sizeof(id_node_t));
             break;
+        case BOOL:
         case NUM:
             node = malloc(sizeof(num_node_t));
             break;
@@ -44,6 +46,7 @@ node_t* create_node_literal(node_type_t type, enum type ts, void* literal_value)
     node_t* node = new_node(type);
     
     switch (type) {
+        case BOOL: // 0 or 1 of type CHAR
         case NUM: {
             ((num_node_t*)node)->ts = ts;
             ((num_node_t*)node)->value = (int)(intptr_t)literal_value;
@@ -53,7 +56,7 @@ node_t* create_node_literal(node_type_t type, enum type ts, void* literal_value)
             ((id_node_t*)node)->value = (char*)literal_value;
             break;
         default:
-            fprintf(stderr, "ERROR: Literal node should have type NUM or ID!\n");
+            fprintf(stderr, "ERROR: Literal node should have type NUM, BOOL or ID!\n");
             exit(1);
     }
 
@@ -120,6 +123,7 @@ void free_ast(node_t* node) {
             free_ast(((binary_node_t*)node)->left);
             free_ast(((binary_node_t*)node)->right);
             break;
+        case LOGICAL_NOT:
         case UMINUS:
             free_ast(((unary_node_t*)node)->child);
             break;
@@ -127,6 +131,7 @@ void free_ast(node_t* node) {
             free(((id_node_t*)node)->value);
             break;
         case NUM:
+        case BOOL:
             break;
     }
 

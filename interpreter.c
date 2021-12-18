@@ -61,6 +61,8 @@ int eval(const node_t* node, environment_t* e) {
 
 int main(int argc, char *argv[]) {
 
+    fprintf(stderr, "WARNING: The interpreter is lagging behind the compiler and will probably be deprecated soon\n");
+
     printf("Input an expression: ");
 
     printf("Parsing...\n");

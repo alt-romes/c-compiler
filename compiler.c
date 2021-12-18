@@ -136,8 +136,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return val;
         }
 
+        case BOOL: // CHAR sized number 0 or 1
         case NUM: { 
-            return LLVMConstInt(type2LLVMType(node->ts), ((num_node_t*)node)->value, node->ts == CHAR ? 0 : 1 /* TODO: reunderstand sign extension */ );
+            return LLVMConstInt(type2LLVMType(node->ts), ((num_node_t*)node)->value, is_int_type_unsigned(node->ts) ? 0 : 1);
         }
 
         case ADD: {
@@ -179,6 +180,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
 
         case UMINUS:
             return LLVMBuildNeg(b, compile(m, b, ((unary_node_t*)node)->child, e), "negtmp");
+
+        case LOGICAL_NOT:
+            return LLVMBuildNot(b, compile(m, b, ((unary_node_t*)node)->child, e), "nottmp");
 
         default:
             fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);

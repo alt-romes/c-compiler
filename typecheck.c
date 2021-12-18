@@ -42,11 +42,13 @@ enum type typecheck(struct node* node, struct environment* e) {
 
             break;
         }
-        case NUM: {
+        case BOOL:
+            t = node->ts = CHAR;
+            break;
+        case NUM:
             // TODO: Min required value to hold this number?
             t = node->ts == 0 ? INT : node->ts; // Use already assigned type for num (on declaration) if available
             break;
-        }
         case ADD:
         case SUB:
         case MUL:
@@ -55,6 +57,11 @@ enum type typecheck(struct node* node, struct environment* e) {
             enum type r = typecheck(((binary_node_t*)node)->right, e);
             // TODO: assert both types are "addable"... (aren't they all?)
             t = type_compare(l, r) < 0 ? r : l;
+            break;
+        }
+        case LOGICAL_NOT: {
+            t = typecheck(((unary_node_t*)node)->child, e);
+            assert(t == BOOL);
             break;
         }
         case UMINUS: {

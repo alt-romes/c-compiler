@@ -22,10 +22,10 @@ void yyerror();
 
 %token _INT _SHORT _CHAR _UNSIGNED _SIGNED
 %token _CONST
-%token _NUM
+%token _NUM _BOOL
 %token _IDENTIFIER
 
-%type <int_v> _NUM type_specifier type_qualifier
+%type <int_v> _NUM _BOOL type_specifier type_qualifier
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
 %type <node_v> initializer statement_list compound_statement function_definition expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement
 %type <declaration_list_v> declaration_list declaration init_declarator_list
@@ -198,7 +198,7 @@ unary_operator
 	/* | '+' */
 	: '-' { $$ = UMINUS; }
 	/* | '~' */
-	/* | '!' { $$ = LOGICAL_NOT; } */
+	| '!' { $$ = LOGICAL_NOT; }
 
 postfix_expression
 	: primary_expression { $$ = $1; }
@@ -213,7 +213,8 @@ postfix_expression
 primary_expression
     : _IDENTIFIER                                     { $$ = create_node_literal(ID, -1, $1); }
     | _NUM                                            { $$ = create_node_literal(NUM, INT /* int32 by default, overriden by declaration type */, (void*)(intptr_t)$1); }
-	/* | CONSTANT instead of NUM ... */
+    | _BOOL                                           { $$ = create_node_literal(BOOL, CHAR, (void*)(intptr_t)$1); }
+	/* | CONSTANT instead of NUM ...? */
 	/* | STRING_LITERAL */
 	| '(' expression ')' { $$ = $2; }
 

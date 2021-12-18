@@ -1,9 +1,11 @@
 CC=clang
-CFLAGS=-Wall `llvm-config --cflags`
+CFLAGS=-Wall `llvm-config --cflags` -I.
 CXX=clang++
 CXXFLAGS=-Wall `llvm-config --cxxflags`
 LD=clang++
 LDFLAGS=-Wall `llvm-config --ldflags --system-libs --libs core`
+
+DEPS=$(shell find . -name "*.h")
 
 COMMON_SRCS=lex.yy.c y.tab.c ast.c parse_utils.c environment.c dcpuIR.c types.c typecheck.c
 COMMON_OBJS=$(COMMON_SRCS:%.c=%.o)
@@ -49,8 +51,9 @@ test:
 	./run-tests.sh compiler
 
 # In fact, these are close to the default rules, no need to write them, the default rules specificy the same
-# %.o: %.c
-# 	$(CC) $(CFLAGS) -c $< -o $@
+# The above comment is no longer true because of the include header files
+%.o: %.c $(DEPS)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # %.o: %.cpp
 # 	$(CXX) $(CXXFLAGS) -c $< -o $@ 
