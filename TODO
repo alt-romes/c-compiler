@@ -1,4 +1,0 @@
-move types to separate module
-right now all types are unsigned and sign extension is always a zero extension
-test 3 failing
-

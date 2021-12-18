@@ -173,7 +173,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
                     compile(m, b, ((binary_node_t*)node)->left, e),
                     ((binary_node_t*)node)->right->ts,
                     compile(m, b, ((binary_node_t*)node)->right, e));
-            // TODO: Depends on sign
+            // TODO: Division depends on sign
             return LLVMBuildSDiv(b, vpair.left, vpair.right, "sdivtmp");
         }
 

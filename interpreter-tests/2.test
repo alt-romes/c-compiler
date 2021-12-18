@@ -5,7 +5,7 @@ int main {
         int x = 5*x, y = x*y;
         int g = 5;
         y+x+g;
-    };
+    }
 
 }
 

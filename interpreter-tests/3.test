@@ -4,6 +4,6 @@ int main {
         int x = 5*x, y = x*y;
         int g = 2+x;
         y+x+g;
-    };
+    }
 }
 
