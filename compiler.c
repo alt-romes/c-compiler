@@ -85,7 +85,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             // TODO: arguments environment
             LLVMValueRef body_value = compile(m, b, ((function_node_t*)node)->body, e);
 
-            if (LLVMTypeOf(body_value) != fun_type) { // body type and function return type are different
+            if (((function_node_t*)node)->body->ts != node->ts) { // body type and function return type are different
 
                 if (LLVMGetTypeKind(LLVMTypeOf(body_value)) == LLVMIntegerTypeKind && // if they both are ints,
                     LLVMGetTypeKind(fun_type) == LLVMIntegerTypeKind) {  // truncate or extend return value
@@ -125,7 +125,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
                 // TODO .val could be NULL?
                 LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].et), "allocatmp");
                 LLVMValueRef assignment_val = compile(m, b, dae->declarations[i].node, scope_env);
-                LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val), alloca);
+                LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
                 assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
             }
 
@@ -136,7 +136,6 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return val;
         }
 
-        case BOOL: // CHAR sized number 0 or 1
         case NUM: { 
             return LLVMConstInt(type2LLVMType(node->ts), ((num_node_t*)node)->value, is_int_type_unsigned(node->ts) ? 0 : 1);
         }
@@ -182,7 +181,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return LLVMBuildNeg(b, compile(m, b, ((unary_node_t*)node)->child, e), "negtmp");
 
         case LOGICAL_NOT:
-            return LLVMBuildNot(b, compile(m, b, ((unary_node_t*)node)->child, e), "nottmp");
+            // TODO: possibly inefficient boolean representation
+            // Cmp result is i1, so extend to maintain number size...
+            return LLVMBuildZExt(b, LLVMBuildICmp(b, LLVMIntEQ, compile(m, b, ((unary_node_t*)node)->child, e), LLVMConstInt(type2LLVMType(node->ts), 0, 0), "nottmp"), type2LLVMType(node->ts), "extnottmp");
 
         default:
             fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);

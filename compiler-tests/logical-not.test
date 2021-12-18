@@ -1,0 +1,4 @@
+char main {
+    char x = !!42;
+    !x;
+}

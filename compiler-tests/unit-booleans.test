@@ -1,5 +1,0 @@
-int main {
-    char x = true;
-    int y = false;
-    false + true;
-}

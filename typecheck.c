@@ -14,40 +14,36 @@ enum type typecheck(struct node* node, struct environment* e) {
             break;
         }
         case ID: {
+            // Set this node's type to the one found in the environment
             t = find(e, ((id_node_t*)node)->value).type;
-            node->ts = t; // Set this node's type to the one found in the environment
             break;
         }
         case BLOCK: {
-             
+
             environment_t* scope_env = beginScope(e);
-            
+
             block_node_t* bnode = (block_node_t*)node;
             declaration_list_t* dae = bnode->declaration_list;  // this id->ast_node environment is freed when the whole ast is freed
                                                                 // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it)
 
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++) {
-                dae->declarations[i].node->ts = dae->declarations[i].et;
-                enum type tychkty = typecheck(dae->declarations[i].node, scope_env);
-                assert(tychkty == dae->declarations[i].node->ts);
-                assoc(scope_env, dae->declarations[i].id, (union association_v){ .type = tychkty });
+                /* dae->declarations[i].node->ts = dae->declarations[i].et; this isn't needed, a cast should be made when associating a value to an identifier */
+                typecheck(dae->declarations[i].node, scope_env); // Must still typecheck all declaration values
+                /* assert(tychkty == dae->declarations[i].node->ts); No longer true, the value doesn't need to have the same time because it'll be casted on assignment */
+                assoc(scope_env, dae->declarations[i].id, (union association_v){ .type = dae->declarations[i].et });
             }
 
             t = typecheck(((block_node_t*)node)->body, scope_env);
 
             endScope(scope_env); // free the scope environment and its association array
 
-            node->ts = t;
-
             break;
         }
-        case BOOL:
-            t = node->ts = CHAR;
-            break;
         case NUM:
-            // TODO: Min required value to hold this number?
-            t = node->ts == 0 ? INT : node->ts; // Use already assigned type for num (on declaration) if available
+            // TODO: Just Min required value to hold this number, ignore node->ts
+            /* t = node->ts == 0 ? INT : node->ts; // Use already assigned type for num (on declaration) if available */
+            t = INT;
             break;
         case ADD:
         case SUB:
@@ -61,7 +57,7 @@ enum type typecheck(struct node* node, struct environment* e) {
         }
         case LOGICAL_NOT: {
             t = typecheck(((unary_node_t*)node)->child, e);
-            assert(t == BOOL);
+            /* assert(t == NUM); assert t is numeric? all numbers are booleans? */
             break;
         }
         case UMINUS: {
@@ -70,7 +66,8 @@ enum type typecheck(struct node* node, struct environment* e) {
             break;
         }
     }
+
+    node->ts = t; // assign typechecked type to self
     return t;
 }
-
 

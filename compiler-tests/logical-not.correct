@@ -1,0 +1,14 @@
+[ Parsing ]
+[ Type Checking ]
+[ Setup ]
+[ Compiling ]
+[ Cleaning ]
+[ Printing ]
+[ Module ]
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i8 @main() {
+entry:
+  ret i8 0
+}

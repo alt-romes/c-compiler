@@ -29,7 +29,6 @@ declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, enum ty
 
 typedef enum node_type {
     NUM,
-    BOOL,
     ID,
     ADD,
     SUB,
