@@ -77,6 +77,17 @@ LLVMValueRef ext_or_trunc(LLVMBuilderRef b, enum type dst_type, enum type src_ty
     return src;
 }
 
+/* 
+ * Transform an integer number into a boolean as an llvm i1 register value
+ * @b -> Instruction builder
+ * @a -> Value to convert to boolean, value == 0 => false (i1=0) ^ value != 1 => true (i1=1)
+ * @a_type -> Int type size of a value
+ */
+LLVMValueRef llvmInt2BoolI1(LLVMBuilderRef b, LLVMValueRef a, enum type a_type) {
+    return LLVMBuildNot(b, LLVMBuildICmp(b, LLVMIntEQ, a, LLVMConstInt(type2LLVMType(a_type), 0, 0), "tobooli1tmp"), "tobooli1nottmp");
+}
+
+
 LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environment_t* e) {
 
     union {
@@ -211,14 +222,30 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
         }
 
         case LOR:
+            return LLVMBuildOr(b,
+                    llvmInt2BoolI1(b,
+                        compile(m, b, ((binary_node_t*)node)->left, e),
+                        ((binary_node_t*)node)->left->ts),
+                    llvmInt2BoolI1(b,
+                        compile(m, b, ((binary_node_t*)node)->right, e),
+                        ((binary_node_t*)node)->right->ts),
+                    "ortmp");
         case LAND:
+            return LLVMBuildAnd(b,
+                    llvmInt2BoolI1(b,
+                        compile(m, b, ((binary_node_t*)node)->left, e),
+                        ((binary_node_t*)node)->left->ts),
+                    llvmInt2BoolI1(b,
+                        compile(m, b, ((binary_node_t*)node)->right, e),
+                        ((binary_node_t*)node)->right->ts),
+                    "andtmp");
 
         case UMINUS:
             return LLVMBuildNeg(b, compile(m, b, ((unary_node_t*)node)->child, e), "negtmp");
 
         case LOGICAL_NOT:
-            // Possibly innefficient, but to compare 2 numbers the boolean 0 must be extended from i1 to the size of the other operand
-            return LLVMBuildICmp(b, LLVMIntEQ, compile(m, b, ((unary_node_t*)node)->child, e), LLVMConstInt(type2LLVMType(((unary_node_t*)node)->child->ts), 0, 0), "nottmp");
+            // Possibly innefficient converting numbers to i1 booleans before doing boolean operations
+            return LLVMBuildNot(b, llvmInt2BoolI1(b, compile(m, b, ((unary_node_t*)node)->child, e), ((unary_node_t*)node)->child->ts), "logicalnottmp");
 
     }
 
