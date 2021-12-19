@@ -40,6 +40,8 @@ typedef enum node_type {
     GT,
     LE,
     GE,
+    LOR,
+    LAND,
     UMINUS,
     LOGICAL_NOT,
     BLOCK,

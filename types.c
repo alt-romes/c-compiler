@@ -1,8 +1,9 @@
 #include <stdint.h>
+#include <stdio.h>
 #include "ast.h"
 #include "types.h"
 
-char is_int_type_unsigned(enum type t) {
+int is_int_type_unsigned(enum type t) {
 
     return t & UNSIGNED;
 }
@@ -11,6 +12,6 @@ char is_int_type_unsigned(enum type t) {
 int type_compare(enum type l, enum type r) {
 
     // TODO: is the result of binary operation on numbers signed or unsigned?
-    return (l & 0xf) - (r & 0xf);
+    return (l & 0xff) - (r & 0xff);
 }
 

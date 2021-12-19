@@ -39,6 +39,10 @@ LLVMTypeRef type2LLVMType(enum type ts) {
             return LLVMInt16Type();
         case CHAR:
             return LLVMInt8Type();
+        case I1:
+            return LLVMIntType(1);
+        case LONG:
+            return LLVMInt64Type();
         default:
             fprintf(stderr, "type2LLVM undefined for ts: %d\n", ts);
             exit(1);
@@ -180,8 +184,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
                     compile(m, b, ((binary_node_t*)node)->left, e),
                     ((binary_node_t*)node)->right->ts,
                     compile(m, b, ((binary_node_t*)node)->right, e));
-            // TODO: Division depends on sign
-            return LLVMBuildSDiv(b, vpair.left, vpair.right, "sdivtmp");
+            return (is_int_type_unsigned(node->ts)?LLVMBuildUDiv:LLVMBuildSDiv)(b, vpair.left, vpair.right, "sdivtmp");
         }
 
         // LT, GT, LE, and GE will have type unsigned if the comparison is between unsigned types, and signed type otherwise
@@ -204,21 +207,19 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
                     ((binary_node_t*)node)->right->ts,
                     compile(m, b, ((binary_node_t*)node)->right, e));
             // Return boolean extended to relational operation type size (CHAR) based on auxiliary LLVMIntPredicate
-            return LLVMBuildZExt(b, LLVMBuildICmp(b, aux.llvmIntPredicate, vpair.left, vpair.right , "cmptmp"), type2LLVMType(node->ts), "extreltmp"); 
+            return LLVMBuildICmp(b, aux.llvmIntPredicate, vpair.left, vpair.right , "cmptmp");
         }
+
+        case LOR:
+        case LAND:
 
         case UMINUS:
             return LLVMBuildNeg(b, compile(m, b, ((unary_node_t*)node)->child, e), "negtmp");
 
         case LOGICAL_NOT:
-            // TODO: possibly inefficient boolean representation
-            // Cmp result is i1, so extend to maintain number size...
-            return LLVMBuildZExt(b, LLVMBuildICmp(b, LLVMIntEQ, compile(m, b, ((unary_node_t*)node)->child, e), LLVMConstInt(type2LLVMType(node->ts), 0, 0), "nottmp"), type2LLVMType(node->ts), "extnottmp");
+            // Possibly innefficient, but to compare 2 numbers the boolean 0 must be extended from i1 to the size of the other operand
+            return LLVMBuildICmp(b, LLVMIntEQ, compile(m, b, ((unary_node_t*)node)->child, e), LLVMConstInt(type2LLVMType(((unary_node_t*)node)->child->ts), 0, 0), "nottmp");
 
-        /* default: */
-        /*     fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type); */
-        /*     exit(1); */
-        /*     return NULL; */
     }
 
     fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);

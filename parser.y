@@ -24,7 +24,7 @@ void yyerror();
 %token _CONST
 %token _NUM
 %token _IDENTIFIER
-%token _EQ_OP _NE_OP _LE_OP _GE_OP
+%token _EQ_OP _NE_OP _LE_OP _GE_OP _OR_OP _AND_OP
 
 %type <int_v> _NUM type_specifier type_qualifier
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
@@ -135,11 +135,11 @@ conditional_expression
 
 logical_or_expression
 	: logical_and_expression { $$ = $1; }
-	/* | logical_or_expression OR_OP logical_and_expression */
+	| logical_or_expression _OR_OP logical_and_expression { $$ = create_node2(LOR, $1, $3); }
 
 logical_and_expression
 	: inclusive_or_expression { $$ = $1; }
-	/* | logical_and_expression AND_OP inclusive_or_expression */
+	| logical_and_expression _AND_OP inclusive_or_expression { $$ = create_node2(LAND, $1, $3); }
 
 inclusive_or_expression
 	: exclusive_or_expression { $$ = $1; }

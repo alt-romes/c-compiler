@@ -47,11 +47,17 @@ enum type typecheck(struct node* node, struct environment* e) {
             break;
         case ADD:
         case SUB:
-        case MUL:
-        case DIV: {
+        case MUL: {
             enum type l = typecheck(((binary_node_t*)node)->left, e);
             enum type r = typecheck(((binary_node_t*)node)->right, e);
             // TODO: assert both types are "addable"... (aren't they all?)
+            t = type_compare(l, r) < 0 ? r : l;
+            break;
+        }
+        case DIV: {
+            enum type l = typecheck(((binary_node_t*)node)->left, e);
+            enum type r = typecheck(((binary_node_t*)node)->right, e);
+            assert((l & UNSIGNED) == (r & UNSIGNED)); // For division either both values or unsigned or none is
             t = type_compare(l, r) < 0 ? r : l;
             break;
         }
@@ -63,21 +69,30 @@ enum type typecheck(struct node* node, struct environment* e) {
             enum type l = typecheck(((binary_node_t*)node)->left, e);
             enum type r = typecheck(((binary_node_t*)node)->right, e);
             assert((l & UNSIGNED) == (r & UNSIGNED)); // Both types must be the same
-            t = CHAR | (l & UNSIGNED); // Return boolean encoded in char. If values are unsigned do unsigned comparison
+            t = I1 | (l & UNSIGNED); // Return boolean encoded in char. If values are unsigned do unsigned comparison
             break;
         }
         case EQ:
         case NE: {
-            enum type l = typecheck(((binary_node_t*)node)->left, e);
-            enum type r = typecheck(((binary_node_t*)node)->right, e);
+            /* enum type l = */ typecheck(((binary_node_t*)node)->left, e);
+            /* enum type r = */ typecheck(((binary_node_t*)node)->right, e);
             // Correction to the below: types can be ints with different size that will be promoted
             /* assert(type_compare(l, r) == 0); // Both types must be the same */
-            t = CHAR; // Return boolean encoded in char
+            t = I1; // I1 boolean
+            break;
+        }
+        case LOR:
+        case LAND: {
+            /* enum type l = */ typecheck(((binary_node_t*)node)->left, e);
+            /* enum type r = */ typecheck(((binary_node_t*)node)->right, e);
+            /* assert both types are boolean ... numeric? */
+            t = I1; // I1 boolean
             break;
         }
         case LOGICAL_NOT: {
-            t = typecheck(((unary_node_t*)node)->child, e);
-            /* assert(t == NUM); assert t is numeric? all numbers are booleans? */
+            typecheck(((unary_node_t*)node)->child, e);
+            /* assert child t is numeric? all numbers are booleans? */
+            t = I1; // boolean values are represented with I1
             break;
         }
         case UMINUS: {

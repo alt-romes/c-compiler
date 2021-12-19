@@ -46,7 +46,7 @@ clean:
 	-rm interpreter
 	-rm dcpu
 
-test:
+test: all
 	./run-tests.sh interpreter
 	./run-tests.sh compiler
 
