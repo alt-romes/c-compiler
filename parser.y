@@ -24,6 +24,7 @@ void yyerror();
 %token _CONST
 %token _NUM
 %token _IDENTIFIER
+%token _EQ_OP _NE_OP
 
 %type <int_v> _NUM type_specifier type_qualifier
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
@@ -154,8 +155,8 @@ and_expression
 
 equality_expression
 	: relational_expression { $$ = $1; }
-	/* | equality_expression EQ_OP relational_expression */
-	/* | equality_expression NE_OP relational_expression */
+	| equality_expression _EQ_OP relational_expression { $$ = create_node2(EQ, $1, $3); }
+	| equality_expression _NE_OP relational_expression { $$ = create_node2(NE, $1, $3); } 
 
 relational_expression
 	: shift_expression { $$ = $1; }

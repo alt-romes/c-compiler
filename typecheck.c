@@ -55,6 +55,15 @@ enum type typecheck(struct node* node, struct environment* e) {
             t = type_compare(l, r) < 0 ? r : l;
             break;
         }
+        case EQ:
+        case NE: {
+            enum type l = typecheck(((binary_node_t*)node)->left, e);
+            enum type r = typecheck(((binary_node_t*)node)->right, e);
+            // Correction to the below: types can be ints with different size that will be promoted
+            /* assert(type_compare(l, r) == 0); // Both types must be the same */
+            t = CHAR; // Return boolean encoded in char
+            break;
+        }
         case LOGICAL_NOT: {
             t = typecheck(((unary_node_t*)node)->child, e);
             /* assert(t == NUM); assert t is numeric? all numbers are booleans? */

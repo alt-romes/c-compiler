@@ -34,6 +34,8 @@ typedef enum node_type {
     SUB,
     MUL,
     DIV,
+    EQ,
+    NE,
     UMINUS,
     LOGICAL_NOT,
     BLOCK,

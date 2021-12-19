@@ -74,6 +74,13 @@ LLVMValueRef ext_or_trunc(LLVMBuilderRef b, enum type dst_type, enum type src_ty
 }
 
 LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environment_t* e) {
+
+    union {
+        LLVMIntPredicate llvmIntPredicate;
+    } aux;
+
+    aux.llvmIntPredicate = 0;
+
     switch (node->type) {
 
         case FUNCTION: {
@@ -177,6 +184,20 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return LLVMBuildSDiv(b, vpair.left, vpair.right, "sdivtmp");
         }
 
+        case NE:
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? LLVMIntNE : aux.llvmIntPredicate; 
+        case EQ: {
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? LLVMIntEQ : aux.llvmIntPredicate; 
+
+            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
+                    ((binary_node_t*)node)->left->ts,
+                    compile(m, b, ((binary_node_t*)node)->left, e),
+                    ((binary_node_t*)node)->right->ts,
+                    compile(m, b, ((binary_node_t*)node)->right, e));
+            // Return boolean extended to relational operation type size (CHAR) based on auxiliary LLVMIntPredicate
+            return LLVMBuildZExt(b, LLVMBuildICmp(b, aux.llvmIntPredicate, vpair.left, vpair.right , "cmptmp"), type2LLVMType(node->ts), "extreltmp"); 
+        }
+
         case UMINUS:
             return LLVMBuildNeg(b, compile(m, b, ((unary_node_t*)node)->child, e), "negtmp");
 
@@ -185,11 +206,14 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             // Cmp result is i1, so extend to maintain number size...
             return LLVMBuildZExt(b, LLVMBuildICmp(b, LLVMIntEQ, compile(m, b, ((unary_node_t*)node)->child, e), LLVMConstInt(type2LLVMType(node->ts), 0, 0), "nottmp"), type2LLVMType(node->ts), "extnottmp");
 
-        default:
-            fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
-            exit(1);
-            return NULL;
+        /* default: */
+        /*     fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type); */
+        /*     exit(1); */
+        /*     return NULL; */
     }
+
+    fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
+    exit(1);
 }
 
 int main(int argc, char *argv[]) {
