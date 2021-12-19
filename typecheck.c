@@ -43,12 +43,18 @@ enum type typecheck(struct node* node, struct environment* e) {
             /* t = node->ts == 0 ? INT : node->ts; // Use already assigned type for num (on declaration) if available */
             t = INT;
             break;
+
+        // All these operations are applied on numeric types that nust 
+        case BOR:
+        case BXOR:
+        case BAND:
+        case LEFT_SHIFT:
         case ADD:
         case SUB:
         case MUL: {
             enum type l = typecheck(((binary_node_t*)node)->left, e);
             enum type r = typecheck(((binary_node_t*)node)->right, e);
-            // TODO: assert both types are "addable"... (aren't they all?)
+            // TODO: assert both types are numeric?
             t = type_compare(l, r) < 0 ? r : l;
             break;
         }
@@ -57,6 +63,14 @@ enum type typecheck(struct node* node, struct environment* e) {
             enum type r = typecheck(((binary_node_t*)node)->right, e);
             assert((l & UNSIGNED) == (r & UNSIGNED)); // For division either both values or unsigned or none is
             t = type_compare(l, r) < 0 ? r : l;
+            break;
+        }
+
+        case RIGHT_SHIFT: {
+            enum type l = typecheck(((binary_node_t*)node)->left, e);
+            enum type r = typecheck(((binary_node_t*)node)->right, e);
+            // For right shift do sign-extended if lhs is signed, zero fill otherwise
+            t = (type_compare(l, r) < 0 ? r : l) | (l & UNSIGNED);
             break;
         }
         
@@ -93,17 +107,7 @@ enum type typecheck(struct node* node, struct environment* e) {
         case UMINUS:
             t = typecheck(((unary_node_t*)node)->child, e);
             // TODO: assert type is numeric...
-            break;
-        
-        case BOR:
-        case BXOR:
-        case BAND: {
-            enum type l = typecheck(((binary_node_t*)node)->left, e);
-            enum type r = typecheck(((binary_node_t*)node)->right, e);
-            // TODO: assert both types are numeric?
-            t = type_compare(l, r) < 0 ? r : l;
-            break;
-        }
+            break; 
     }
 
     node->ts = t; // assign typechecked type to self

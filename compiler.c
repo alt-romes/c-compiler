@@ -92,9 +92,29 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
 
     union {
         LLVMIntPredicate llvmIntPredicate;
+        struct LLVMValueRefPair llvmVPair;
     } aux;
 
     aux.llvmIntPredicate = 0;
+
+    switch (node->type) {
+        /* Binary nodes that need same-size type operands in common */
+        case ADD: case SUB: case MUL: case DIV:
+        case BAND: case BOR: case BXOR:
+        case LEFT_SHIFT: case RIGHT_SHIFT:
+            aux.llvmVPair = ext_int_binaryop_operands(b,
+                ((binary_node_t*)node)->left->ts,
+                compile(m, b, ((binary_node_t*)node)->left, e),
+                ((binary_node_t*)node)->right->ts,
+                compile(m, b, ((binary_node_t*)node)->right, e));
+            break;
+        /* Binary nodes that use different llvmIntPredicates */
+        case EQ: case NE: case LT: case GT: case LE: case GE:
+            aux.llvmIntPredicate = 0;
+            break;
+        default:
+            break;
+    }
 
     switch (node->type) {
 
@@ -158,45 +178,20 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return val;
         }
 
-        case NUM: { 
+        case NUM:
             return LLVMConstInt(type2LLVMType(node->ts), ((num_node_t*)node)->value, is_int_type_unsigned(node->ts) ? 0 : 1);
-        }
 
-        case ADD: {
-            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
-                    ((binary_node_t*)node)->left->ts,
-                    compile(m, b, ((binary_node_t*)node)->left, e),
-                    ((binary_node_t*)node)->right->ts,
-                    compile(m, b, ((binary_node_t*)node)->right, e));
-            return LLVMBuildAdd(b, vpair.left, vpair.right, "addtmp");
-        }
+        case ADD:
+            return LLVMBuildAdd(b, aux.llvmVPair.left, aux.llvmVPair.right, "addtmp");
 
-        case SUB: {
-            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
-                    ((binary_node_t*)node)->left->ts,
-                    compile(m, b, ((binary_node_t*)node)->left, e),
-                    ((binary_node_t*)node)->right->ts,
-                    compile(m, b, ((binary_node_t*)node)->right, e));
-            return LLVMBuildSub(b, vpair.left, vpair.right, "subtmp");
-        }
+        case SUB:
+            return LLVMBuildSub(b, aux.llvmVPair.left, aux.llvmVPair.right, "subtmp");
 
-        case MUL: {
-            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
-                    ((binary_node_t*)node)->left->ts,
-                    compile(m, b, ((binary_node_t*)node)->left, e),
-                    ((binary_node_t*)node)->right->ts,
-                    compile(m, b, ((binary_node_t*)node)->right, e));
-            return LLVMBuildMul(b, vpair.left, vpair.right, "multmp");
-        }
+        case MUL:
+            return LLVMBuildMul(b, aux.llvmVPair.left, aux.llvmVPair.right, "multmp");
 
-        case DIV: {
-            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
-                    ((binary_node_t*)node)->left->ts,
-                    compile(m, b, ((binary_node_t*)node)->left, e),
-                    ((binary_node_t*)node)->right->ts,
-                    compile(m, b, ((binary_node_t*)node)->right, e));
-            return (is_int_type_unsigned(node->ts)?LLVMBuildUDiv:LLVMBuildSDiv)(b, vpair.left, vpair.right, "sdivtmp");
-        }
+        case DIV:
+            return (is_int_type_unsigned(node->ts)?LLVMBuildUDiv:LLVMBuildSDiv)(b, aux.llvmVPair.left, aux.llvmVPair.right, "sdivtmp");
 
         // LT, GT, LE, and GE will have type unsigned if the comparison is between unsigned types, and signed type otherwise
         case LT:
@@ -248,30 +243,16 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             // Possibly innefficient converting numbers to i1 booleans before doing boolean operations
             return LLVMBuildNot(b, llvmInt2BoolI1(b, compile(m, b, ((unary_node_t*)node)->child, e), ((unary_node_t*)node)->child->ts), "logicalnottmp");
 
-        case BOR: {
-            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
-                    ((binary_node_t*)node)->left->ts,
-                    compile(m, b, ((binary_node_t*)node)->left, e),
-                    ((binary_node_t*)node)->right->ts,
-                    compile(m, b, ((binary_node_t*)node)->right, e));
-            return LLVMBuildOr(b, vpair.left, vpair.right, "multmp");
-        }
-        case BXOR: {
-            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
-                    ((binary_node_t*)node)->left->ts,
-                    compile(m, b, ((binary_node_t*)node)->left, e),
-                    ((binary_node_t*)node)->right->ts,
-                    compile(m, b, ((binary_node_t*)node)->right, e));
-            return LLVMBuildXor(b, vpair.left, vpair.right, "multmp");
-        }
-        case BAND: {
-            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
-                    ((binary_node_t*)node)->left->ts,
-                    compile(m, b, ((binary_node_t*)node)->left, e),
-                    ((binary_node_t*)node)->right->ts,
-                    compile(m, b, ((binary_node_t*)node)->right, e));
-            return LLVMBuildAnd(b, vpair.left, vpair.right, "multmp");
-        }
+        case BOR:
+            return LLVMBuildOr(b,  aux.llvmVPair.left, aux.llvmVPair.right, "bortmp");
+        case BXOR:
+            return LLVMBuildXor(b, aux.llvmVPair.left, aux.llvmVPair.right, "xortmp");
+        case BAND:
+            return LLVMBuildAnd(b, aux.llvmVPair.left, aux.llvmVPair.right, "bandtmp");
+        case LEFT_SHIFT:
+            return LLVMBuildShl(b, aux.llvmVPair.left, aux.llvmVPair.right, "leftshifttmp");
+        case RIGHT_SHIFT:
+            return (is_int_type_unsigned(node->ts)?LLVMBuildLShr:LLVMBuildAShr)(b, aux.llvmVPair.left, aux.llvmVPair.right, "rightshifttmp");
 
     }
 

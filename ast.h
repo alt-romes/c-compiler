@@ -30,6 +30,8 @@ declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, enum ty
 typedef enum node_type {
     NUM,
     ID,
+
+    /* Binary */
     ADD,
     SUB,
     MUL,
@@ -45,6 +47,9 @@ typedef enum node_type {
     BAND,
     BOR,
     BXOR,
+    LEFT_SHIFT,
+    RIGHT_SHIFT,
+
     UMINUS,
     LOGICAL_NOT,
     BLOCK,

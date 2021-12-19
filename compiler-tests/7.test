@@ -1,0 +1,5 @@
+int main {
+    char y = 255;
+    unsigned char x = -127;
+    (y >> 2) + (x >> 2);
+}
