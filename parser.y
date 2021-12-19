@@ -44,10 +44,10 @@ init
     : function_definition                             { *root = $1; }
 
 function_definition
-    // TODO: HOW TO HANDLE DECLARATION SPECIFIERS FOR FUNCTIONS? AND WHAT TO DO WITH CONST?
+    // TODO: HOW TO HANDLE DECLARATION SPECIFIERS FOR FUNCTIONS?
     : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1, $2, $3); }
 
-compound_statement  // also known as "block"
+compound_statement // also known as "block"
     : '{' statement_list '}'                          { $$ = $2; }
     | '{' declaration_list statement_list '}'         { $$ = create_node_block(BLOCK, $2, $3); }
 
@@ -94,7 +94,7 @@ initializer
 
 statement_list
 	: statement { $$ = $1; }
-	/* | statement_list statement */
+	| statement_list statement /* TODO: How are sequential statements different from a sequence of expressions */ { $$ = create_node2(SEQEXP, $1, $2); }
 
 statement
 	/* : labeled_statement */
