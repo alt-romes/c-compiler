@@ -38,6 +38,8 @@ node_t* new_node(node_type_t type) {
             break;
         case LOGICAL_NOT:
         case UMINUS:
+        case UPLUS:
+        case BNOT:
             node = malloc(sizeof(unary_node_t));
             break;
         case ID:
@@ -151,6 +153,8 @@ void free_ast(node_t* node) {
             break;
         case LOGICAL_NOT:
         case UMINUS:
+        case UPLUS:
+        case BNOT:
             free_ast(((unary_node_t*)node)->child);
             break;
         case ID:

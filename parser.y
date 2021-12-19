@@ -196,9 +196,9 @@ unary_expression
 unary_operator
 	/* : '&' */
 	/* | '*' */
-	/* | '+' */
-	: '-' { $$ = UMINUS; }
-	/* | '~' */
+	: '+' { $$ = UPLUS; }
+	| '-' { $$ = UMINUS; }
+	| '~' { $$ = BNOT; }
 	| '!' { $$ = LOGICAL_NOT; }
 
 postfix_expression

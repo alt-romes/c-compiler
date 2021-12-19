@@ -105,6 +105,8 @@ enum type typecheck(struct node* node, struct environment* e) {
             /* assert child t is numeric? all numbers are booleans? */
             t = I1; // boolean values are represented with I1
             break;
+        case BNOT:
+        case UPLUS:
         case UMINUS:
             t = typecheck(((unary_node_t*)node)->child, e);
             // TODO: assert type is numeric...

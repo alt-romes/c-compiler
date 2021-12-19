@@ -239,12 +239,18 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
                         ((binary_node_t*)node)->right->ts),
                     "andtmp");
 
+        case UPLUS:
+            return compile(m, b, ((unary_node_t*)node)->child, e);
+        
         case UMINUS:
             return LLVMBuildNeg(b, compile(m, b, ((unary_node_t*)node)->child, e), "negtmp");
 
         case LOGICAL_NOT:
             // Possibly innefficient converting numbers to i1 booleans before doing boolean operations
             return LLVMBuildNot(b, llvmInt2BoolI1(b, compile(m, b, ((unary_node_t*)node)->child, e), ((unary_node_t*)node)->child->ts), "logicalnottmp");
+
+        case BNOT:
+            return LLVMBuildNot(b, compile(m, b, ((unary_node_t*)node)->child, e), "bnottmp");
 
         case BOR:
             return LLVMBuildOr(b,  aux.llvmVPair.left, aux.llvmVPair.right, "bortmp");

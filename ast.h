@@ -51,8 +51,13 @@ typedef enum node_type {
     LEFT_SHIFT,
     RIGHT_SHIFT,
 
+    /* Unary */
+    UPLUS,
     UMINUS,
     LOGICAL_NOT,
+    BNOT,
+
+
     BLOCK,
     FUNCTION
 } node_type_t;
