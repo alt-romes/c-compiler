@@ -36,6 +36,7 @@ typedef enum node_type {
     SUB,
     MUL,
     DIV,
+    REM,
     EQ,
     NE,
     LT,

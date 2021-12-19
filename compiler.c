@@ -99,7 +99,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
 
     switch (node->type) {
         /* Binary nodes that need same-size type operands in common */
-        case ADD: case SUB: case MUL: case DIV:
+        case ADD: case SUB: case MUL: case DIV: case REM:
         case BAND: case BOR: case BXOR:
         case LEFT_SHIFT: case RIGHT_SHIFT:
             aux.llvmVPair = ext_int_binaryop_operands(b,
@@ -191,7 +191,10 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return LLVMBuildMul(b, aux.llvmVPair.left, aux.llvmVPair.right, "multmp");
 
         case DIV:
-            return (is_int_type_unsigned(node->ts)?LLVMBuildUDiv:LLVMBuildSDiv)(b, aux.llvmVPair.left, aux.llvmVPair.right, "sdivtmp");
+            return (is_int_type_unsigned(node->ts)?LLVMBuildUDiv:LLVMBuildSDiv)(b, aux.llvmVPair.left, aux.llvmVPair.right, "divtmp");
+
+        case REM:
+            return (is_int_type_unsigned(node->ts)?LLVMBuildURem:LLVMBuildSRem)(b, aux.llvmVPair.left, aux.llvmVPair.right, "remtmp");
 
         // LT, GT, LE, and GE will have type unsigned if the comparison is between unsigned types, and signed type otherwise
         case LT:

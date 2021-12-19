@@ -58,6 +58,7 @@ enum type typecheck(struct node* node, struct environment* e) {
             t = type_compare(l, r) < 0 ? r : l;
             break;
         }
+        case REM:
         case DIV: {
             enum type l = typecheck(((binary_node_t*)node)->left, e);
             enum type r = typecheck(((binary_node_t*)node)->right, e);

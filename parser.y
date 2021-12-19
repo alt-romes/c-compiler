@@ -179,7 +179,7 @@ multiplicative_expression
 	: cast_expression { $$ = $1; }
 	| multiplicative_expression '*' cast_expression { $$ = create_node2(MUL, $1, $3); }
 	| multiplicative_expression '/' cast_expression { $$ = create_node2(DIV, $1, $3); }
-	/* | multiplicative_expression '%' cast_expression */
+	| multiplicative_expression '%' cast_expression { $$ = create_node2(REM, $1, $3); }
 
 cast_expression
 	: unary_expression { $$ = $1; }

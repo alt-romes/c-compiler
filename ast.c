@@ -20,6 +20,7 @@ node_t* new_node(node_type_t type) {
         case SUB:
         case MUL:
         case DIV:
+        case REM:
         case LT:
         case GT:
         case LE:
@@ -131,6 +132,7 @@ void free_ast(node_t* node) {
         case SUB:
         case MUL:
         case DIV:
+        case REM:
         case LT:
         case GT:
         case LE:

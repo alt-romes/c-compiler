@@ -28,6 +28,7 @@ extern YYSTYPE yylval;
 "!"       return '!';
 "*"       return '*';
 "/"       return '/';
+"%"       return '%';
 "="       return '=';
 ";"       return ';';
 ","       return ',';

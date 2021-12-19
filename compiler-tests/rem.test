@@ -1,0 +1,4 @@
+int main {
+    char x = 3;
+    x % 2;
+}
