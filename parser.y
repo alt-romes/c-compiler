@@ -105,8 +105,8 @@ statement
 	/* | jump_statement */
 
 expression_statement
-	/* : ';' */ 
-	: expression ';' { $$ = $1; }
+	: ';' 
+	| expression ';' { $$ = $1; }
 
 expression
 	: assignment_expression { $$ = $1; }
@@ -143,15 +143,15 @@ logical_and_expression
 
 inclusive_or_expression
 	: exclusive_or_expression { $$ = $1; }
-	/* | inclusive_or_expression '|' exclusive_or_expression */
+	| inclusive_or_expression '|' exclusive_or_expression { $$ = create_node2(BOR, $1, $3); }
 
 exclusive_or_expression
 	: and_expression { $$ = $1; }
-	/* | exclusive_or_expression '^' and_expression */
+	| exclusive_or_expression '^' and_expression { $$ = create_node2(BXOR, $1, $3); }
 
 and_expression
 	: equality_expression { $$ = $1; }
-	/* | and_expression '&' equality_expression */
+	| and_expression '&' equality_expression { $$ = create_node2(BAND, $1, $3); }
 
 equality_expression
 	: relational_expression { $$ = $1; }

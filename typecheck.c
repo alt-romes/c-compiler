@@ -6,18 +6,16 @@
 enum type typecheck(struct node* node, struct environment* e) {
     enum type t;
     switch (node->type) {
-        case FUNCTION: {
+        case FUNCTION:
             // TODO ... 
             /* this doesn't need to be, only make sure that its castable from one to another assert((t = node->ts) == typecheck(((function_node_t*)node)->body, e)); */
             t = node->ts; // function type is its return value... quite wrong but ..
             typecheck(((function_node_t*)node)->body, e);
             break;
-        }
-        case ID: {
+        case ID:
             // Set this node's type to the one found in the environment
             t = find(e, ((id_node_t*)node)->value).type;
             break;
-        }
         case BLOCK: {
 
             environment_t* scope_env = beginScope(e);
@@ -73,31 +71,37 @@ enum type typecheck(struct node* node, struct environment* e) {
             break;
         }
         case EQ:
-        case NE: {
+        case NE:
             /* enum type l = */ typecheck(((binary_node_t*)node)->left, e);
             /* enum type r = */ typecheck(((binary_node_t*)node)->right, e);
             // Correction to the below: types can be ints with different size that will be promoted
             /* assert(type_compare(l, r) == 0); // Both types must be the same */
             t = I1; // I1 boolean
             break;
-        }
         case LOR:
-        case LAND: {
+        case LAND:
             /* enum type l = */ typecheck(((binary_node_t*)node)->left, e);
             /* enum type r = */ typecheck(((binary_node_t*)node)->right, e);
             /* assert both types are boolean ... numeric? */
             t = I1; // I1 boolean
             break;
-        }
-        case LOGICAL_NOT: {
+        case LOGICAL_NOT:
             typecheck(((unary_node_t*)node)->child, e);
             /* assert child t is numeric? all numbers are booleans? */
             t = I1; // boolean values are represented with I1
             break;
-        }
-        case UMINUS: {
+        case UMINUS:
             t = typecheck(((unary_node_t*)node)->child, e);
             // TODO: assert type is numeric...
+            break;
+        
+        case BOR:
+        case BXOR:
+        case BAND: {
+            enum type l = typecheck(((binary_node_t*)node)->left, e);
+            enum type r = typecheck(((binary_node_t*)node)->right, e);
+            // TODO: assert both types are numeric?
+            t = type_compare(l, r) < 0 ? r : l;
             break;
         }
     }

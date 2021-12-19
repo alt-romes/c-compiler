@@ -221,6 +221,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return LLVMBuildICmp(b, aux.llvmIntPredicate, vpair.left, vpair.right , "cmptmp");
         }
 
+        // Booleans are represented in an i1 LLVM register, we can convert a number to an i1 boolean, and bit OR, AND, NOT operations on 1 bit are the same as logical operations
         case LOR:
             return LLVMBuildOr(b,
                     llvmInt2BoolI1(b,
@@ -246,6 +247,31 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
         case LOGICAL_NOT:
             // Possibly innefficient converting numbers to i1 booleans before doing boolean operations
             return LLVMBuildNot(b, llvmInt2BoolI1(b, compile(m, b, ((unary_node_t*)node)->child, e), ((unary_node_t*)node)->child->ts), "logicalnottmp");
+
+        case BOR: {
+            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
+                    ((binary_node_t*)node)->left->ts,
+                    compile(m, b, ((binary_node_t*)node)->left, e),
+                    ((binary_node_t*)node)->right->ts,
+                    compile(m, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildOr(b, vpair.left, vpair.right, "multmp");
+        }
+        case BXOR: {
+            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
+                    ((binary_node_t*)node)->left->ts,
+                    compile(m, b, ((binary_node_t*)node)->left, e),
+                    ((binary_node_t*)node)->right->ts,
+                    compile(m, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildXor(b, vpair.left, vpair.right, "multmp");
+        }
+        case BAND: {
+            struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
+                    ((binary_node_t*)node)->left->ts,
+                    compile(m, b, ((binary_node_t*)node)->left, e),
+                    ((binary_node_t*)node)->right->ts,
+                    compile(m, b, ((binary_node_t*)node)->right, e));
+            return LLVMBuildAnd(b, vpair.left, vpair.right, "multmp");
+        }
 
     }
 

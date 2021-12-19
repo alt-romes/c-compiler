@@ -28,6 +28,9 @@ node_t* new_node(node_type_t type) {
         case NE:
         case LOR:
         case LAND:
+        case BOR:
+        case BXOR:
+        case BAND:
             node = malloc(sizeof(binary_node_t));
             break;
         case LOGICAL_NOT:
@@ -134,6 +137,9 @@ void free_ast(node_t* node) {
         case NE:
         case LOR:
         case LAND:
+        case BOR:
+        case BXOR:
+        case BAND:
             free_ast(((binary_node_t*)node)->left);
             free_ast(((binary_node_t*)node)->right);
             break;
