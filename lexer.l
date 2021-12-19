@@ -14,6 +14,8 @@ extern YYSTYPE yylval;
 "const"   return _CONST;
 "=="      return _EQ_OP;
 "!="      return _NE_OP;
+">="      return _GE_OP;
+"<="      return _LE_OP;
 [ \t\n]+  ;
 [0-9]+    { yylval.int_v = atoi(yytext); return _NUM; }
 [a-zA-Z][a-zA-Z0-9]*  { yylval.string_v = strdup(yytext); return _IDENTIFIER; }
@@ -29,6 +31,8 @@ extern YYSTYPE yylval;
 ")"       return ')';
 "{"       return '{';
 "}"       return '}';
+"<"       return '<';
+">"       return '>';
 
 %%
 

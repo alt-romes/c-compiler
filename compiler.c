@@ -184,6 +184,15 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return LLVMBuildSDiv(b, vpair.left, vpair.right, "sdivtmp");
         }
 
+        // LT, GT, LE, and GE will have type unsigned if the comparison is between unsigned types, and signed type otherwise
+        case LT:
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? (node->ts & UNSIGNED) ? LLVMIntULT : LLVMIntSLT : aux.llvmIntPredicate; 
+        case GT:
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? (node->ts & UNSIGNED) ? LLVMIntUGT : LLVMIntSGT : aux.llvmIntPredicate; 
+        case LE:
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? (node->ts & UNSIGNED) ? LLVMIntULE : LLVMIntSLE : aux.llvmIntPredicate; 
+        case GE:
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? (node->ts & UNSIGNED) ? LLVMIntUGE : LLVMIntSGE : aux.llvmIntPredicate; 
         case NE:
             aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? LLVMIntNE : aux.llvmIntPredicate; 
         case EQ: {

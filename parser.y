@@ -24,7 +24,7 @@ void yyerror();
 %token _CONST
 %token _NUM
 %token _IDENTIFIER
-%token _EQ_OP _NE_OP
+%token _EQ_OP _NE_OP _LE_OP _GE_OP
 
 %type <int_v> _NUM type_specifier type_qualifier
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
@@ -160,10 +160,10 @@ equality_expression
 
 relational_expression
 	: shift_expression { $$ = $1; }
-	/* | relational_expression '<' shift_expression */
-	/* | relational_expression '>' shift_expression */
-	/* | relational_expression LE_OP shift_expression */
-	/* | relational_expression GE_OP shift_expression */
+	| relational_expression '<' shift_expression { $$ = create_node2(LT, $1, $3); }
+	| relational_expression '>' shift_expression { $$ = create_node2(GT, $1, $3); }
+	| relational_expression _LE_OP shift_expression { $$ = create_node2(LE, $1, $3); }
+	| relational_expression _GE_OP shift_expression { $$ = create_node2(GE, $1, $3); }
 
 shift_expression
 	: additive_expression { $$ = $1; }

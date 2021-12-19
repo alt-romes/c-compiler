@@ -1,0 +1,5 @@
+int main {
+    char x = 100, y = 255, z = 0;
+    (x > y) > z;
+}
+

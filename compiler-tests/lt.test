@@ -1,0 +1,4 @@
+int main {
+    unsigned char x = 100, y = 255;
+    x < y;
+}

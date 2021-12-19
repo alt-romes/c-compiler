@@ -55,6 +55,17 @@ enum type typecheck(struct node* node, struct environment* e) {
             t = type_compare(l, r) < 0 ? r : l;
             break;
         }
+        
+        case LT:
+        case GT:
+        case LE:
+        case GE: {
+            enum type l = typecheck(((binary_node_t*)node)->left, e);
+            enum type r = typecheck(((binary_node_t*)node)->right, e);
+            assert((l & UNSIGNED) == (r & UNSIGNED)); // Both types must be the same
+            t = CHAR | (l & UNSIGNED); // Return boolean encoded in char. If values are unsigned do unsigned comparison
+            break;
+        }
         case EQ:
         case NE: {
             enum type l = typecheck(((binary_node_t*)node)->left, e);

@@ -20,6 +20,10 @@ node_t* new_node(node_type_t type) {
         case SUB:
         case MUL:
         case DIV:
+        case LT:
+        case GT:
+        case LE:
+        case GE:
         case EQ:
         case NE:
             node = malloc(sizeof(binary_node_t));
@@ -120,6 +124,10 @@ void free_ast(node_t* node) {
         case SUB:
         case MUL:
         case DIV:
+        case LT:
+        case GT:
+        case LE:
+        case GE:
         case EQ:
         case NE:
             free_ast(((binary_node_t*)node)->left);
