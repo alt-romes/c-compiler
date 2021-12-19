@@ -178,6 +178,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node, environmen
             return val;
         }
 
+        case SEQEXP:
+            return compile(m, b, ((binary_node_t*)node)->left, e), compile(m, b, ((binary_node_t*)node)->right, e);
+
         case NUM:
             return LLVMConstInt(type2LLVMType(node->ts), ((num_node_t*)node)->value, is_int_type_unsigned(node->ts) ? 0 : 1);
 

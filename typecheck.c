@@ -74,7 +74,13 @@ enum type typecheck(struct node* node, struct environment* e) {
             t = (type_compare(l, r) < 0 ? r : l) | (l & UNSIGNED);
             break;
         }
-        
+
+        case SEQEXP: {
+            typecheck(((binary_node_t*)node)->left, e);
+            t = typecheck(((binary_node_t*)node)->right, e);
+            break;
+        }
+
         case LT:
         case GT:
         case LE:

@@ -50,6 +50,7 @@ typedef enum node_type {
     BXOR,
     LEFT_SHIFT,
     RIGHT_SHIFT,
+    SEQEXP,
 
     /* Unary */
     UPLUS,

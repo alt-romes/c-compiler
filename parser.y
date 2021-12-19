@@ -105,12 +105,12 @@ statement
 	/* | jump_statement */
 
 expression_statement
-	: ';' 
-	| expression ';' { $$ = $1; }
+	/* : ';'            { $$ = ???; }; // TODO: What to return here */
+	: expression ';' { $$ = $1; }
 
 expression
 	: assignment_expression { $$ = $1; }
-	/* | expression ',' assignment_expression */
+	| expression ',' assignment_expression { $$ = create_node2(SEQEXP, $1, $3); }
 
 assignment_expression
     : conditional_expression { $$ = $1; }

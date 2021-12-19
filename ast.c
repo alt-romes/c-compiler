@@ -34,6 +34,7 @@ node_t* new_node(node_type_t type) {
         case BAND:
         case LEFT_SHIFT:
         case RIGHT_SHIFT:
+        case SEQEXP:
             node = malloc(sizeof(binary_node_t));
             break;
         case LOGICAL_NOT:
@@ -148,6 +149,7 @@ void free_ast(node_t* node) {
         case BAND:
         case LEFT_SHIFT:
         case RIGHT_SHIFT:
+        case SEQEXP:
             free_ast(((binary_node_t*)node)->left);
             free_ast(((binary_node_t*)node)->right);
             break;
