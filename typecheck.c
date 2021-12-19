@@ -80,6 +80,13 @@ enum type typecheck(struct node* node, struct environment* e) {
             t = typecheck(((binary_node_t*)node)->right, e);
             break;
         }
+        
+        case ASSIGN: {
+            typecheck(((binary_node_t*)node)->left, e);
+            // TODO: what can i assert here...
+            t = typecheck(((binary_node_t*)node)->right, e);
+            break;
+        }
 
         case LT:
         case GT:

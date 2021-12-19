@@ -51,6 +51,7 @@ typedef enum node_type {
     LEFT_SHIFT,
     RIGHT_SHIFT,
     SEQEXP,
+    ASSIGN,
 
     /* Unary */
     UPLUS,

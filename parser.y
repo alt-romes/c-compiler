@@ -32,7 +32,7 @@ void yyerror();
 %type <declaration_list_v> declaration_list declaration init_declarator_list
 %type <declaration_v> init_declarator
 %type <declaration_specifiers_v> declaration_specifiers
-%type <node_type_v> unary_operator
+%type <node_type_v> unary_operator assignment_operator
 
 %parse-param {node_t** root}
 
@@ -94,7 +94,7 @@ initializer
 
 statement_list
 	: statement { $$ = $1; }
-	| statement_list statement /* TODO: How are sequential statements different from a sequence of expressions */ { $$ = create_node2(SEQEXP, $1, $2); }
+	| statement_list statement /* TODO: How are sequential statements different from a sequence of expressions. They're currently the same to make it easier but ... the types are wrong, etc... */ { $$ = create_node2(SEQEXP, $1, $2); }
 
 statement
 	/* : labeled_statement */
@@ -114,10 +114,10 @@ expression
 
 assignment_expression
     : conditional_expression { $$ = $1; }
-    /* | unary_expression assignment_operator assignment_expression */
+    | unary_expression assignment_operator assignment_expression { $$ = create_node2($2, $1, $3); }
 
 assignment_operator
-    : '='
+    : '=' { $$ = ASSIGN; }
     /* | MUL_ASSIGN */
 	/* | DIV_ASSIGN */
 	/* | MOD_ASSIGN */
