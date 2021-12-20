@@ -27,7 +27,8 @@ enum type typecheck(struct node* node, struct environment* e) {
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++) {
                 /* dae->declarations[i].node->ts = dae->declarations[i].et; this isn't needed, a cast should be made when associating a value to an identifier */
-                typecheck(dae->declarations[i].node, scope_env); // Must still typecheck all declaration values
+                if (dae->declarations[i].node != NULL)
+                    typecheck(dae->declarations[i].node, scope_env); // Must still typecheck all declaration values
                 /* assert(tychkty == dae->declarations[i].node->ts); No longer true, the value doesn't need to have the same time because it'll be casted on assignment */
                 assoc(scope_env, dae->declarations[i].id, (union association_v){ .type = dae->declarations[i].et });
             }

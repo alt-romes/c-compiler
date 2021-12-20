@@ -173,10 +173,12 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++) {
-                // TODO .val could be NULL?
                 LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].et), "allocatmp");
-                LLVMValueRef assignment_val = compile(m, b, dae->declarations[i].node, scope_env, 1);
-                LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
+                LLVMValueRef assignment_val = NULL;
+                if (dae->declarations[i].node != NULL) {
+                    assignment_val = compile(m, b, dae->declarations[i].node, scope_env, 1);
+                    LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
+                }
                 assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
             }
 
