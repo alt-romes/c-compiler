@@ -1,60 +1,55 @@
 CC=clang
-CFLAGS=-Wall `llvm-config --cflags` -I.
 CXX=clang++
-CXXFLAGS=-Wall `llvm-config --cxxflags`
 LD=clang++
-LDFLAGS=-Wall `llvm-config --ldflags --system-libs --libs core`
 
-DEPS=$(shell find . -name "*.h")
+BUILD_DIR=./build
+SRC_DIR=./src
+INCLUDE_DIR=./include
 
-COMMON_SRCS=lex.yy.c y.tab.c ast.c parse_utils.c environment.c dcpuIR.c types.c typecheck.c
-COMMON_OBJS=$(COMMON_SRCS:%.c=%.o)
+CFLAGS=`llvm-config --cflags`
+CXXFLAGS=`llvm-config --cxxflags`
+LDFLAGS=`llvm-config --ldflags --system-libs --libs core`
+CPPFLAGS=-Wall -I$(INCLUDE_DIR)
 
-INTERPRETER_SRCS=interpreter.c
-INTERPRETER_OBJS=$(INTERPRETER_SRCS:%.c=%.o)
+HEADERS := $(shell find $(INCLUDE_DIR) -name '*.h')
+SRCS := $(shell find $(SRC_DIR) -name '*.c')
+OBJS := $(BUILD_DIR)/lex.yy.o $(BUILD_DIR)/y.tab.o $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
-DCPU_SRCS=dcpuCompiler.c dcpuIR.c
-DCPU_OBJS=$(DCPU_SRCS:%.c=%.o)
 
-COMPILER_SRCS=compiler.c llvm.c
-COMPILER_OBJS=$(COMPILER_SRCS:%.c=%.o)
+all: compiler # interpreter # dcpu
 
-all: compiler interpreter dcpu
+$(SRC_DIR)/y.tab.c $(INCLUDE_DIR)/y.tab.h: $(SRC_DIR)/parser.y
+	yacc -o $(SRC_DIR)/y.tab.c -d $<
+	mv $(SRC_DIR)/y.tab.h $(INCLUDE_DIR)/
 
-compiler: $(COMPILER_OBJS) $(COMMON_OBJS)
-	$(LD) $(LDFLAGS) $^ -o $@
+$(SRC_DIR)/lex.yy.c: $(SRC_DIR)/lexer.l $(INCLUDE_DIR)/y.tab.h
+	lex -o $@ $<
 
-interpreter: $(INTERPRETER_OBJS) $(COMMON_OBJS)
-	$(LD) $^ -o $@
+# Build object files from C files in the project src directory
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-dcpu: $(DCPU_OBJS) $(COMMON_OBJS)
-	$(LD) $^ -o $@
+# Build object files from C files in the project root directory
+$(BUILD_DIR)/%.o: %.c $(HEADERS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-y.tab.c y.tab.h: parser.y
-	yacc -d $<
+compiler: $(BUILD_DIR)/compiler.o $(OBJS)
+	$(LD) $(CPPFLAGS) $(LDFLAGS) $^ -o $@
 
-lex.yy.c: lexer.l y.tab.h
-	lex $<
+interpreter: $(BUILD_DIR)/interpreter.o $(OBJS)
+	$(LD) $(CPPFLAGS) $(LDFLAGS) $^ -o $@
 
 .PHONY: clean test
 clean:
-	-rm *.o
-	-rm y.tab.c
-	-rm y.tab.h
-	-rm lex.yy.c
-	-rm compiler
-	-rm interpreter
-	-rm dcpu
+	rm -f $(BUILD_DIR)/*
+	rm -f $(SRC_DIR)/y.tab.c
+	rm -f $(INCLUDE_DIR)/y.tab.h
+	rm -f $(SRC_DIR)/lex.yy.c
+	rm -f compiler
+	rm -f interpreter
+	rm -f dcpu
 
 test: all
 	./run-tests.sh interpreter
 	./run-tests.sh compiler
-
-# In fact, these are close to the default rules, no need to write them, the default rules specificy the same
-# The above comment is no longer true because of the include header files
-%.o: %.c $(DEPS)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# %.o: %.cpp
-# 	$(CXX) $(CXXFLAGS) -c $< -o $@ 
 

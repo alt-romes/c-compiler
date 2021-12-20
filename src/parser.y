@@ -186,6 +186,10 @@ cast_expression
 	: unary_expression { $$ = $1; }
 	/* | '(' type_name ')' cast_expression */
 
+/* type_name */
+	/* : specifier_qualifier_list */ 
+	/* | specifier_qualifier_list abstract_declarator */
+
 unary_expression
 	: postfix_expression { $$ = $1; }
 	/* | INC_OP unary_expression */
