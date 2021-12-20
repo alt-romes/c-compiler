@@ -7,9 +7,9 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/Transforms/Utils.h>
-#include "ast.h"
-#include "typecheck.h"
-#include "parse_utils.h"
+#include <ast.h>
+#include <typecheck.h>
+#include <parse_utils.h>
 /* #include "llvm.h" */
 
 #define OPTIMIZE
@@ -131,22 +131,25 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fun, "entry");
             LLVMPositionBuilderAtEnd(b, entry);
             // TODO: arguments environment
-            LLVMValueRef body_value = compile(m, b, ((function_node_t*)node)->body, e, 1);
 
-            if (((function_node_t*)node)->body->ts != node->ts) { // body type and function return type are different
+            compile(m, b, ((function_node_t*)node)->body, e, 1);
 
-                if (LLVMGetTypeKind(LLVMTypeOf(body_value)) == LLVMIntegerTypeKind && // if they both are ints,
-                    LLVMGetTypeKind(fun_type) == LLVMIntegerTypeKind) {  // truncate or extend return value
+            // TODO: For now explicit casting is required for function type to match return type
+            /* if (((function_node_t*)node)->body->ts != node->ts) { // body type and function return type are different */
 
-                    body_value = ext_or_trunc(b, node->ts, ((function_node_t*)node)->body->ts, body_value);
-                }
-                else {
-                    fprintf(stderr, "Can't cast body value to return type:: TODO Move to typecheck\n");
-                    exit(2);
-                }
-            }
+            /*     if (LLVMGetTypeKind(LLVMTypeOf(body_value)) == LLVMIntegerTypeKind && // if they both are ints, */
+            /*         LLVMGetTypeKind(fun_type) == LLVMIntegerTypeKind) {  // truncate or extend return value */
 
-            LLVMBuildRet(b, body_value);
+            /*         body_value = ext_or_trunc(b, node->ts, ((function_node_t*)node)->body->ts, body_value); */
+            /*     } */
+            /*     else { */
+            /*         fprintf(stderr, "Can't cast body value to return type:: TODO Move to typecheck\n"); */
+            /*         exit(2); */
+            /*     } */
+            /* } */
+
+            // By default return void
+            LLVMBuildRetVoid(b);
 
             LLVMVerifyFunction(fun, LLVMAbortProcessAction);
 #ifdef OPTIMIZE
@@ -182,17 +185,20 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                 assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
             }
 
-            LLVMValueRef val = compile(m, b, ((block_node_t*)node)->body, scope_env, 1);
+            statement_list_t* statement_list = ((block_node_t*)node)->statement_list;
+            for (int i = 0; i < statement_list->size; i++)
+                compile(m, b, statement_list->statements[i], scope_env, 1);
 
             endScope(scope_env); // free the scope environment and its association array
 
-            return val;
+            return NULL;
         }
 
         case ASSIGN: {
             LLVMValueRef lhs = compile(m, b, ((binary_node_t*)node)->left, e, 0);
-            LLVMValueRef rhs = ext_or_trunc(b, ((binary_node_t*)node)->right->ts, ((binary_node_t*)node)->left->ts, compile(m, b, ((binary_node_t*)node)->right, e, 1));
-            LLVMBuildStore(b, rhs, lhs);
+            LLVMValueRef rhs = compile(m, b, ((binary_node_t*)node)->right, e, 1);
+            LLVMValueRef rhsX = ext_or_trunc(b, ((binary_node_t*)node)->left->ts, ((binary_node_t*)node)->right->ts, rhs);
+            LLVMBuildStore(b, rhsX, lhs);
             return rhs;
         }
 

@@ -11,6 +11,7 @@ enum type {
      * the bit OR operation between said different qualifiers-specifiers */
 
     /* Specifiers */
+    VOID = 0, /* Is this OK being zero? :) */
     I1 = 0b1,
     CHAR = 0b10,
     SHORT = 0b100,

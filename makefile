@@ -50,6 +50,6 @@ clean:
 	rm -f dcpu
 
 test: all
-	./run-tests.sh interpreter
+	# ./run-tests.sh interpreter
 	./run-tests.sh compiler
 

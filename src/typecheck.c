@@ -34,9 +34,15 @@ enum type typecheck(struct node* node, struct environment* e) {
                 assoc(scope_env, dae->declarations[i].id, (union association_v){ .type = dae->declarations[i].et });
             }
 
-            t = typecheck(((block_node_t*)node)->body, scope_env);
+            statement_list_t* stmtl = ((block_node_t*)node)->statement_list;
+            for (int i = 0; i < stmtl->size; i++)
+                // Typecheck each statement
+                typecheck(stmtl->statements[i], scope_env);
+            /* t = typecheck(((block_node_t*)node)->body, scope_env); */
 
             endScope(scope_env); // free the scope environment and its association array
+
+            t = VOID;
 
             break;
         }

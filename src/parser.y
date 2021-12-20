@@ -16,6 +16,7 @@ void yyerror();
     struct node* node_v;
     node_type_t node_type_v;
     struct declaration_list* declaration_list_v;
+    struct statement_list* statement_list_v;
     struct declaration declaration_v;
     enum type declaration_specifiers_v;
 }
@@ -29,8 +30,9 @@ void yyerror();
 
 %type <int_v> _NUM type_specifier type_qualifier
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
-%type <node_v> initializer statement_list compound_statement function_definition expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement
+%type <node_v> initializer compound_statement function_definition expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement
 %type <declaration_list_v> declaration_list declaration init_declarator_list
+%type <statement_list_v> statement_list
 %type <declaration_v> init_declarator
 %type <declaration_specifiers_v> declaration_specifiers
 %type <node_type_v> unary_operator assignment_operator
@@ -49,7 +51,7 @@ function_definition
     : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1, $2, $3); }
 
 compound_statement // also known as "block"
-    : '{' statement_list '}'                          { $$ = $2; }
+    : '{' statement_list '}'                          { $$ = create_node_block(BLOCK, create_declaration_list() /* empty by default */ , $2); }
     | '{' declaration_list statement_list '}'         { $$ = create_node_block(BLOCK, $2, $3); }
 
 declaration_list
@@ -94,8 +96,8 @@ initializer
     /* | '{' initializer_list ',' '}' */
 
 statement_list
-	: statement { $$ = $1; }
-	| statement_list statement /* TODO: How are sequential statements different from a sequence of expressions. They're currently the same to make it easier but ... the types are wrong, etc... */ { $$ = create_node2(SEQEXP, $1, $2); }
+	: statement { $$ = statement_list_add(create_statement_list(), $1); }
+	| statement_list statement { $$ = statement_list_add($1, $2); }
 
 statement
 	/* : labeled_statement */

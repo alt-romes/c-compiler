@@ -2,8 +2,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "environment.h"
-#include "ast.h"
+#include <environment.h>
+#include <ast.h>
 
 node_t* new_node(node_type_t type) {
 
@@ -63,7 +63,7 @@ node_t* new_node(node_type_t type) {
     }
 
     node->type = type;
-    node->ts = 0;
+    node->ts = VOID;
 
     return node;
 }
@@ -133,11 +133,11 @@ node_t* create_node2(node_type_t type, node_t* l, node_t* r) {
     return (node_t*)node;
 }
 
-node_t* create_node_block(node_type_t type, declaration_list_t* declaration_list, node_t* b) {
+node_t* create_node_block(node_type_t type, declaration_list_t* declaration_list, statement_list_t* statement_list) {
 
     block_node_t* node = (block_node_t*)new_node(type);
     node->declaration_list = declaration_list;
-    node->body = b;
+    node->statement_list = statement_list;
     return (node_t*)node;
 }
 
@@ -155,20 +155,29 @@ void free_ast(node_t* node) {
     switch (node->type) {
         case FUNCTION: {
             free(((function_node_t*)node)->name);
-            free(((function_node_t*)node)->body);
+            free_ast(((function_node_t*)node)->body);
             break;
         }
         case BLOCK: {
             declaration_list_t* dae = ((block_node_t*)node)->declaration_list;
+            statement_list_t* stmtl = ((block_node_t*)node)->statement_list;
             for (int i = 0; i < dae->size; i++) {
                 free(dae->declarations[i].id);
                 if (dae->declarations[i].node != NULL)
-                    free(dae->declarations[i].node);
+                    free_ast(dae->declarations[i].node);
             }
 
             free(dae->declarations);
             free(dae);
-            free(((block_node_t*)node)->body);
+
+            // Free all nodes in statements list
+            for (int i = 0; i < stmtl->size; i++)
+                free_ast(stmtl->statements[i]);
+            // Free statements malloc'd array
+            free(stmtl->statements);
+            // Free statement list malloc'd structure
+            free(stmtl);
+
             break;
         }
         case ADD:
@@ -257,3 +266,24 @@ declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, enum ty
 
     return decs;
 }
+
+
+/* Statement List */
+statement_list_t* create_statement_list() {
+    statement_list_t* l = malloc(sizeof(statement_list_t));
+    l->statements = NULL;   // Important because realloc requires a NULL pointer to behave as malloc
+    l->size = 0;            // Important to set because when attempting to associate a value if it's an undefined value things can go wrong
+    return l;
+}
+
+statement_list_t* statement_list_add(statement_list_t * e, node_t* node) {
+
+    if (!e->size % DEFAULT_ENVIRONMENT_SIZE)
+        // CAREFUL: e->declarations must be initially NULL for realloc to behave as malloc!
+        e->statements = realloc(e->statements, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(node_t*));
+
+    e->statements[e->size++] = node;
+
+    return e;
+}
+

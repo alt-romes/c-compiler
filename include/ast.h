@@ -22,6 +22,16 @@ declaration_list_t* declaration_list_assoc(declaration_list_t* e, struct declara
 declaration_list_t* declaration_list_merge(declaration_list_t* src, declaration_list_t* dst); // merge two environments by copying all associations from src to dst, freeing src, and keeping dst's parent
 declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, enum type ds);
 
+/* Statement List */
+
+typedef struct statement_list {
+    struct node** statements;
+    int size;
+} statement_list_t; 
+
+statement_list_t* create_statement_list();
+statement_list_t* statement_list_add(statement_list_t*, struct node*);
+
 /*
  * All `*_node` structures must start with a node_type_t field so that they can
  * be cast from and to `struct node`
@@ -109,7 +119,7 @@ typedef struct block_node {
     node_type_t type;
     enum type ts;
     declaration_list_t* declaration_list;
-    struct node* body;
+    statement_list_t* statement_list;
 } block_node_t;
 
 typedef struct function_node {
@@ -122,7 +132,7 @@ typedef struct function_node {
 node_t* create_node_literal(node_type_t, enum type, void* literal_value);
 node_t* create_node1(node_type_t, node_t*);
 node_t* create_node2(node_type_t, node_t*, node_t*);
-node_t* create_node_block(node_type_t, declaration_list_t*, node_t*);
+node_t* create_node_block(node_type_t, declaration_list_t*, statement_list_t*);
 node_t* create_node_function(node_type_t, enum type, char*, node_t*);
 
 void free_ast(node_t* root);
