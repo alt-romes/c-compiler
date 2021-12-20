@@ -25,6 +25,7 @@ void yyerror();
 %token _NUM
 %token _IDENTIFIER
 %token _EQ_OP _NE_OP _LE_OP _GE_OP _OR_OP _AND_OP _LEFT_OP _RIGHT_OP
+%token _MUL_ASSIGN _DIV_ASSIGN _MOD_ASSIGN _ADD_ASSIGN _SUB_ASSIGN _LEFT_ASSIGN _RIGHT_ASSIGN _AND_ASSIGN _XOR_ASSIGN _OR_ASSIGN
 
 %type <int_v> _NUM type_specifier type_qualifier
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
@@ -118,16 +119,16 @@ assignment_expression
 
 assignment_operator
     : '=' { $$ = ASSIGN; }
-    /* | MUL_ASSIGN */
-	/* | DIV_ASSIGN */
-	/* | MOD_ASSIGN */
-	/* | ADD_ASSIGN */
-	/* | SUB_ASSIGN */
-	/* | LEFT_ASSIGN */
-	/* | RIGHT_ASSIGN */
-	/* | AND_ASSIGN */
-	/* | XOR_ASSIGN */
-	/* | OR_ASSIGN */
+    | _MUL_ASSIGN { $$ = MUL_ASSIGN; }
+	| _DIV_ASSIGN { $$ = DIV_ASSIGN; }
+	| _MOD_ASSIGN { $$ = MOD_ASSIGN; }
+	| _ADD_ASSIGN { $$ = ADD_ASSIGN; }
+	| _SUB_ASSIGN { $$ = SUB_ASSIGN; }
+	| _LEFT_ASSIGN { $$ = LEFT_ASSIGN; }
+	| _RIGHT_ASSIGN { $$ = RIGHT_ASSIGN; }
+	| _AND_ASSIGN { $$ = AND_ASSIGN; }
+	| _XOR_ASSIGN { $$ = XOR_ASSIGN; }
+	| _OR_ASSIGN { $$ = OR_ASSIGN; }
 
 conditional_expression
 	: logical_or_expression { $$ = $1; }

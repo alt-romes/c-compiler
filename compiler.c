@@ -196,6 +196,20 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             return rhs;
         }
 
+        case MUL_ASSIGN:
+        case DIV_ASSIGN:
+        case MOD_ASSIGN:
+        case ADD_ASSIGN:
+        case SUB_ASSIGN:
+        case LEFT_ASSIGN:
+        case RIGHT_ASSIGN:
+        case AND_ASSIGN:
+        case XOR_ASSIGN:
+        case OR_ASSIGN:
+            fprintf(stderr, "[ABORT] An assignment with syntatic sugar (such as *=) should never reach the typecheck or compile phase.\n");
+            exit(15);
+
+
         case SEQEXP:
             return compile(m, b, ((binary_node_t*)node)->left, e, 1), compile(m, b, ((binary_node_t*)node)->right, e, 1);
 

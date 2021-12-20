@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
 #include "typecheck.h"
@@ -82,12 +83,25 @@ enum type typecheck(struct node* node, struct environment* e) {
             break;
         }
         
+        
         case ASSIGN: {
             typecheck(((binary_node_t*)node)->left, e);
             // TODO: what can i assert here...
             t = typecheck(((binary_node_t*)node)->right, e);
             break;
         }
+        case MUL_ASSIGN:
+        case DIV_ASSIGN:
+        case MOD_ASSIGN:
+        case ADD_ASSIGN:
+        case SUB_ASSIGN:
+        case LEFT_ASSIGN:
+        case RIGHT_ASSIGN:
+        case AND_ASSIGN:
+        case XOR_ASSIGN:
+        case OR_ASSIGN:
+            fprintf(stderr, "[ABORT] An assignment with syntatic sugar (such as *=) should never reach the typecheck or compile phase.\n");
+            exit(15);
 
         case LT:
         case GT:

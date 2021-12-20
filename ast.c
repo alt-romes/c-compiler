@@ -36,6 +36,16 @@ node_t* new_node(node_type_t type) {
         case RIGHT_SHIFT:
         case SEQEXP:
         case ASSIGN:
+        case MUL_ASSIGN:
+        case DIV_ASSIGN:
+        case MOD_ASSIGN:
+        case ADD_ASSIGN:
+        case SUB_ASSIGN:
+        case LEFT_ASSIGN:
+        case RIGHT_ASSIGN:
+        case AND_ASSIGN:
+        case XOR_ASSIGN:
+        case OR_ASSIGN:
             node = malloc(sizeof(binary_node_t));
             break;
         case LOGICAL_NOT:
@@ -91,6 +101,35 @@ node_t* create_node2(node_type_t type, node_t* l, node_t* r) {
     binary_node_t* node = (binary_node_t*)new_node(type);
     node->left = l;
     node->right = r;
+
+    /* Assignment desugaring built in the parser */
+    node_type_t aux = 0;
+    switch (type) {
+        case MUL_ASSIGN: aux = MUL; break;
+        case DIV_ASSIGN: aux = DIV; break;
+        case MOD_ASSIGN: aux = REM; break;
+        case ADD_ASSIGN: aux = ADD; break;
+        case SUB_ASSIGN: aux = SUB; break;
+        case LEFT_ASSIGN: aux = LEFT_SHIFT; break;
+        case RIGHT_ASSIGN: aux = RIGHT_SHIFT; break;
+        case AND_ASSIGN: aux = BAND; break;
+        case XOR_ASSIGN: aux = BXOR; break;
+        case OR_ASSIGN: aux = BOR; break;
+        default: break;
+    }
+
+    switch (type) {
+        case MUL_ASSIGN: case DIV_ASSIGN: case MOD_ASSIGN:
+        case ADD_ASSIGN: case SUB_ASSIGN:
+        case LEFT_ASSIGN: case RIGHT_ASSIGN:
+        case AND_ASSIGN: case XOR_ASSIGN: case OR_ASSIGN:
+            node->type = ASSIGN;
+            ((binary_node_t*)node)->right =
+                create_node2(aux, ((binary_node_t*)node)->left, ((binary_node_t*)node)->right);
+            break;
+        default: break;
+    }
+
     return (node_t*)node;
 }
 
@@ -152,6 +191,16 @@ void free_ast(node_t* node) {
         case RIGHT_SHIFT:
         case SEQEXP:
         case ASSIGN:
+        case MUL_ASSIGN:
+        case DIV_ASSIGN:
+        case MOD_ASSIGN:
+        case ADD_ASSIGN:
+        case SUB_ASSIGN:
+        case LEFT_ASSIGN:
+        case RIGHT_ASSIGN:
+        case AND_ASSIGN:
+        case XOR_ASSIGN:
+        case OR_ASSIGN:
             free_ast(((binary_node_t*)node)->left);
             free_ast(((binary_node_t*)node)->right);
             break;

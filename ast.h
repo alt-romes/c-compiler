@@ -52,6 +52,17 @@ typedef enum node_type {
     RIGHT_SHIFT,
     SEQEXP,
     ASSIGN,
+    MUL_ASSIGN,
+    DIV_ASSIGN,
+    MOD_ASSIGN,
+    ADD_ASSIGN,
+    SUB_ASSIGN,
+    LEFT_ASSIGN,
+    RIGHT_ASSIGN,
+    AND_ASSIGN,
+    XOR_ASSIGN,
+    OR_ASSIGN,
+
 
     /* Unary */
     UPLUS,

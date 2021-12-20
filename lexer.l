@@ -20,6 +20,18 @@ extern YYSTYPE yylval;
 "||"      return _OR_OP;
 "<<"      return _LEFT_OP;
 ">>"      return _RIGHT_OP;
+
+"*="      return _MUL_ASSIGN;
+"/="      return _DIV_ASSIGN;
+"%="      return _MOD_ASSIGN;
+"+="      return _ADD_ASSIGN;
+"-="      return _SUB_ASSIGN;
+"<<="      return _LEFT_ASSIGN;
+">>="      return _RIGHT_ASSIGN;
+"&="      return _AND_ASSIGN;
+"^="      return _XOR_ASSIGN;
+"|="      return _OR_ASSIGN;
+
 [ \t\n]+  ;
 [0-9]+    { yylval.int_v = atoi(yytext); return _NUM; }
 [a-zA-Z][a-zA-Z0-9]*  { yylval.string_v = strdup(yytext); return _IDENTIFIER; }
