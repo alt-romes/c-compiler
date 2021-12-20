@@ -145,6 +145,13 @@ enum type typecheck(struct node* node, struct environment* e) {
             t = typecheck(((unary_node_t*)node)->child, e);
             // TODO: assert type is numeric...
             break; 
+
+        case RETURN:
+            if (((unary_node_t*)node)->child != NULL)
+                t = typecheck(((unary_node_t*)node)->child, e);
+            else
+                t = VOID;
+            break;
     }
 
     node->ts = t; // assign typechecked type to self

@@ -79,6 +79,7 @@ typedef enum node_type {
     UMINUS,
     LOGICAL_NOT,
     BNOT,
+    RETURN,
 
 
     BLOCK,

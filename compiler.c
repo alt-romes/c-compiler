@@ -304,6 +304,11 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         case RIGHT_SHIFT:
             return (is_int_type_unsigned(node->ts)?LLVMBuildLShr:LLVMBuildAShr)(b, aux.llvmVPair.left, aux.llvmVPair.right, "rightshifttmp");
 
+        case RETURN:
+            if (((unary_node_t*)node)->child != NULL)
+                return LLVMBuildRet(b, compile(m, b, ((unary_node_t*)node)->child, e, 1));
+            else
+                return LLVMBuildRetVoid(b);
     }
 
     fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
