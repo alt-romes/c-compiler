@@ -1,4 +1,4 @@
 int main {
     int x = 3, y = 5;
-    x + 5, y - 1;
+    return x + 5, y - 1;
 }

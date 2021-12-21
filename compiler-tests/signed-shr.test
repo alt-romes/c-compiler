@@ -1,4 +1,4 @@
 int main {
     char x = -127;
-    x >> 2;
+    return x >> 2;
 }

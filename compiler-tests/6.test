@@ -4,7 +4,7 @@ int main {
     {
         int x = x + y + g, g = 2;
         int y = g+y;
-        y+x+g;
+        return y+x+g;
     }
 }
 

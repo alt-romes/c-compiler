@@ -1,5 +1,4 @@
 int main {
     int x = 255, y = 255;
-    x <= y <= 256;
+    return x <= y <= 256;
 }
-

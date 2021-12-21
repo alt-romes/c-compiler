@@ -1,5 +1,5 @@
 int main {
     const int x = 5, y = 2, z = 6;
     const int i = 4;
-    ( x * y - (-z) ) / i;
+    return ( x * y - (-z) ) / i;
 }

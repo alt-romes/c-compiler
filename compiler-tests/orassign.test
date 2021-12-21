@@ -2,5 +2,5 @@ int main {
 
     int x = 6;
     x |= 1;
-    x;
+    return x;
 }

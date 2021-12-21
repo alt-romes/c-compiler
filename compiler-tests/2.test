@@ -1,5 +1,5 @@
 short main {
     char x = 255;
     short y = 1;
-    y + x;
+    return y + x;
 }

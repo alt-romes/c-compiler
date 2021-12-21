@@ -89,12 +89,18 @@ LLVMValueRef llvmInt2BoolI1(LLVMBuilderRef b, LLVMValueRef a, enum type a_type) 
 
 
 /*
- * @auto_deref_stack --> IDs are associated to memory locations in the stack.
- * auto_deref_stack == 0 when compiling an ID returns its memory location
- * auto_deref_stack > 0 when compiling an ID loads the value from its memory location.
+ * The last parameter is called "current_function_type_or_auto_deref_stack", or "cftoads".
+ * When current_function_type_or_auto_deref_stack == -1:
+ *      => compiling an ID will be just getting the memory location associated with it
+ * When current_function_type_or_auto_deref_stack != -1 (enum type)
+ *      => when compiling an ID, its value is loaded from the associated memory location,
+ *      => return nodes are automatically cast to the current function type encoded directly in the argument
+ * There is no conflict when we assume that a return node will never be present in a NO_AUTO_DEREF situation,
+ * so the only time the parameter is -1, the possibly encoded type isn't needed because no return statement will be cast
  */
+#define NO_AUTO_DEREF -1
 LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
-        environment_t* e, unsigned char auto_deref_stack) {
+        environment_t* e, enum type cftoads) {
 
     union {
         LLVMIntPredicate llvmIntPredicate;
@@ -110,9 +116,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         case LEFT_SHIFT: case RIGHT_SHIFT:
             aux.llvmVPair = ext_int_binaryop_operands(b,
                 ((binary_node_t*)node)->left->ts,
-                compile(m, b, ((binary_node_t*)node)->left, e, 1),
+                compile(m, b, ((binary_node_t*)node)->left, e, cftoads),
                 ((binary_node_t*)node)->right->ts,
-                compile(m, b, ((binary_node_t*)node)->right, e, 1));
+                compile(m, b, ((binary_node_t*)node)->right, e, cftoads));
             break;
         /* Binary nodes that use different llvmIntPredicates */
         case EQ: case NE: case LT: case GT: case LE: case GE:
@@ -132,7 +138,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             LLVMPositionBuilderAtEnd(b, entry);
             // TODO: arguments environment
 
-            compile(m, b, ((function_node_t*)node)->body, e, 1);
+            compile(m, b, ((function_node_t*)node)->body, e, ((function_node_t*)node)->ts /* update current function type */);
 
             // TODO: For now explicit casting is required for function type to match return type
             /* if (((function_node_t*)node)->body->ts != node->ts) { // body type and function return type are different */
@@ -148,8 +154,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             /*     } */
             /* } */
 
-            // By default return void
-            LLVMBuildRetVoid(b);
+            /* // By default return void */
+            // Update: No default void return!!
+            /* LLVMBuildRetVoid(b); */
 
             LLVMVerifyFunction(fun, LLVMAbortProcessAction);
 #ifdef OPTIMIZE
@@ -161,7 +168,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
         case ID: {
             LLVMValueRef alloca = find(e, ((id_node_t*)node)->value).llvmref;
-            if (auto_deref_stack)
+            if (cftoads != NO_AUTO_DEREF)
                 return LLVMBuildLoad2(b, LLVMGetAllocatedType(alloca), alloca, "loadtmp");
             else
                 return alloca;
@@ -179,7 +186,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                 LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].et), "allocatmp");
                 LLVMValueRef assignment_val = NULL;
                 if (dae->declarations[i].node != NULL) {
-                    assignment_val = compile(m, b, dae->declarations[i].node, scope_env, 1);
+                    assignment_val = compile(m, b, dae->declarations[i].node, scope_env, cftoads);
                     LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
                 }
                 assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
@@ -187,7 +194,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             statement_list_t* statement_list = ((block_node_t*)node)->statement_list;
             for (int i = 0; i < statement_list->size; i++)
-                compile(m, b, statement_list->statements[i], scope_env, 1);
+                compile(m, b, statement_list->statements[i], scope_env, cftoads);
 
             endScope(scope_env); // free the scope environment and its association array
 
@@ -195,8 +202,8 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         }
 
         case ASSIGN: {
-            LLVMValueRef lhs = compile(m, b, ((binary_node_t*)node)->left, e, 0);
-            LLVMValueRef rhs = compile(m, b, ((binary_node_t*)node)->right, e, 1);
+            LLVMValueRef lhs = compile(m, b, ((binary_node_t*)node)->left, e, NO_AUTO_DEREF);
+            LLVMValueRef rhs = compile(m, b, ((binary_node_t*)node)->right, e, cftoads);
             LLVMValueRef rhsX = ext_or_trunc(b, ((binary_node_t*)node)->left->ts, ((binary_node_t*)node)->right->ts, rhs);
             LLVMBuildStore(b, rhsX, lhs);
             return rhs;
@@ -217,7 +224,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
 
         case SEQEXP:
-            return compile(m, b, ((binary_node_t*)node)->left, e, 1), compile(m, b, ((binary_node_t*)node)->right, e, 1);
+            return compile(m, b, ((binary_node_t*)node)->left, e, cftoads), compile(m, b, ((binary_node_t*)node)->right, e, cftoads);
 
         case NUM:
             return LLVMConstInt(type2LLVMType(node->ts), ((num_node_t*)node)->value, is_int_type_unsigned(node->ts) ? 0 : 1);
@@ -253,9 +260,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             struct LLVMValueRefPair vpair = ext_int_binaryop_operands(b,
                     ((binary_node_t*)node)->left->ts,
-                    compile(m, b, ((binary_node_t*)node)->left, e, 1),
+                    compile(m, b, ((binary_node_t*)node)->left, e, cftoads),
                     ((binary_node_t*)node)->right->ts,
-                    compile(m, b, ((binary_node_t*)node)->right, e, 1));
+                    compile(m, b, ((binary_node_t*)node)->right, e, cftoads));
             // Return boolean extended to relational operation type size (CHAR) based on auxiliary LLVMIntPredicate
             return LLVMBuildICmp(b, aux.llvmIntPredicate, vpair.left, vpair.right , "cmptmp");
         }
@@ -264,34 +271,34 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         case LOR:
             return LLVMBuildOr(b,
                     llvmInt2BoolI1(b,
-                        compile(m, b, ((binary_node_t*)node)->left, e, 1),
+                        compile(m, b, ((binary_node_t*)node)->left, e, cftoads),
                         ((binary_node_t*)node)->left->ts),
                     llvmInt2BoolI1(b,
-                        compile(m, b, ((binary_node_t*)node)->right, e, 1),
+                        compile(m, b, ((binary_node_t*)node)->right, e, cftoads),
                         ((binary_node_t*)node)->right->ts),
                     "ortmp");
         case LAND:
             return LLVMBuildAnd(b,
                     llvmInt2BoolI1(b,
-                        compile(m, b, ((binary_node_t*)node)->left, e, 1),
+                        compile(m, b, ((binary_node_t*)node)->left, e, cftoads),
                         ((binary_node_t*)node)->left->ts),
                     llvmInt2BoolI1(b,
-                        compile(m, b, ((binary_node_t*)node)->right, e, 1),
+                        compile(m, b, ((binary_node_t*)node)->right, e, cftoads),
                         ((binary_node_t*)node)->right->ts),
                     "andtmp");
 
         case UPLUS:
-            return compile(m, b, ((unary_node_t*)node)->child, e, 1);
+            return compile(m, b, ((unary_node_t*)node)->child, e, cftoads);
         
         case UMINUS:
-            return LLVMBuildNeg(b, compile(m, b, ((unary_node_t*)node)->child, e, 1), "negtmp");
+            return LLVMBuildNeg(b, compile(m, b, ((unary_node_t*)node)->child, e, cftoads), "negtmp");
 
         case LOGICAL_NOT:
             // Possibly innefficient converting numbers to i1 booleans before doing boolean operations
-            return LLVMBuildNot(b, llvmInt2BoolI1(b, compile(m, b, ((unary_node_t*)node)->child, e, 1), ((unary_node_t*)node)->child->ts), "logicalnottmp");
+            return LLVMBuildNot(b, llvmInt2BoolI1(b, compile(m, b, ((unary_node_t*)node)->child, e, cftoads), ((unary_node_t*)node)->child->ts), "logicalnottmp");
 
         case BNOT:
-            return LLVMBuildNot(b, compile(m, b, ((unary_node_t*)node)->child, e, 1), "bnottmp");
+            return LLVMBuildNot(b, compile(m, b, ((unary_node_t*)node)->child, e, cftoads), "bnottmp");
 
         case BOR:
             return LLVMBuildOr(b,  aux.llvmVPair.left, aux.llvmVPair.right, "bortmp");
@@ -306,7 +313,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
         case RETURN:
             if (((unary_node_t*)node)->child != NULL)
-                return LLVMBuildRet(b, compile(m, b, ((unary_node_t*)node)->child, e, 1));
+                return LLVMBuildRet(b, ext_or_trunc(b, cftoads, ((unary_node_t*)node)->child->ts, compile(m, b, ((unary_node_t*)node)->child, e, cftoads)));
             else
                 return LLVMBuildRetVoid(b);
     }
@@ -336,7 +343,7 @@ int main(int argc, char *argv[]) {
     environment_t* env = newEnvironment();
 
     printf("[ Compiling ]\n");
-    compile(module, builder, root, env, 1);
+    compile(module, builder, root, env, VOID);
 
     printf("[ Cleaning ]\n");
     free(env);
