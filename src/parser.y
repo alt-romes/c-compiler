@@ -29,7 +29,7 @@ void yyerror();
 %token _MUL_ASSIGN _DIV_ASSIGN _MOD_ASSIGN _ADD_ASSIGN _SUB_ASSIGN _LEFT_ASSIGN _RIGHT_ASSIGN _AND_ASSIGN _XOR_ASSIGN _OR_ASSIGN
 %token _RETURN
 
-%type <int_v> _NUM type_specifier type_qualifier
+%type <int_v> _NUM type_specifier type_qualifier specifier_qualifier_list type_name
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
 %type <node_v> initializer compound_statement function_definition expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement
 %type <declaration_list_v> declaration_list declaration init_declarator_list
@@ -187,11 +187,17 @@ multiplicative_expression
 
 cast_expression
 	: unary_expression { $$ = $1; }
-	/* | '(' type_name ')' cast_expression */
+	| '(' type_name ')' cast_expression { ($$ = create_node1(CAST, $4))->ts = $2; }
 
-/* type_name */
-	/* : specifier_qualifier_list */ 
+type_name
+	: specifier_qualifier_list { $$ = $1; }
 	/* | specifier_qualifier_list abstract_declarator */
+
+specifier_qualifier_list
+	: type_specifier specifier_qualifier_list { $$ = (enum type)($1 | $2); }
+	| type_specifier { $$ = (enum type) $1; }
+	| type_qualifier specifier_qualifier_list { $$ = (enum type)($1 | $2); }
+	| type_qualifier { $$ = (enum type) $1; }
 
 unary_expression
 	: postfix_expression { $$ = $1; }

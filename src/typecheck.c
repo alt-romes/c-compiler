@@ -153,6 +153,11 @@ enum type typecheck(struct node* node, struct environment* e) {
             else
                 t = VOID;
             break;
+        case CAST:
+            t = node->ts;
+            typecheck(((unary_node_t*)node)->child, e);
+            // TODO: Assert child type is castable to cast type
+            break;
     }
 
     node->ts = t; // assign typechecked type to self

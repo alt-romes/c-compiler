@@ -67,12 +67,14 @@ struct LLVMValueRefPair ext_int_binaryop_operands(LLVMBuilderRef b, enum type ln
     return (struct LLVMValueRefPair){ left, right };
 }
 
-LLVMValueRef ext_or_trunc(LLVMBuilderRef b, enum type dst_type, enum type src_type, LLVMValueRef src) {
+LLVMValueRef cast(LLVMBuilderRef b, enum type dst_type, enum type src_type, LLVMValueRef src) {
 
     if (type_compare(src_type, dst_type) < 0)
         src = (is_int_type_unsigned(src_type) ? LLVMBuildZExt : LLVMBuildSExt)(b, src, type2LLVMType(dst_type), "extsrctmp");
     else if (type_compare(src_type, dst_type) > 0)
         src = LLVMBuildTrunc(b, src, type2LLVMType(dst_type), "truncsrctmp"); // extend right type to match left type size
+
+    // TODO: Cast int to float, vice-versa, etc...
 
     return src;
 }
@@ -187,7 +189,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                 LLVMValueRef assignment_val = NULL;
                 if (dae->declarations[i].node != NULL) {
                     assignment_val = compile(m, b, dae->declarations[i].node, scope_env, cftoads);
-                    LLVMBuildStore(b, ext_or_trunc(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
+                    LLVMBuildStore(b, cast(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
                 }
                 assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
             }
@@ -217,7 +219,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         case OR_ASSIGN: {
             LLVMValueRef lhs = compile(m, b, ((binary_node_t*)node)->left, e, NO_AUTO_DEREF);
             LLVMValueRef rhs = compile(m, b, ((binary_node_t*)node)->right, e, cftoads);
-            LLVMValueRef rhsX = ext_or_trunc(b, ((binary_node_t*)node)->left->ts, ((binary_node_t*)node)->right->ts, rhs);
+            LLVMValueRef rhsX = cast(b, ((binary_node_t*)node)->left->ts, ((binary_node_t*)node)->right->ts, rhs);
             LLVMBuildStore(b, rhsX, lhs);
             return rhs;
         }
@@ -312,9 +314,11 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
         case RETURN:
             if (((unary_node_t*)node)->child != NULL)
-                return LLVMBuildRet(b, ext_or_trunc(b, cftoads, ((unary_node_t*)node)->child->ts, compile(m, b, ((unary_node_t*)node)->child, e, cftoads)));
+                return LLVMBuildRet(b, cast(b, cftoads, ((unary_node_t*)node)->child->ts, compile(m, b, ((unary_node_t*)node)->child, e, cftoads)));
             else
                 return LLVMBuildRetVoid(b);
+        case CAST:
+            return cast(b, node->ts, ((unary_node_t*)node)->child->ts, compile(m, b, ((unary_node_t*)node)->child, e, cftoads));
     }
 
     fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);

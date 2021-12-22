@@ -83,7 +83,8 @@ typedef enum node_type {
 
 
     BLOCK,
-    FUNCTION
+    FUNCTION,
+    CAST
 } node_type_t;
 
 typedef struct node {
