@@ -124,7 +124,8 @@ node_t* create_node2(node_type_t type, node_t* l, node_t* r) {
         case ADD_ASSIGN: case SUB_ASSIGN:
         case LEFT_ASSIGN: case RIGHT_ASSIGN:
         case AND_ASSIGN: case XOR_ASSIGN: case OR_ASSIGN:
-            node->type = ASSIGN;
+            // Desugar XXX_ASSIGN to normal assign, but keep type to correctly free memory.
+            // These types are to be treated exactly as an ASSIGN because that's what they really are under the hood
             ((binary_node_t*)node)->right =
                 create_node2(aux, ((binary_node_t*)node)->left, ((binary_node_t*)node)->right);
             break;
@@ -201,6 +202,9 @@ void free_ast(node_t* node) {
         case RIGHT_SHIFT:
         case SEQEXP:
         case ASSIGN:
+            free_ast(((binary_node_t*)node)->left);
+            free_ast(((binary_node_t*)node)->right);
+            break;
         case MUL_ASSIGN:
         case DIV_ASSIGN:
         case MOD_ASSIGN:
@@ -211,7 +215,9 @@ void free_ast(node_t* node) {
         case AND_ASSIGN:
         case XOR_ASSIGN:
         case OR_ASSIGN:
-            free_ast(((binary_node_t*)node)->left);
+            // Don't free left ast because the XXX_ASSIGN node has been desugered
+            // from x *= y to x = x * y, where a pointer to x is on both the left and the right hand side.
+            // As such, the left hand side will be automatically freed when teh right hand side is freed.
             free_ast(((binary_node_t*)node)->right);
             break;
         case LOGICAL_NOT:

@@ -201,14 +201,10 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             return NULL;
         }
 
-        case ASSIGN: {
-            LLVMValueRef lhs = compile(m, b, ((binary_node_t*)node)->left, e, NO_AUTO_DEREF);
-            LLVMValueRef rhs = compile(m, b, ((binary_node_t*)node)->right, e, cftoads);
-            LLVMValueRef rhsX = ext_or_trunc(b, ((binary_node_t*)node)->left->ts, ((binary_node_t*)node)->right->ts, rhs);
-            LLVMBuildStore(b, rhsX, lhs);
-            return rhs;
-        }
-
+        // All XXX_ASSIGNS have been desugered to an ASSIGN,
+        // but maintain their type to be correctly freed.
+        // Treat them equally.
+        case ASSIGN:
         case MUL_ASSIGN:
         case DIV_ASSIGN:
         case MOD_ASSIGN:
@@ -218,10 +214,13 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         case RIGHT_ASSIGN:
         case AND_ASSIGN:
         case XOR_ASSIGN:
-        case OR_ASSIGN:
-            fprintf(stderr, "[ABORT] An assignment with syntatic sugar (such as *=) should never reach the typecheck or compile phase.\n");
-            exit(15);
-
+        case OR_ASSIGN: {
+            LLVMValueRef lhs = compile(m, b, ((binary_node_t*)node)->left, e, NO_AUTO_DEREF);
+            LLVMValueRef rhs = compile(m, b, ((binary_node_t*)node)->right, e, cftoads);
+            LLVMValueRef rhsX = ext_or_trunc(b, ((binary_node_t*)node)->left->ts, ((binary_node_t*)node)->right->ts, rhs);
+            LLVMBuildStore(b, rhsX, lhs);
+            return rhs;
+        }
 
         case SEQEXP:
             return compile(m, b, ((binary_node_t*)node)->left, e, cftoads), compile(m, b, ((binary_node_t*)node)->right, e, cftoads);

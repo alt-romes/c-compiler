@@ -90,12 +90,10 @@ enum type typecheck(struct node* node, struct environment* e) {
         }
         
         
-        case ASSIGN: {
-            typecheck(((binary_node_t*)node)->left, e);
-            // TODO: what can i assert here...
-            t = typecheck(((binary_node_t*)node)->right, e);
-            break;
-        }
+        // All XXX_ASSIGNS have been desugered to an ASSIGN,
+        // but maintain their type to be correctly freed.
+        // Treat them equally.
+        case ASSIGN:
         case MUL_ASSIGN:
         case DIV_ASSIGN:
         case MOD_ASSIGN:
@@ -105,9 +103,12 @@ enum type typecheck(struct node* node, struct environment* e) {
         case RIGHT_ASSIGN:
         case AND_ASSIGN:
         case XOR_ASSIGN:
-        case OR_ASSIGN:
-            fprintf(stderr, "[ABORT] An assignment with syntatic sugar (such as *=) should never reach the typecheck or compile phase.\n");
-            exit(15);
+        case OR_ASSIGN: {
+            typecheck(((binary_node_t*)node)->left, e);
+            // TODO: what can i assert here...
+            t = typecheck(((binary_node_t*)node)->right, e);
+            break;
+        }
 
         case LT:
         case GT:
