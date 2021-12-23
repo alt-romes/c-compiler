@@ -319,6 +319,34 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                 return LLVMBuildRetVoid(b);
         case CAST:
             return cast(b, node->ts, ((unary_node_t*)node)->child->ts, compile(m, b, ((unary_node_t*)node)->child, e, cftoads));
+
+        case IF: {
+            if_node_t* ifnode = (if_node_t*)node;
+            LLVMValueRef condition = llvmInt2BoolI1(b, compile(m, b, ifnode->cond, e, cftoads), ifnode->cond->ts);
+
+            // Retrieve function.
+            LLVMValueRef func = LLVMGetBasicBlockParent(LLVMGetInsertBlock(b));
+
+            // Generate true/false expr and merge.
+            LLVMBasicBlockRef then_block = LLVMAppendBasicBlock(func, "then");
+            LLVMBasicBlockRef else_block = LLVMAppendBasicBlock(func, "else");
+            LLVMBasicBlockRef merge_block = LLVMAppendBasicBlock(func, "ifcont");
+
+            LLVMBuildCondBr(b, condition, then_block, else_block);
+
+            // Generate 'then' block.
+            LLVMPositionBuilderAtEnd(b, then_block);
+            compile(m, b, ((if_node_t*)node)->thenst, e, cftoads);
+            LLVMBuildBr(b, merge_block);
+
+            LLVMPositionBuilderAtEnd(b, else_block);
+            if (ifnode->elsest != NULL)
+                compile(m, b, ifnode->elsest, e, cftoads);
+            LLVMBuildBr(b, merge_block);
+
+            LLVMPositionBuilderAtEnd(b, merge_block);
+            return NULL; // TODO: this could be a problem? however, this is a statement, it shouldn't return any value
+        }
     }
 
     fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);

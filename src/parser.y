@@ -27,11 +27,11 @@ void yyerror();
 %token _IDENTIFIER
 %token _EQ_OP _NE_OP _LE_OP _GE_OP _OR_OP _AND_OP _LEFT_OP _RIGHT_OP
 %token _MUL_ASSIGN _DIV_ASSIGN _MOD_ASSIGN _ADD_ASSIGN _SUB_ASSIGN _LEFT_ASSIGN _RIGHT_ASSIGN _AND_ASSIGN _XOR_ASSIGN _OR_ASSIGN
-%token _RETURN
+%token _RETURN _IF _ELSE
 
 %type <int_v> _NUM type_specifier type_qualifier specifier_qualifier_list type_name
 %type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
-%type <node_v> initializer compound_statement function_definition expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement
+%type <node_v> initializer compound_statement function_definition expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement selection_statement
 %type <declaration_list_v> declaration_list declaration init_declarator_list
 %type <statement_list_v> statement_list
 %type <declaration_v> init_declarator
@@ -104,7 +104,7 @@ statement
 	/* : labeled_statement */
 	: compound_statement { $$ = $1; }
 	| expression_statement { $$ = $1; }
-	/* | selection_statement */
+	| selection_statement { $$ = $1; }
 	/* | iteration_statement */
 	| jump_statement
 
@@ -238,6 +238,17 @@ jump_statement
 	/* | BREAK ';' */
 	: _RETURN ';'             { $$ = create_node1(RETURN, NULL); }
 	| _RETURN expression ';'  { $$ = create_node1(RETURN, $2); }
+
+/* iteration_statement */
+/* 	| WHILE '(' expression ')' statement */
+/* 	: DO statement WHILE '(' expression ')' ';' */
+/* 	| FOR '(' expression_statement expression_statement ')' statement */
+/* 	| FOR '(' expression_statement expression_statement expression ')' statement */
+
+selection_statement
+	: _IF '(' expression ')' statement { $$ = create_node_if(IF, $3, $5, NULL); }
+	| _IF '(' expression ')' statement _ELSE statement { $$ = create_node_if(IF, $3, $5, $7); }
+	/* | SWITCH '(' expression ')' statement */
 
 %%
 

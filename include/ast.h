@@ -73,7 +73,6 @@ typedef enum node_type {
     XOR_ASSIGN,
     OR_ASSIGN,
 
-
     /* Unary */
     UPLUS,
     UMINUS,
@@ -81,10 +80,10 @@ typedef enum node_type {
     BNOT,
     RETURN,
 
-
+    CAST,
     BLOCK,
     FUNCTION,
-    CAST
+    IF
 } node_type_t;
 
 typedef struct node {
@@ -131,11 +130,20 @@ typedef struct function_node {
     struct node* body;
 } function_node_t;
 
+typedef struct if_node {
+    node_type_t type;
+    enum type ts;
+    struct node* cond;
+    struct node* thenst;
+    struct node* elsest;
+} if_node_t;
+
 node_t* create_node_literal(node_type_t, enum type, void* literal_value);
 node_t* create_node1(node_type_t, node_t*);
 node_t* create_node2(node_type_t, node_t*, node_t*);
 node_t* create_node_block(node_type_t, declaration_list_t*, statement_list_t*);
 node_t* create_node_function(node_type_t, enum type, char*, node_t*);
+node_t* create_node_if(node_type_t, node_t*, node_t*, node_t*);
 
 void free_ast(node_t* root);
 

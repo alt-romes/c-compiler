@@ -145,7 +145,7 @@ enum type typecheck(struct node* node, struct environment* e) {
         case UMINUS:
             t = typecheck(((unary_node_t*)node)->child, e);
             // TODO: assert type is numeric...
-            break; 
+            break;
 
         case RETURN:
             if (((unary_node_t*)node)->child != NULL)
@@ -157,6 +157,14 @@ enum type typecheck(struct node* node, struct environment* e) {
             t = node->ts;
             typecheck(((unary_node_t*)node)->child, e);
             // TODO: Assert child type is castable to cast type
+            break;
+        case IF:
+            t = VOID;
+            typecheck(((if_node_t*)node)->cond, e);
+            // Assert condition is bool or castable to bool? ...
+            typecheck(((if_node_t*)node)->thenst, e);
+            if (((if_node_t*)node)->elsest != NULL)
+                typecheck(((if_node_t*)node)->elsest, e);
             break;
     }
 

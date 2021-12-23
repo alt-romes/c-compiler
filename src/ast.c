@@ -62,6 +62,9 @@ node_t* new_node(node_type_t type) {
         case NUM:
             node = malloc(sizeof(num_node_t));
             break;
+        case IF:
+            node = malloc(sizeof(if_node_t));
+            break;
     }
 
     node->type = type;
@@ -153,6 +156,15 @@ node_t* create_node_function(node_type_t type, enum type ts, char* name, node_t*
     return (node_t*)node;
 }
 
+node_t* create_node_if(node_type_t type, node_t* cond, node_t* thenst, node_t* elsest) {
+
+    if_node_t* node = (if_node_t*)new_node(type);
+    node->cond = cond;
+    node->thenst = thenst;
+    node->elsest = elsest;
+    return (node_t*)node;
+}
+
 void free_ast(node_t* node) {
 
     switch (node->type) {
@@ -233,6 +245,12 @@ void free_ast(node_t* node) {
             free(((id_node_t*)node)->value);
             break;
         case NUM:
+            break;
+        case IF:
+            free_ast(((if_node_t*)node)->cond);
+            free_ast(((if_node_t*)node)->thenst);
+            if (((if_node_t*)node)->elsest != NULL)
+                free_ast(((if_node_t*)node)->elsest);
             break;
     }
 

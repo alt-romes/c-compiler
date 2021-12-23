@@ -7,6 +7,8 @@ extern YYSTYPE yylval;
 %%
 
 "return"     return _RETURN;
+"if"     return _IF;
+"else"     return _ELSE;
 "int"     return _INT;
 "short"   return _SHORT;
 "char"    return _CHAR;
