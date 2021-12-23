@@ -166,6 +166,15 @@ enum type typecheck(struct node* node, struct environment* e) {
             if (((if_node_t*)node)->elsest != NULL)
                 typecheck(((if_node_t*)node)->elsest, e);
             break;
+        case CONDITIONAL: {
+            typecheck(((if_node_t*)node)->cond, e);
+            // TODO: Assert condition is bool or castable to bool? ...
+            t = typecheck(((if_node_t*)node)->thenst, e);
+            typecheck(((if_node_t*)node)->elsest, e);
+            // TODO: Assert then is castable to the same type as else
+            break;
+        }
+
     }
 
     node->ts = t; // assign typechecked type to self

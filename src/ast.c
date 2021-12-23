@@ -63,6 +63,7 @@ node_t* new_node(node_type_t type) {
             node = malloc(sizeof(num_node_t));
             break;
         case IF:
+        case CONDITIONAL:
             node = malloc(sizeof(if_node_t));
             break;
     }
@@ -247,6 +248,7 @@ void free_ast(node_t* node) {
         case NUM:
             break;
         case IF:
+        case CONDITIONAL:
             free_ast(((if_node_t*)node)->cond);
             free_ast(((if_node_t*)node)->thenst);
             if (((if_node_t*)node)->elsest != NULL)

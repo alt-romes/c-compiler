@@ -135,7 +135,7 @@ assignment_operator
 
 conditional_expression
 	: logical_or_expression { $$ = $1; }
-	/* | logical_or_expression '?' expression ':' conditional_expression */
+	| logical_or_expression '?' expression ':' conditional_expression { $$ = create_node_if(CONDITIONAL, $1, $3, $5); }
 
 logical_or_expression
 	: logical_and_expression { $$ = $1; }

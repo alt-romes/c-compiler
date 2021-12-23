@@ -320,7 +320,8 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         case CAST:
             return cast(b, node->ts, ((unary_node_t*)node)->child->ts, compile(m, b, ((unary_node_t*)node)->child, e, cftoads));
 
-        case IF: {
+        case IF:
+        case CONDITIONAL: {
             if_node_t* ifnode = (if_node_t*)node;
             LLVMValueRef condition = llvmInt2BoolI1(b, compile(m, b, ifnode->cond, e, cftoads), ifnode->cond->ts);
 
@@ -336,17 +337,34 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             // Generate 'then' block.
             LLVMPositionBuilderAtEnd(b, then_block);
-            compile(m, b, ((if_node_t*)node)->thenst, e, cftoads);
+            LLVMValueRef then_value = compile(m, b, ((if_node_t*)node)->thenst, e, cftoads);
             LLVMBuildBr(b, merge_block);
 
             LLVMPositionBuilderAtEnd(b, else_block);
-            if (ifnode->elsest != NULL)
-                compile(m, b, ifnode->elsest, e, cftoads);
+            LLVMValueRef else_value;
+            if (ifnode->elsest != NULL) {
+                else_value = compile(m, b, ifnode->elsest, e, cftoads);
+                // If the node is a conditional, the else branch must be cast to the same type as the then branch
+                if (node->type == CONDITIONAL)
+                    else_value = cast(b, ifnode->thenst->ts, ifnode->elsest->ts, else_value);
+            }
             LLVMBuildBr(b, merge_block);
 
             LLVMPositionBuilderAtEnd(b, merge_block);
-            return NULL; // TODO: this could be a problem? however, this is a statement, it shouldn't return any value
+            if (node->type == IF)
+                return NULL; // TODO: this could be a problem? however, this is a statement, it shouldn't return any value
+            else if (node->type == CONDITIONAL) {
+
+                LLVMPositionBuilderAtEnd(b, merge_block);
+                LLVMValueRef phi = LLVMBuildPhi(b, type2LLVMType(node->ts), "");
+                LLVMAddIncoming(phi, &then_value, &then_block, 1);
+                LLVMAddIncoming(phi, &else_value, &else_block, 1);
+                
+                return phi;
+            }
+
         }
+
     }
 
     fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);

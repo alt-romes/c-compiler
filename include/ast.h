@@ -80,10 +80,12 @@ typedef enum node_type {
     BNOT,
     RETURN,
 
+    IF,
+    CONDITIONAL,
+
     CAST,
     BLOCK,
-    FUNCTION,
-    IF
+    FUNCTION
 } node_type_t;
 
 typedef struct node {
