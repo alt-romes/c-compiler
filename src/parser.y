@@ -26,7 +26,7 @@ void yyerror();
 %token _NUM
 %token _IDENTIFIER
 %token _EQ_OP _NE_OP _LE_OP _GE_OP _OR_OP _AND_OP _LEFT_OP _RIGHT_OP
-%token _MUL_ASSIGN _DIV_ASSIGN _MOD_ASSIGN _ADD_ASSIGN _SUB_ASSIGN _LEFT_ASSIGN _RIGHT_ASSIGN _AND_ASSIGN _XOR_ASSIGN _OR_ASSIGN
+%token _MUL_ASSIGN _DIV_ASSIGN _MOD_ASSIGN _ADD_ASSIGN _SUB_ASSIGN _LEFT_ASSIGN _RIGHT_ASSIGN _AND_ASSIGN _XOR_ASSIGN _OR_ASSIGN _INC_OP _DEC_OP
 %token _RETURN _IF _ELSE
 
 %type <int_v> _NUM type_specifier type_qualifier specifier_qualifier_list type_name
@@ -201,8 +201,8 @@ specifier_qualifier_list
 
 unary_expression
 	: postfix_expression { $$ = $1; }
-	/* | INC_OP unary_expression */
-	/* | DEC_OP unary_expression */
+	| _INC_OP unary_expression { $$ = create_node1(PRE_INC, $2); }
+	| _DEC_OP unary_expression { $$ = create_node1(PRE_DEC, $2); }
 	| unary_operator cast_expression { $$ = create_node1($1, $2); }
 	/* | SIZEOF unary_expression */
 	/* | SIZEOF '(' type_name ')' */
@@ -222,8 +222,8 @@ postfix_expression
 	/* | postfix_expression '(' argument_expression_list ')' */
 	/* | postfix_expression '.' IDENTIFIER */
 	/* | postfix_expression PTR_OP IDENTIFIER */
-	/* | postfix_expression INC_OP */
-	/* | postfix_expression DEC_OP */
+	| postfix_expression _INC_OP { $$ = create_node1(POST_INC, $1); }
+	| postfix_expression _DEC_OP { $$ = create_node1(POST_DEC, $1); }
 
 primary_expression
     : _IDENTIFIER                                     { $$ = create_node_literal(ID, -1, $1); }

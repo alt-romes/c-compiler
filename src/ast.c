@@ -54,6 +54,10 @@ node_t* new_node(node_type_t type) {
         case BNOT:
         case RETURN:
         case CAST:
+        case PRE_INC:
+        case PRE_DEC:
+        case POST_INC:
+        case POST_DEC:
             node = malloc(sizeof(unary_node_t));
             break;
         case ID:
@@ -77,10 +81,10 @@ node_t* new_node(node_type_t type) {
 node_t* create_node_literal(node_type_t type, enum type ts, void* literal_value) {
     
     node_t* node = new_node(type);
+    node->ts = ts;
     
     switch (type) {
         case NUM: {
-            ((num_node_t*)node)->ts = ts;
             ((num_node_t*)node)->value = (int)(intptr_t)literal_value;
             break;
         }
@@ -99,6 +103,25 @@ node_t* create_node1(node_type_t type, node_t* n) {
 
     unary_node_t* node = (unary_node_t*)new_node(type);
     node->child = n;
+
+    /* Desugaring */
+    switch (type) {
+        case PRE_INC:
+            node->child = create_node2(ADD_ASSIGN, node->child, create_node_literal(NUM, node->ts, (void*)(intptr_t)1));
+            break;
+        case PRE_DEC:
+            node->child = create_node2(SUB_ASSIGN, node->child, create_node_literal(NUM, node->ts, (void*)(intptr_t)1));
+            break;
+        case POST_INC:
+            node->child = create_node2(SUB, create_node2(ADD_ASSIGN, node->child, create_node_literal(NUM, node->ts, (void*)(intptr_t)1)), create_node_literal(NUM, node->ts, (void*)(intptr_t)1));
+            break;
+        case POST_DEC:
+            node->child = create_node2(ADD, create_node2(SUB_ASSIGN, node->child, create_node_literal(NUM, node->ts, (void*)(intptr_t)1)), create_node_literal(NUM, node->ts, (void*)(intptr_t)1));
+            break;
+        
+        default: break;
+    }
+
     return (node_t*)node;
 }
 
@@ -108,7 +131,7 @@ node_t* create_node2(node_type_t type, node_t* l, node_t* r) {
     node->left = l;
     node->right = r;
 
-    /* Assignment desugaring built in the parser */
+    /* Desugaring */
     node_type_t aux = 0;
     switch (type) {
         case MUL_ASSIGN: aux = MUL; break;
@@ -240,6 +263,10 @@ void free_ast(node_t* node) {
         case BNOT:
         case RETURN:
         case CAST:
+        case PRE_INC:
+        case PRE_DEC:
+        case POST_INC:
+        case POST_DEC:
             free_ast(((unary_node_t*)node)->child);
             break;
         case ID:

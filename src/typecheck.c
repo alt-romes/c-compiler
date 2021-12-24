@@ -143,6 +143,10 @@ enum type typecheck(struct node* node, struct environment* e) {
         case BNOT:
         case UPLUS:
         case UMINUS:
+        case PRE_INC:
+        case PRE_DEC:
+        case POST_INC:
+        case POST_DEC:
             t = typecheck(((unary_node_t*)node)->child, e);
             // TODO: assert type is numeric...
             break;

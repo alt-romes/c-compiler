@@ -268,6 +268,12 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             return LLVMBuildICmp(b, aux.llvmIntPredicate, vpair.left, vpair.right , "cmptmp");
         }
 
+        case PRE_INC:
+        case PRE_DEC:
+        case POST_INC:
+        case POST_DEC:
+            return compile(m, b, ((unary_node_t*)node)->child, e, cftoads);
+
         // Booleans are represented in an i1 LLVM register, we can convert a number to an i1 boolean, and bit OR, AND, NOT operations on 1 bit are the same as logical operations
         case LOR:
             return LLVMBuildOr(b,

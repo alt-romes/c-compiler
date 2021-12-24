@@ -74,6 +74,10 @@ typedef enum node_type {
     OR_ASSIGN,
 
     /* Unary */
+    PRE_INC,
+    PRE_DEC,
+    POST_INC,
+    POST_DEC,
     UPLUS,
     UMINUS,
     LOGICAL_NOT,

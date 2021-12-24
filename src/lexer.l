@@ -35,6 +35,9 @@ extern YYSTYPE yylval;
 "^="      return _XOR_ASSIGN;
 "|="      return _OR_ASSIGN;
 
+"++"      return _INC_OP;
+"--"      return _DEC_OP;
+
 [ \t\n]+  ;
 [0-9]+    { yylval.int_v = atoi(yytext); return _NUM; }
 [a-zA-Z][a-zA-Z0-9]*  { yylval.string_v = strdup(yytext); return _IDENTIFIER; }
