@@ -32,21 +32,33 @@ void create_llvm_pass_manager(LLVMModuleRef module) {
 
 LLVMTypeRef type2LLVMType(enum type ts) {
 
-    switch (ts & 0xf) {
+    LLVMTypeRef tr;
+
+    switch (ts & 0xff) {
         case INT:
-            return LLVMInt32Type();
+            tr = LLVMInt32Type();
+            break;
         case SHORT:
-            return LLVMInt16Type();
+            tr = LLVMInt16Type();
+            break;
         case CHAR:
-            return LLVMInt8Type();
+            tr = LLVMInt8Type();
+            break;
         case I1:
-            return LLVMIntType(1);
+            tr = LLVMIntType(1);
+            break;
         case LONG:
-            return LLVMInt64Type();
+            tr = LLVMInt64Type();
+            break;
         default:
             fprintf(stderr, "type2LLVM undefined for ts: %d\n", ts);
             exit(1);
     }
+
+    if (ts & REFERENCE)
+        tr = LLVMPointerType(tr, 0); // TODO ADDRESS SPACE
+
+    return tr;
 
 }
 
@@ -296,7 +308,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
         case DEREF: {
             LLVMValueRef alloca = compile(m, b, ((unary_node_t*)node)->child, e, cftoads);
-            return LLVMBuildLoad2(b, LLVMGetAllocatedType(alloca), alloca, "loadtmp");
+            return LLVMBuildLoad2(b, type2LLVMType(node->ts), alloca, "loadtmp");
         }
         case REFOF:
             return compile(m, b, ((unary_node_t*)node)->child, e, NO_AUTO_DEREF); // Compile without auto deref :)

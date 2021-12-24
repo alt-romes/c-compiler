@@ -4,6 +4,11 @@
 #include "environment.h"
 #include "types.h"
 
+struct declarator {
+    char* id;
+    enum type pointer;
+};
+
 /* Declaration List */
 
 struct declaration {

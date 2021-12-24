@@ -19,6 +19,7 @@ void yyerror();
     struct statement_list* statement_list_v;
     struct declaration declaration_v;
     enum type declaration_specifiers_v;
+    struct declarator declarator_v;
 }
 
 %token _INT _SHORT _CHAR _UNSIGNED _SIGNED
@@ -29,8 +30,9 @@ void yyerror();
 %token _MUL_ASSIGN _DIV_ASSIGN _MOD_ASSIGN _ADD_ASSIGN _SUB_ASSIGN _LEFT_ASSIGN _RIGHT_ASSIGN _AND_ASSIGN _XOR_ASSIGN _OR_ASSIGN _INC_OP _DEC_OP
 %token _RETURN _IF _ELSE
 
-%type <int_v> _NUM type_specifier type_qualifier specifier_qualifier_list type_name
-%type <string_v> _IDENTIFIER declarator direct_declarator // string is malloc'd and needs to be freed by the ast destructor
+%type <int_v> _NUM type_specifier type_qualifier specifier_qualifier_list type_name pointer
+%type <string_v> _IDENTIFIER direct_declarator // string is malloc'd and needs to be freed by the ast destructor
+%type <declarator_v> declarator
 %type <node_v> initializer compound_statement function_definition expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement selection_statement
 %type <declaration_list_v> declaration_list declaration init_declarator_list
 %type <statement_list_v> statement_list
@@ -49,7 +51,8 @@ init
 
 function_definition
     // TODO: HOW TO HANDLE DECLARATION SPECIFIERS FOR FUNCTIONS?
-    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1, $2, $3); }
+    // TODO: What to do with declarator with pointer???
+    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1, $2.id, $3); }
 
 compound_statement // also known as "block"
     : '{' statement_list '}'                          { $$ = create_node_block(BLOCK, create_declaration_list() /* empty by default */ , $2); }
@@ -82,11 +85,18 @@ init_declarator_list
     | init_declarator_list ',' init_declarator        { $$ = declaration_list_assoc($1, $3); }
 
 init_declarator
-    : declarator                                      { $$ = (struct declaration){ .id = $1, EMPTY_DEC_SPECS, .node = NULL }; }
-    | declarator '=' initializer                      { $$ = (struct declaration){ .id = $1, EMPTY_DEC_SPECS, .node = $3 }; }
+    : declarator                                      { $$ = (struct declaration){ .id = $1.id, $1.pointer, .node = NULL }; }
+    | declarator '=' initializer                      { $$ = (struct declaration){ .id = $1.id, $1.pointer, .node = $3 }; }
 
 declarator
-    : direct_declarator                               { $$ = $1; }
+	: pointer direct_declarator                       { $$ = (struct declarator){ $2, $1 }; }
+	| direct_declarator                               { $$ = (struct declarator){ $1, VOID }; }
+
+pointer
+	: '*' { $$ = REFERENCE; }
+	/* | '*' type_qualifier_list */
+	| '*' pointer { $$ = (enum type)(REFERENCE | $2); }
+	/* | '*' type_qualifier_list pointer */
 
 direct_declarator
     : _IDENTIFIER                                     { $$ = $1; }

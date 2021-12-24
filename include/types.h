@@ -24,7 +24,6 @@ enum type {
     /* Qualifiers */
     CONST = 0x8000
 }; 
-#define EMPTY_DEC_SPECS -1
 
 int is_int_type_unsigned(enum type t);
 int type_compare(enum type l, enum type r);
