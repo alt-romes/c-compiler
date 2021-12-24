@@ -208,9 +208,9 @@ unary_expression
 	/* | SIZEOF '(' type_name ')' */
 
 unary_operator
-	/* : '&' */
-	/* | '*' */
-	: '+' { $$ = UPLUS; }
+	: '&' { $$ = REFOF; }
+	| '*' { $$ = DEREF; }
+	| '+' { $$ = UPLUS; }
 	| '-' { $$ = UMINUS; }
 	| '~' { $$ = BNOT; }
 	| '!' { $$ = LOGICAL_NOT; }

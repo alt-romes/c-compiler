@@ -150,6 +150,14 @@ enum type typecheck(struct node* node, struct environment* e) {
             t = typecheck(((unary_node_t*)node)->child, e);
             // TODO: assert type is numeric...
             break;
+        case REFOF:
+            t = ref_of(typecheck(((unary_node_t*)node)->child, e));
+            break;
+        case DEREF:
+            t = typecheck(((unary_node_t*)node)->child, e);
+            assert(t & REFERENCE); // Assert t is a reference
+            t = deref(t);
+            break;
 
         case RETURN:
             if (((unary_node_t*)node)->child != NULL)

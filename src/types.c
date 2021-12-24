@@ -15,3 +15,12 @@ int type_compare(enum type l, enum type r) {
     return (l & 0xff) - (r & 0xff);
 }
 
+enum type ref_of(enum type t) {
+
+    return t | REFERENCE;
+}
+
+enum type deref(enum type t) {
+    
+    return t ^ REFERENCE;
+}

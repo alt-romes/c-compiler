@@ -58,6 +58,8 @@ node_t* new_node(node_type_t type) {
         case PRE_DEC:
         case POST_INC:
         case POST_DEC:
+        case REFOF:
+        case DEREF:
             node = malloc(sizeof(unary_node_t));
             break;
         case ID:
@@ -267,6 +269,8 @@ void free_ast(node_t* node) {
         case PRE_DEC:
         case POST_INC:
         case POST_DEC:
+        case REFOF:
+        case DEREF:
             free_ast(((unary_node_t*)node)->child);
             break;
         case ID:

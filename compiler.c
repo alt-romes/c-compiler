@@ -96,7 +96,7 @@ LLVMValueRef llvmInt2BoolI1(LLVMBuilderRef b, LLVMValueRef a, enum type a_type) 
  *      => compiling an ID will be just getting the memory location associated with it
  * When current_function_type_or_auto_deref_stack != -1 (enum type)
  *      => when compiling an ID, its value is loaded from the associated memory location,
- *      => return nodes are automatically cast to the current function type encoded directly in the argument
+ *      => return nodes are automatically cast to the current function type encoded directly in the argument (this will probably have to be split into a different argument :( because of REFOF)
  * There is no conflict when we assume that a return node will never be present in a NO_AUTO_DEREF situation,
  * so the only time the parameter is -1, the possibly encoded type isn't needed because no return statement will be cast
  */
@@ -293,6 +293,13 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                         compile(m, b, ((binary_node_t*)node)->right, e, cftoads),
                         ((binary_node_t*)node)->right->ts),
                     "andtmp");
+
+        case DEREF: {
+            LLVMValueRef alloca = compile(m, b, ((unary_node_t*)node)->child, e, cftoads);
+            return LLVMBuildLoad2(b, LLVMGetAllocatedType(alloca), alloca, "loadtmp");
+        }
+        case REFOF:
+            return compile(m, b, ((unary_node_t*)node)->child, e, NO_AUTO_DEREF); // Compile without auto deref :)
 
         case UPLUS:
             return compile(m, b, ((unary_node_t*)node)->child, e, cftoads);

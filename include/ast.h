@@ -78,6 +78,8 @@ typedef enum node_type {
     PRE_DEC,
     POST_INC,
     POST_DEC,
+    REFOF,
+    DEREF,
     UPLUS,
     UMINUS,
     LOGICAL_NOT,

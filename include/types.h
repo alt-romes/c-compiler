@@ -19,6 +19,7 @@ enum type {
     LONG = 0b10000,
     SIGNED = 0,
     UNSIGNED = 0x100,
+    REFERENCE = 0x200,
 
     /* Qualifiers */
     CONST = 0x8000
@@ -27,5 +28,7 @@ enum type {
 
 int is_int_type_unsigned(enum type t);
 int type_compare(enum type l, enum type r);
+enum type ref_of(enum type);
+enum type deref(enum type);
 
 #endif
