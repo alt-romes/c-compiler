@@ -348,3 +348,20 @@ statement_list_t* statement_list_add(statement_list_t * e, node_t* node) {
     return e;
 }
 
+
+struct args_list* create_args_list() {
+    struct args_list* l = malloc(sizeof(struct args_list));
+    l->args = NULL;   // Important because realloc requires a NULL pointer to behave as malloc
+    l->size = 0;            // Important to set because when attempting to associate a value if it's an undefined value things can go wrong
+    return l;
+}
+
+struct args_list* args_list_add(struct args_list* e, struct declarator v) {
+
+    if (!e->size % DEFAULT_ENVIRONMENT_SIZE)
+        e->args = realloc(e->args, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct declarator));
+
+    e->args[e->size++] = v;
+
+    return e;
+}

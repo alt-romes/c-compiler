@@ -21,6 +21,10 @@ enum type {
     UNSIGNED = 0x100,
     REFERENCE = 0x200,
 
+    /* Function type has the return type in the lower 8 bits,
+     * and the type parameters are in an associated enum type list */
+    FUNCTIONT = 0x400,
+
     /* Qualifiers */
     CONST = 0x8000
 }; 

@@ -4,9 +4,18 @@
 #include "environment.h"
 #include "types.h"
 
+struct args_list {
+    struct declarator* args;
+    int size;
+};
+
+struct args_list* create_args_list();
+struct args_list* args_list_add(struct args_list*, struct declarator);
+
 struct declarator {
     char* id;
-    enum type pointer;
+    enum type ts;
+    struct args_list* args;
 };
 
 /* Declaration List */
