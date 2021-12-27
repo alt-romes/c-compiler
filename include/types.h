@@ -19,19 +19,31 @@ enum type {
     LONG = 0b10000,
     SIGNED = 0,
     UNSIGNED = 0x100,
-    REFERENCE = 0x200,
 
     /* Function type has the return type in the lower 8 bits,
      * and the type parameters are in an associated enum type list */
-    FUNCTION_TYPE = 0x400,
+    FUNCTION_TYPE = 0x200,
+
+    /* A type can be reference of another type, but can also be reference of
+     * another reference of another type.  To encode this all in just one
+     * number, each reference type adds to the enum type, so 1 reference will
+     * be 0x1000 | the type it references, 2 references will be 0x1000 + 0x1000
+     * | the type it references.  Essentially, the bits between 0x8000 and
+     * 0x1000 represent the length of the reference chain, which allows for a
+     * maximum of 16 chained references. This should be enough for now, but an
+     * expansion for up to 256 is currently possible.
+     */
+    REFERENCE = 0x1000, // until 0x8000
+    IS_REFERENCE = 0xF000, // type & IS_REFERENCE to get if value is a reference
 
     /* Qualifiers */
-    CONST = 0x8000
+    CONST = 0x80000000
 }; 
 
 int is_int_type_unsigned(enum type t);
 int type_compare(enum type l, enum type r);
 enum type ref_of(enum type);
 enum type deref(enum type);
+int reference_chain_length(enum type t);
 
 #endif

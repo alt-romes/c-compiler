@@ -169,7 +169,7 @@ enum type typecheck(struct node* node, struct environment* e) {
             break;
         case DEREF:
             t = typecheck(((unary_node_t*)node)->child, e);
-            assert(t & REFERENCE); // Assert t is a reference
+            assert(t & IS_REFERENCE); // Assert t is a reference
             t = deref(t);
             break;
 

@@ -94,20 +94,20 @@ init_declarator
     | declarator '=' initializer                      { $$ = (struct declaration){ .id = $1.id, $1.ts, .node = $3 }; }
 
 declarator
-	: pointer direct_declarator                       { $$ = (struct declarator){ .id = $2.id, .ts = $2.ts | $1 , .args = NULL }; }
+	: pointer direct_declarator                       { $$ = (struct declarator){ .id = $2.id, .ts = $2.ts | $1, .args = NULL }; }
 	| direct_declarator                               { $$ = $1; }
 
 pointer
 	: '*' { $$ = REFERENCE; }
 	/* | '*' type_qualifier_list */
-	| '*' pointer { $$ = (enum type)(REFERENCE | $2); }
+	| '*' pointer { $$ = (enum type)(REFERENCE + $2); /* read types.h to understand the plus on REFERENCES */ }
 	/* | '*' type_qualifier_list pointer */
 
 direct_declarator
     : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = VOID, .args = NULL }; }
     /* | '(' declarator ')' */
 	/* | direct_declarator '[' constant_expression ']' */
-	| direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE | $1.ts, .args = NULL }; }
+	| direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; }
 	| direct_declarator '(' parameter_type_list ')'   { $$ = (struct declarator){ .id = $1.id, .ts = $1.ts | FUNCTION_TYPE, .args = $3 }; }
 	/* | direct_declarator '(' identifier_list ')' */
 	| direct_declarator '(' ')' { $$ = (struct declarator){ .id = $1.id, .ts = $1.ts | FUNCTION_TYPE, .args = create_args_list() }; }

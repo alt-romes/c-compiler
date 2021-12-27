@@ -55,8 +55,8 @@ LLVMTypeRef type2LLVMType(enum type ts) {
             exit(1);
     }
 
-    if (ts & REFERENCE)
-        tr = LLVMPointerType(tr, 0); // TODO ADDRESS SPACE
+    for (int i = 0; i < reference_chain_length(ts); i++)
+        tr = LLVMPointerType(tr, 0 /* ADDRESSSPACE (TODO BETTER?) */ );
 
     return tr;
 
@@ -399,7 +399,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             else if (node->type == CONDITIONAL) {
 
                 LLVMPositionBuilderAtEnd(b, merge_block);
-                LLVMValueRef phi = LLVMBuildPhi(b, type2LLVMType(node->ts), "iftmp");
+                LLVMValueRef phi = LLVMBuildPhi(b, type2LLVMType(node->ts), "phitmp");
                 LLVMAddIncoming(phi, &then_value, &then_block, 1);
                 LLVMAddIncoming(phi, &else_value, &else_block, 1);
                 

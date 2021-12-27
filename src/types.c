@@ -24,3 +24,8 @@ enum type deref(enum type t) {
     
     return t ^ REFERENCE;
 }
+
+int reference_chain_length(enum type t) {
+
+    return (t & IS_REFERENCE) >> 4*3;
+}
