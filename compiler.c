@@ -145,9 +145,23 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
     switch (node->type) {
 
         case FUNCTION: {
-            LLVMTypeRef fun_type = type2LLVMType(node->ts);
-            LLVMTypeRef ftype = LLVMFunctionType(fun_type, NULL, 0, 0);
-            LLVMValueRef fun = LLVMAddFunction(m, ((function_node_t*)node)->name, ftype);
+            function_node_t* fnode = (function_node_t*)node;
+            LLVMTypeRef ret_type = type2LLVMType(node->ts);
+
+            // Define function type with correct parameters
+            LLVMTypeRef fun_type;
+            if (fnode->decl.args != NULL) { // If function declaration was done with () or ( parameter_type_list )
+                int argc = fnode->decl.args->size;
+                LLVMTypeRef* params = malloc(sizeof(LLVMTypeRef)*argc); // TODO: This must be freed!!
+                for (int i = 0; i < argc; i++)
+                    params[i] = type2LLVMType(fnode->decl.args->args[i].ts);
+
+                 fun_type = LLVMFunctionType(ret_type, params, argc, 0);
+            }
+            else // Function declaration without parameters syntax (e.g. int main {})
+                fun_type = LLVMFunctionType(ret_type, NULL, 0, 0);
+
+            LLVMValueRef fun = LLVMAddFunction(m, ((function_node_t*)node)->decl.id, fun_type);
             LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fun, "entry");
             LLVMPositionBuilderAtEnd(b, entry);
             // TODO: arguments environment

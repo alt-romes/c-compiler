@@ -23,7 +23,7 @@ enum type {
 
     /* Function type has the return type in the lower 8 bits,
      * and the type parameters are in an associated enum type list */
-    FUNCTIONT = 0x400,
+    FUNCTION_TYPE = 0x400,
 
     /* Qualifiers */
     CONST = 0x8000

@@ -148,7 +148,7 @@ typedef struct block_node {
 typedef struct function_node {
     node_type_t type;
     enum type ts;
-    char* name;
+    struct declarator decl;
     struct node* body;
 } function_node_t;
 
@@ -164,7 +164,7 @@ node_t* create_node_literal(node_type_t, enum type, void* literal_value);
 node_t* create_node1(node_type_t, node_t*);
 node_t* create_node2(node_type_t, node_t*, node_t*);
 node_t* create_node_block(node_type_t, declaration_list_t*, statement_list_t*);
-node_t* create_node_function(node_type_t, enum type, char*, node_t*);
+node_t* create_node_function(node_type_t, enum type, struct declarator, node_t*);
 node_t* create_node_if(node_type_t, node_t*, node_t*, node_t*);
 
 void free_ast(node_t* root);

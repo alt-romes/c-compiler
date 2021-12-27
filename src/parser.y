@@ -55,9 +55,9 @@ function_definition
     // TODO: HOW TO HANDLE DECLARATION SPECIFIERS FOR FUNCTIONS?
     // TODO: What to do with declarator with pointer???
     /* : declaration_specifiers declarator declaration_list compound_statement ??? */
-    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1, $2.id, $3); }
+    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1, $2, $3); }
 	/* | declarator declaration_list compound_statement ?? */
-	| declarator compound_statement { $$ = create_node_function(FUNCTION, INT, $1.id, $2); }
+	| declarator compound_statement { $$ = create_node_function(FUNCTION, INT, $1, $2); }
 
 compound_statement // also known as "block"
     : '{' statement_list '}'                          { $$ = create_node_block(BLOCK, create_declaration_list() /* empty by default */ , $2); }
@@ -94,7 +94,7 @@ init_declarator
     | declarator '=' initializer                      { $$ = (struct declaration){ .id = $1.id, $1.ts, .node = $3 }; }
 
 declarator
-	: pointer direct_declarator                       { $$ = (struct declarator){ $2.id, $2.ts | $1 }; }
+	: pointer direct_declarator                       { $$ = (struct declarator){ .id = $2.id, .ts = $2.ts | $1 , .args = NULL }; }
 	| direct_declarator                               { $$ = $1; }
 
 pointer
@@ -104,13 +104,13 @@ pointer
 	/* | '*' type_qualifier_list pointer */
 
 direct_declarator
-    : _IDENTIFIER                                     { $$ = (struct declarator){ $1, VOID }; }
+    : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = VOID, .args = NULL }; }
     /* | '(' declarator ')' */
 	/* | direct_declarator '[' constant_expression ']' */
-	| direct_declarator '[' ']'                       { $$ = (struct declarator){ $1.id, REFERENCE | $1.ts }; }
-	| direct_declarator '(' parameter_type_list ')'   { $$ = (struct declarator){ .id = $1.id, .ts = $1.ts | FUNCTIONT, .args = $3 }; }
+	| direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE | $1.ts, .args = NULL }; }
+	| direct_declarator '(' parameter_type_list ')'   { $$ = (struct declarator){ .id = $1.id, .ts = $1.ts | FUNCTION_TYPE, .args = $3 }; }
 	/* | direct_declarator '(' identifier_list ')' */
-	| direct_declarator '(' ')' { $$ = (struct declarator){ .id = $1.id, .ts = $1.ts | FUNCTIONT, .args = create_args_list() }; }
+	| direct_declarator '(' ')' { $$ = (struct declarator){ .id = $1.id, .ts = $1.ts | FUNCTION_TYPE, .args = create_args_list() }; }
 
 abstract_declarator
 	: pointer { $$ = $1; }

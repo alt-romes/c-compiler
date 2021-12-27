@@ -173,11 +173,11 @@ node_t* create_node_block(node_type_t type, declaration_list_t* declaration_list
     return (node_t*)node;
 }
 
-node_t* create_node_function(node_type_t type, enum type ts, char* name, node_t* b) {
+node_t* create_node_function(node_type_t type, enum type ts, struct declarator decl, node_t* b) {
 
     function_node_t* node = (function_node_t*)new_node(type);
     node->ts = ts;
-    node->name = name;
+    node->decl = decl;
     node->body = b;
     return (node_t*)node;
 }
@@ -195,7 +195,13 @@ void free_ast(node_t* node) {
 
     switch (node->type) {
         case FUNCTION: {
-            free(((function_node_t*)node)->name);
+            // Free declaration id and args list
+            free(((function_node_t*)node)->decl.id);
+
+            if (((function_node_t*)node)->decl.args != NULL && ((function_node_t*)node)->decl.args->args != NULL)
+                free(((function_node_t*)node)->decl.args->args);
+            free(((function_node_t*)node)->decl.args);
+
             free_ast(((function_node_t*)node)->body);
             break;
         }
