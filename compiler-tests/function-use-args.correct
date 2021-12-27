@@ -1,0 +1,16 @@
+[ Parsing ]
+[ Type Checking ]
+[ Setup ]
+[ Compiling ]
+[ Cleaning ]
+[ Printing ]
+[ Module ]
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i32 @main(i32 %0, i8* %1) {
+entry:
+  %cmptmp = icmp sgt i32 %0, 0
+  %. = select i1 %cmptmp, i32 %0, i32 -1
+  ret i32 %.
+}

@@ -45,7 +45,7 @@ LLVMTypeRef type2LLVMType(enum type ts) {
             tr = LLVMInt8Type();
             break;
         case I1:
-            tr = LLVMIntType(1);
+            tr = LLVMInt1Type();
             break;
         case LONG:
             tr = LLVMInt64Type();
@@ -148,43 +148,47 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             function_node_t* fnode = (function_node_t*)node;
             LLVMTypeRef ret_type = type2LLVMType(node->ts);
 
-            // Define function type with correct parameters
+            // Create function with parameters when it has been defined with them vvvv
+            int argc = 0;
+            LLVMTypeRef* params = NULL;
             LLVMTypeRef fun_type;
             if (fnode->decl.args != NULL) { // If function declaration was done with () or ( parameter_type_list )
-                int argc = fnode->decl.args->size;
-                LLVMTypeRef* params = malloc(sizeof(LLVMTypeRef)*argc); // TODO: This must be freed!!
+
+                argc = fnode->decl.args->size;
+
+                // Define function type with correct parameters
+                params = malloc(sizeof(LLVMTypeRef)*argc); // TODO: This must be freed!!
                 for (int i = 0; i < argc; i++)
                     params[i] = type2LLVMType(fnode->decl.args->args[i].ts);
 
-                 fun_type = LLVMFunctionType(ret_type, params, argc, 0);
-            }
-            else // Function declaration without parameters syntax (e.g. int main {})
-                fun_type = LLVMFunctionType(ret_type, NULL, 0, 0);
+
+            } // Else, function declaration without parameters syntax (e.g. int main {})
+
+            fun_type = LLVMFunctionType(ret_type, params, argc, 0);
 
             LLVMValueRef fun = LLVMAddFunction(m, ((function_node_t*)node)->decl.id, fun_type);
             LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fun, "entry");
             LLVMPositionBuilderAtEnd(b, entry);
-            // TODO: arguments environment
 
-            compile(m, b, ((function_node_t*)node)->body, e, ((function_node_t*)node)->ts /* update current function type */);
 
-            // TODO: For now explicit casting is required for function type to match return type
-            /* if (((function_node_t*)node)->body->ts != node->ts) { // body type and function return type are different */
+            environment_t* scope_env = beginScope(e);
 
-            /*     if (LLVMGetTypeKind(LLVMTypeOf(body_value)) == LLVMIntegerTypeKind && // if they both are ints, */
-            /*         LLVMGetTypeKind(fun_type) == LLVMIntegerTypeKind) {  // truncate or extend return value */
 
-            /*         body_value = ext_or_trunc(b, node->ts, ((function_node_t*)node)->body->ts, body_value); */
-            /*     } */
-            /*     else { */
-            /*         fprintf(stderr, "Can't cast body value to return type:: TODO Move to typecheck\n"); */
-            /*         exit(2); */
-            /*     } */
-            /* } */
+            if (fnode->decl.args != NULL) // If function has parameters (same as above)
 
-            /* // By default return void */
-            // Update: No default void return!!
-            /* LLVMBuildRetVoid(b); */
+                // Add params to environment
+                for (int i = 0; i < argc; i++) {
+                    LLVMValueRef param_alloca = LLVMBuildAlloca(b, params[i], "allocatmp");
+                    LLVMBuildStore(b, LLVMGetParam(fun, i), param_alloca);
+                    assoc(scope_env, fnode->decl.args->args[i].id, (union association_v){ .llvmref = param_alloca });
+                }
+
+
+            compile(m, b, ((function_node_t*)node)->body, scope_env, ((function_node_t*)node)->ts /* update current function type */);
+
+
+            endScope(scope_env); // free the scope environment and its association array
+
 
             LLVMVerifyFunction(fun, LLVMAbortProcessAction);
 #ifdef OPTIMIZE
@@ -395,7 +399,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             else if (node->type == CONDITIONAL) {
 
                 LLVMPositionBuilderAtEnd(b, merge_block);
-                LLVMValueRef phi = LLVMBuildPhi(b, type2LLVMType(node->ts), "");
+                LLVMValueRef phi = LLVMBuildPhi(b, type2LLVMType(node->ts), "iftmp");
                 LLVMAddIncoming(phi, &then_value, &then_block, 1);
                 LLVMAddIncoming(phi, &else_value, &else_block, 1);
                 

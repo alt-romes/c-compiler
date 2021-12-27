@@ -7,12 +7,26 @@
 enum type typecheck(struct node* node, struct environment* e) {
     enum type t;
     switch (node->type) {
-        case FUNCTION:
+        case FUNCTION: {
             // TODO ... 
             /* this doesn't need to be, only make sure that its castable from one to another assert((t = node->ts) == typecheck(((function_node_t*)node)->body, e)); */
             t = node->ts; // function type is its return value... quite wrong but ..
-            typecheck(((function_node_t*)node)->body, e);
+
+            environment_t* scope_env = beginScope(e);
+
+            if (((function_node_t*)node)->decl.args != NULL) // If function has parameters (same as above)
+                // Add params types to environment
+                for (int i = 0; i < ((function_node_t*)node)->decl.args->size; i++)
+                    assoc(scope_env, ((function_node_t*)node)->decl.args->args[i].id, (union association_v){ .type = ((function_node_t*)node)->decl.args->args[i].ts });
+
+
+            typecheck(((function_node_t*)node)->body, scope_env);
+
+
+            endScope(scope_env); // free the scope environment and its association array
+
             break;
+        }
         case ID:
             // Set this node's type to the one found in the environment
             t = find(e, ((id_node_t*)node)->value).type;
