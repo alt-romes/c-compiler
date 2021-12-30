@@ -74,8 +74,8 @@ declaration_list
     | declaration_list declaration                    { $$ = declaration_list_merge($2, $1); }
 
 declaration
-    /* : declaration_specifiers ';'                      { $$ = } */
-    : declaration_specifiers init_declarator_list ';' { $$ = add_declaration_specifiers($2, $1); }
+    : declaration_specifiers ';'                      { $$ = create_declaration_list(); /* does nothing */ }
+    | declaration_specifiers init_declarator_list ';' { $$ = add_declaration_specifiers($2, $1); }
 
 declaration_specifiers
     /* : storage_class_specifier */
