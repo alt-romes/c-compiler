@@ -3,29 +3,29 @@
 #include "ast.h"
 #include "types.h"
 
-int is_int_type_unsigned(enum type t) {
+int is_type_unsigned(type_t t) {
 
-    return t & UNSIGNED;
+    return t.t & UNSIGNED;
 }
 
 /* Returns 0 if the same, negative if l is smaller, positive if l is larger */
-int type_compare(enum type l, enum type r) {
+int type_compare(type_t l, type_t r) {
 
     // TODO: is the result of binary operation on numbers signed or unsigned?
-    return (l & 0xff) - (r & 0xff);
+    // TODO: compare pointer types?...
+    return (l.t & 0xff) - (r.t & 0xff);
 }
 
-enum type ref_of(enum type t) {
-
-    return t | REFERENCE;
+type_t type_from(enum type t) {
+    return (type_t){ t };
 }
 
-enum type deref(enum type t) {
+type_t ref_of(type_t t) {
+
+    /* return t | REFERENCE; */
+}
+
+type_t deref(type_t t) {
     
-    return t ^ REFERENCE;
-}
-
-int reference_chain_length(enum type t) {
-
-    return (t & IS_REFERENCE) >> 4*3;
+    /* return t ^ REFERENCE; */
 }

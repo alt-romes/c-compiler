@@ -20,10 +20,6 @@ enum type {
     SIGNED = 0,
     UNSIGNED = 0x100,
 
-    /* Function type has the return type in the lower 8 bits,
-     * and the type parameters are in an associated enum type list */
-    FUNCTION_TYPE = 0x200,
-
     /* A type can be reference of another type, but can also be reference of
      * another reference of another type.  To encode this all in just one
      * number, each reference type adds to the enum type, so 1 reference will
@@ -33,17 +29,51 @@ enum type {
      * maximum of 16 chained references. This should be enough for now, but an
      * expansion for up to 256 is currently possible.
      */
-    REFERENCE = 0x1000, // until 0x8000
-    IS_REFERENCE = 0xF000, // type & IS_REFERENCE to get if value is a reference
+    POINTER = 0x1000, // until 0x8000
+
+    /* Function type has the return type in the lower 9 bits,
+     * and the type parameters are in an associated enum type list */
+    FUNCTION_TYPE = 0x2000,
 
     /* Qualifiers */
-    CONST = 0x40000000
+    CONST = 0x40000000,
+
+    /* Undefined :P */
+    UNDEFINED = -1
 }; 
 
-int is_int_type_unsigned(enum type t);
-int type_compare(enum type l, enum type r);
-enum type ref_of(enum type);
-enum type deref(enum type);
-int reference_chain_length(enum type t);
+typedef struct type_s {
+    enum type t;
+} type_t;
+
+struct function_type {
+    enum type t;
+    type_t ret;
+    struct args_list* args;
+};
+
+struct pointer_type {
+    enum type t;
+    type_t pointed;
+};
+
+int is_type_unsigned(type_t t);
+int type_compare(type_t l, type_t r);
+
+type_t type_from(enum type t);
+
+type_t ref_of(type_t);
+type_t deref(type_t);
+
+struct type_s create_type_pointer(enum type pointer_type_and_qualifiers);
+struct type_s create_type_function(enum type function_type_and_qualifiers, struct args_list* args);
+
+/* (Recursively) Set the base type of an "in-construction" type.
+ * Setting the base type of a...
+ *  POINTER -> is setting the pointed to type
+ *  FUNCTION -> is setting the return type
+ *  UNDEFINED -> is setting the type directly
+ */
+struct type_s set_base_type(struct type_s, struct type_s);
 
 #endif

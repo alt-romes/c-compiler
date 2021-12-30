@@ -14,15 +14,14 @@ struct args_list* args_list_add(struct args_list*, struct declarator);
 
 struct declarator {
     char* id;
-    enum type ts;
-    struct args_list* args;
+    type_t ts;
 };
 
 /* Declaration List */
 
 struct declaration {
     char* id;
-    enum type et;
+    type_t et;
     struct node* node;
 };
 
@@ -111,61 +110,61 @@ typedef enum node_type {
 
 typedef struct node {
     node_type_t type;
-    enum type ts;
+    type_t ts;
 } node_t;
 
 typedef struct num_node {
     node_type_t type;
-    enum type ts;
+    type_t ts;
     int value;
 } num_node_t;
 
 typedef struct id_node {
     node_type_t type;
-    enum type ts;
+    type_t ts;
     char* value;
 } id_node_t;
 
 typedef struct unary_node {
     node_type_t type;
-    enum type ts;
+    type_t ts;
     struct node* child;
 } unary_node_t;
 
 typedef struct binary_node {
     node_type_t type;
-    enum type ts;
+    type_t ts;
     struct node* left;
     struct node* right;
 } binary_node_t;
 
 typedef struct block_node {
     node_type_t type;
-    enum type ts;
+    type_t ts;
     declaration_list_t* declaration_list;
     statement_list_t* statement_list;
 } block_node_t;
 
 typedef struct function_node {
     node_type_t type;
-    enum type ts;
+    type_t ts;
     struct declarator decl;
     struct node* body;
 } function_node_t;
 
 typedef struct if_node {
     node_type_t type;
-    enum type ts;
+    type_t ts;
     struct node* cond;
     struct node* thenst;
     struct node* elsest;
 } if_node_t;
 
-node_t* create_node_literal(node_type_t, enum type, void* literal_value);
+node_t* create_node_literal(node_type_t, type_t, void* literal_value);
 node_t* create_node1(node_type_t, node_t*);
 node_t* create_node2(node_type_t, node_t*, node_t*);
 node_t* create_node_block(node_type_t, declaration_list_t*, statement_list_t*);
-node_t* create_node_function(node_type_t, enum type, struct declarator, node_t*);
+node_t* create_node_function(node_type_t, struct declarator, node_t*);
 node_t* create_node_if(node_type_t, node_t*, node_t*, node_t*);
 
 void free_ast(node_t* root);

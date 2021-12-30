@@ -30,36 +30,38 @@ void create_llvm_pass_manager(LLVMModuleRef module) {
 }
 #endif
 
-LLVMTypeRef type2LLVMType(enum type ts) {
+LLVMTypeRef type2LLVMType(type_t ts) {
 
-    LLVMTypeRef tr;
+    LLVMTypeRef tr = NULL;
 
-    switch (ts & 0xff) {
-        case VOID:
-            tr = LLVMVoidType();
-            break;
-        case I1:
-            tr = LLVMInt1Type();
-            break;
-        case CHAR:
-            tr = LLVMInt8Type();
-            break;
-        case SHORT:
-            tr = LLVMInt16Type();
-            break;
-        case INT:
-            tr = LLVMInt32Type();
-            break;
-        case LONG:
-            tr = LLVMInt64Type();
-            break;
-        default:
-            fprintf(stderr, "type2LLVM undefined for ts: %d\n", ts);
-            exit(1);
-    }
+    // TODO: REDO
 
-    for (int i = 0; i < reference_chain_length(ts); i++)
-        tr = LLVMPointerType(tr, 0 /* ADDRESSSPACE (TODO BETTER?) */ );
+    /* switch (ts & 0xff) { */
+    /*     case VOID: */
+    /*         tr = LLVMVoidType(); */
+    /*         break; */
+    /*     case I1: */
+    /*         tr = LLVMInt1Type(); */
+    /*         break; */
+    /*     case CHAR: */
+    /*         tr = LLVMInt8Type(); */
+    /*         break; */
+    /*     case SHORT: */
+    /*         tr = LLVMInt16Type(); */
+    /*         break; */
+    /*     case INT: */
+    /*         tr = LLVMInt32Type(); */
+    /*         break; */
+    /*     case LONG: */
+    /*         tr = LLVMInt64Type(); */
+    /*         break; */
+    /*     default: */
+    /*         fprintf(stderr, "type2LLVM undefined for ts: %d\n", ts); */
+    /*         exit(1); */
+    /* } */
+
+    /* for (int i = 0; i < reference_chain_length(ts); i++) */
+    /*     tr = LLVMPointerType(tr, 0 /1* ADDRESSSPACE (TODO BETTER?) *1/ ); */
 
     return tr;
 
@@ -69,23 +71,23 @@ struct LLVMValueRefPair {
     LLVMValueRef left, right;
 };
 
-struct LLVMValueRefPair ext_int_binaryop_operands(LLVMBuilderRef b, enum type lnt, LLVMValueRef left, enum type rnt, LLVMValueRef right) {
+struct LLVMValueRefPair ext_int_binaryop_operands(LLVMBuilderRef b, type_t lnt, LLVMValueRef left, type_t rnt, LLVMValueRef right) {
 
     LLVMTypeRef lt = LLVMTypeOf(left);
     LLVMTypeRef rt = LLVMTypeOf(right);
 
     if (type_compare(lnt, rnt) < 0) // left is smaller than right
-        left = (is_int_type_unsigned(lnt) ? LLVMBuildZExt : LLVMBuildSExt)(b, left, rt, "sextlefttmp"); // Extend left type to match right type size
+        left = (is_type_unsigned(lnt) ? LLVMBuildZExt : LLVMBuildSExt)(b, left, rt, "sextlefttmp"); // Extend left type to match right type size
     else if (type_compare(lnt, rnt) > 0) // left is larger than right
-        right = (is_int_type_unsigned(rnt) ? LLVMBuildZExt : LLVMBuildSExt)(b, right, lt, "sextrighttmp"); // Extend right type to match left type size
+        right = (is_type_unsigned(rnt) ? LLVMBuildZExt : LLVMBuildSExt)(b, right, lt, "sextrighttmp"); // Extend right type to match left type size
 
     return (struct LLVMValueRefPair){ left, right };
 }
 
-LLVMValueRef cast(LLVMBuilderRef b, enum type dst_type, enum type src_type, LLVMValueRef src) {
+LLVMValueRef cast(LLVMBuilderRef b, type_t dst_type, type_t src_type, LLVMValueRef src) {
 
     if (type_compare(src_type, dst_type) < 0)
-        src = (is_int_type_unsigned(src_type) ? LLVMBuildZExt : LLVMBuildSExt)(b, src, type2LLVMType(dst_type), "extsrctmp");
+        src = (is_type_unsigned(src_type) ? LLVMBuildZExt : LLVMBuildSExt)(b, src, type2LLVMType(dst_type), "extsrctmp");
     else if (type_compare(src_type, dst_type) > 0)
         src = LLVMBuildTrunc(b, src, type2LLVMType(dst_type), "truncsrctmp"); // extend right type to match left type size
 
@@ -100,7 +102,7 @@ LLVMValueRef cast(LLVMBuilderRef b, enum type dst_type, enum type src_type, LLVM
  * @a -> Value to convert to boolean, value == 0 => false (i1=0) ^ value != 1 => true (i1=1)
  * @a_type -> Int type size of a value
  */
-LLVMValueRef llvmInt2BoolI1(LLVMBuilderRef b, LLVMValueRef a, enum type a_type) {
+LLVMValueRef llvmInt2BoolI1(LLVMBuilderRef b, LLVMValueRef a, type_t a_type) {
     return LLVMBuildNot(b, LLVMBuildICmp(b, LLVMIntEQ, a, LLVMConstInt(type2LLVMType(a_type), 0, 0), "tobooli1tmp"), "tobooli1nottmp");
 }
 
@@ -115,9 +117,9 @@ LLVMValueRef llvmInt2BoolI1(LLVMBuilderRef b, LLVMValueRef a, enum type a_type) 
  * There is no conflict when we assume that a return node will never be present in a NO_AUTO_DEREF situation,
  * so the only time the parameter is -1, the possibly encoded type isn't needed because no return statement will be cast
  */
-#define NO_AUTO_DEREF -1
+#define NO_AUTO_DEREF (type_t){ -1 }
 LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
-        environment_t* e, enum type cftoads) {
+        environment_t* e, type_t cftoads) {
 
     union {
         LLVMIntPredicate llvmIntPredicate;
@@ -205,7 +207,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
         case ID: {
             LLVMValueRef alloca = find(e, ((id_node_t*)node)->value).llvmref;
-            if (cftoads != NO_AUTO_DEREF)
+            if (cftoads.t != NO_AUTO_DEREF.t)
                 return LLVMBuildLoad2(b, LLVMGetAllocatedType(alloca), alloca, "loadtmp");
             else
                 return alloca;
@@ -263,7 +265,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             return compile(m, b, ((binary_node_t*)node)->left, e, cftoads), compile(m, b, ((binary_node_t*)node)->right, e, cftoads);
 
         case NUM:
-            return LLVMConstInt(type2LLVMType(node->ts), ((num_node_t*)node)->value, is_int_type_unsigned(node->ts) ? 0 : 1);
+            return LLVMConstInt(type2LLVMType(node->ts), ((num_node_t*)node)->value, is_type_unsigned(node->ts) ? 0 : 1);
 
         case ADD:
             return LLVMBuildAdd(b, aux.llvmVPair.left, aux.llvmVPair.right, "addtmp");
@@ -275,20 +277,20 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             return LLVMBuildMul(b, aux.llvmVPair.left, aux.llvmVPair.right, "multmp");
 
         case DIV:
-            return (is_int_type_unsigned(node->ts)?LLVMBuildUDiv:LLVMBuildSDiv)(b, aux.llvmVPair.left, aux.llvmVPair.right, "divtmp");
+            return (is_type_unsigned(node->ts)?LLVMBuildUDiv:LLVMBuildSDiv)(b, aux.llvmVPair.left, aux.llvmVPair.right, "divtmp");
 
         case REM:
-            return (is_int_type_unsigned(node->ts)?LLVMBuildURem:LLVMBuildSRem)(b, aux.llvmVPair.left, aux.llvmVPair.right, "remtmp");
+            return (is_type_unsigned(node->ts)?LLVMBuildURem:LLVMBuildSRem)(b, aux.llvmVPair.left, aux.llvmVPair.right, "remtmp");
 
         // LT, GT, LE, and GE will have type unsigned if the comparison is between unsigned types, and signed type otherwise
         case LT:
-            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? (node->ts & UNSIGNED) ? LLVMIntULT : LLVMIntSLT : aux.llvmIntPredicate; 
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? is_type_unsigned(node->ts) ? LLVMIntULT : LLVMIntSLT : aux.llvmIntPredicate; 
         case GT:
-            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? (node->ts & UNSIGNED) ? LLVMIntUGT : LLVMIntSGT : aux.llvmIntPredicate; 
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? is_type_unsigned(node->ts) ? LLVMIntUGT : LLVMIntSGT : aux.llvmIntPredicate; 
         case LE:
-            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? (node->ts & UNSIGNED) ? LLVMIntULE : LLVMIntSLE : aux.llvmIntPredicate; 
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? is_type_unsigned(node->ts) ? LLVMIntULE : LLVMIntSLE : aux.llvmIntPredicate; 
         case GE:
-            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? (node->ts & UNSIGNED) ? LLVMIntUGE : LLVMIntSGE : aux.llvmIntPredicate; 
+            aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? is_type_unsigned(node->ts) ? LLVMIntUGE : LLVMIntSGE : aux.llvmIntPredicate; 
         case NE:
             aux.llvmIntPredicate = aux.llvmIntPredicate == 0 ? LLVMIntNE : aux.llvmIntPredicate; 
         case EQ: {
@@ -358,7 +360,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         case LEFT_SHIFT:
             return LLVMBuildShl(b, aux.llvmVPair.left, aux.llvmVPair.right, "leftshifttmp");
         case RIGHT_SHIFT:
-            return (is_int_type_unsigned(node->ts)?LLVMBuildLShr:LLVMBuildAShr)(b, aux.llvmVPair.left, aux.llvmVPair.right, "rightshifttmp");
+            return (is_type_unsigned(node->ts)?LLVMBuildLShr:LLVMBuildAShr)(b, aux.llvmVPair.left, aux.llvmVPair.right, "rightshifttmp");
 
         case RETURN:
             if (((unary_node_t*)node)->child != NULL)
@@ -442,7 +444,7 @@ int main(int argc, char *argv[]) {
     environment_t* env = newEnvironment();
 
     printf("[ Compiling ]\n");
-    compile(module, builder, root, env, VOID);
+    compile(module, builder, root, env, (type_t){ VOID });
 
     printf("[ Cleaning ]\n");
     free(env);

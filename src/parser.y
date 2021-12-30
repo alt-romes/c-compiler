@@ -18,7 +18,9 @@ void yyerror();
     struct declaration_list* declaration_list_v;
     struct statement_list* statement_list_v;
     struct declaration declaration_v;
-    enum type declaration_specifiers_v;
+    struct type_s declaration_specifiers_v;
+    struct type_s struct_type_v;
+    enum type enum_type_v;
     struct declarator declarator_v;
     struct args_list* args_list_v;
 }
@@ -31,14 +33,16 @@ void yyerror();
 %token _MUL_ASSIGN _DIV_ASSIGN _MOD_ASSIGN _ADD_ASSIGN _SUB_ASSIGN _LEFT_ASSIGN _RIGHT_ASSIGN _AND_ASSIGN _XOR_ASSIGN _OR_ASSIGN _INC_OP _DEC_OP
 %token _RETURN _IF _ELSE
 
-%type <int_v> _NUM type_specifier type_qualifier specifier_qualifier_list type_name pointer
+%type <int_v> _NUM
 %type <string_v> _IDENTIFIER // string is malloc'd and needs to be freed by the ast destructor
 %type <declarator_v> declarator direct_declarator parameter_declaration
 %type <node_v> initializer compound_statement function_definition expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement selection_statement constant_expression
 %type <declaration_list_v> declaration_list declaration init_declarator_list
 %type <statement_list_v> statement_list
 %type <declaration_v> init_declarator
-%type <declaration_specifiers_v> declaration_specifiers abstract_declarator
+%type <declaration_specifiers_v> type_name
+%type <enum_type_v> declaration_specifiers specifier_qualifier_list type_specifier type_qualifier type_qualifier_list
+%type <struct_type_v> pointer abstract_declarator
 %type <node_type_v> unary_operator assignment_operator
 %type <args_list_v> parameter_type_list parameter_list
 
@@ -60,11 +64,11 @@ init
 	/* | declaration */
 
 function_definition
-    : declaration_specifiers declarator compound_statement { $$ = create_node_function(FUNCTION, $1, $2, $3); }
-	| declarator compound_statement { $$ = create_node_function(FUNCTION, INT, $1, $2); }
+    : declaration_specifiers declarator compound_statement { $2.ts = set_base_type($2.ts, type_from($1)), $$ = create_node_function(FUNCTION, $2, $3); }
+	| declarator compound_statement { $1.ts = set_base_type($1.ts, type_from(INT)), $$ = create_node_function(FUNCTION, $1, $2); }
 
 compound_statement
-    : '{' '}'                                         { $$ = create_node_literal(UNIT, VOID, NULL); }
+    : '{' '}'                                         { $$ = create_node_literal(UNIT, type_from(VOID), NULL); }
     | '{' statement_list '}'                          { $$ = create_node_block(BLOCK, create_declaration_list() /* empty by default */ , $2); }
     | '{' declaration_list '}'                        { $$ = create_node_block(BLOCK, $2, create_statement_list() /* empty by default */); }
     | '{' declaration_list statement_list '}'         { $$ = create_node_block(BLOCK, $2, $3); }
@@ -157,43 +161,27 @@ init_declarator
     | declarator '=' initializer                      { $$ = (struct declaration){ .id = $1.id, $1.ts, .node = $3 }; }
 
 declarator
-	: pointer direct_declarator                       { $$ = (struct declarator){ .id = $2.id, .ts = $2.ts | $1, .args = NULL }; }
+	: pointer direct_declarator                       { $$ = (struct declarator){ .id = $2.id, .ts = set_base_type($2.ts, $1) }; }
 	| direct_declarator                               { $$ = $1; }
 
 pointer
-	: '*' { $$ = REFERENCE; }
-	/* | '*' type_qualifier_list */
-	| '*' pointer { $$ = (enum type)(REFERENCE + $2); /* read types.h to understand the plus on REFERENCES */ }
-	/* | '*' type_qualifier_list pointer */
+	: '*' { $$ = create_type_pointer(POINTER); }
+	| '*' type_qualifier_list { $$ = create_type_pointer(POINTER | $2); }
+	| '*' pointer { $$ = set_base_type($2, create_type_pointer(POINTER)); }
+	| '*' type_qualifier_list pointer { $$ = set_base_type($3, create_type_pointer(POINTER | $2)); }
 
-/* type_qualifier_list */
-/* 	: type_qualifier */
-/* 	| type_qualifier_list type_qualifier */
+type_qualifier_list
+	: type_qualifier { $$ = $1; }
+	| type_qualifier_list type_qualifier { $$ = (enum type)($1 | $2); }
 
 direct_declarator
-    : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = VOID, .args = NULL }; }
-    | '(' declarator ')'                              { $$ = $2; } // TODO: Is this it?
+    : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = type_from(UNDEFINED) }; }
+    | '(' declarator ')'                              { $$ = $2; }
 	/* | direct_declarator '[' constant_expression ']' */
-	| direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; }
-	| direct_declarator '(' parameter_type_list ')'   { $$ = (struct declarator){ .id = $1.id, .ts = $1.ts | FUNCTION_TYPE, .args = $3 }; }
+	/* | direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; } */
+	| direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
 	/* | direct_declarator '(' identifier_list ')' */
-	| direct_declarator '(' ')' { $$ = (struct declarator){ .id = $1.id, .ts = $1.ts | FUNCTION_TYPE, .args = create_args_list() }; }
-
-abstract_declarator
-	: pointer { $$ = $1; }
-	/* | direct_abstract_declarator */
-	/* | pointer direct_abstract_declarator */
-
-/* direct_abstract_declarator */
-/* 	: '(' abstract_declarator ')' */
-/* 	| '[' ']' */
-/* 	| '[' constant_expression ']' */
-/* 	| direct_abstract_declarator '[' ']' */
-/* 	| direct_abstract_declarator '[' constant_expression ']' */
-/* 	| '(' ')' */
-/* 	| '(' parameter_type_list ')' */
-/* 	| direct_abstract_declarator '(' ')' */
-/* 	| direct_abstract_declarator '(' parameter_type_list ')' */
+	| direct_declarator '(' ')' { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, create_args_list())); $$ = $1; }
 
 parameter_type_list
 	: parameter_list { $$ = $1; }
@@ -204,7 +192,7 @@ parameter_list
 	| parameter_list ',' parameter_declaration { $$ = args_list_add($1, $3); }
 
 parameter_declaration
-	: declaration_specifiers declarator { $$ = (struct declarator){ .id = $2.id, .ts = $2.ts | $1, .args = $2.args }; }
+	: declaration_specifiers declarator { $2.ts = set_base_type($2.ts, $1); $$ = $1; }
 	/* | declaration_specifiers abstract_declarator */
 	/* | declaration_specifiers */
 
@@ -239,7 +227,7 @@ statement
 /* 	| _DEFAULT ':' statement */
 
 expression_statement
-	: ';'            { $$ = create_node_literal(UNIT, VOID, NULL); }
+	: ';'            { $$ = create_node_literal(UNIT, type_from(VOID), NULL); }
 	| expression ';' { $$ = $1; }
 
 constant_expression
@@ -323,14 +311,31 @@ cast_expression
 	| '(' type_name ')' cast_expression { ($$ = create_node1(CAST, $4))->ts = $2; }
 
 type_name
-	: specifier_qualifier_list { $$ = $1; }
-	| specifier_qualifier_list abstract_declarator { $$ = (enum type)($1 | $2); }
+	: specifier_qualifier_list { $$ = type_from($1); }
+	| specifier_qualifier_list abstract_declarator { $$ = set_base_type($2, $1); }
 
 specifier_qualifier_list
 	: type_specifier specifier_qualifier_list { $$ = (enum type)($1 | $2); }
 	| type_specifier { $$ = (enum type) $1; }
 	| type_qualifier specifier_qualifier_list { $$ = (enum type)($1 | $2); }
 	| type_qualifier { $$ = (enum type) $1; }
+
+abstract_declarator
+	: pointer { $$ = $1; }
+	/* | direct_abstract_declarator */
+	/* | pointer direct_abstract_declarator */
+
+/* direct_abstract_declarator */
+/* 	: '(' abstract_declarator ')' */
+/* 	| '[' ']' */
+/* 	| '[' constant_expression ']' */
+/* 	| direct_abstract_declarator '[' ']' */
+/* 	| direct_abstract_declarator '[' constant_expression ']' */
+/* 	| '(' ')' */
+/* 	| '(' parameter_type_list ')' */
+/* 	| direct_abstract_declarator '(' ')' */
+/* 	| direct_abstract_declarator '(' parameter_type_list ')' */
+
 
 unary_expression
 	: postfix_expression { $$ = $1; }
@@ -398,7 +403,7 @@ void yyerror(const char* str) {
 
 /*
 
-UNSUPPORTED FROM THE ANSI C GRAMMAR:
+NO SUPPORT FOR, FROM THE ANSI C GRAMMAR:
 
 function_definition
 --> : declaration_specifiers declarator declaration_list compound_statement

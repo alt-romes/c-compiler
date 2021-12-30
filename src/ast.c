@@ -81,7 +81,7 @@ node_t* new_node(node_type_t type) {
     return node;
 }
 
-node_t* create_node_literal(node_type_t type, enum type ts, void* literal_value) {
+node_t* create_node_literal(node_type_t type, type_t ts, void* literal_value) {
     
     node_t* node = new_node(type);
     node->ts = ts;
@@ -176,7 +176,7 @@ node_t* create_node_block(node_type_t type, declaration_list_t* declaration_list
     return (node_t*)node;
 }
 
-node_t* create_node_function(node_type_t type, enum type ts, struct declarator decl, node_t* b) {
+node_t* create_node_function(node_type_t type, struct declarator decl, node_t* b) {
 
     function_node_t* node = (function_node_t*)new_node(type);
     node->ts = ts;
@@ -332,7 +332,7 @@ declaration_list_t* declaration_list_merge(declaration_list_t* src, declaration_
     return dst;
 }
 
-declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, enum type et) {
+declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, type_t et) {
     
     for (struct declaration* d = decs->declarations, * lim = d + decs->size; d < lim; d++) d->et |= et;
 
