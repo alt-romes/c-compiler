@@ -35,17 +35,20 @@ LLVMTypeRef type2LLVMType(enum type ts) {
     LLVMTypeRef tr;
 
     switch (ts & 0xff) {
-        case INT:
-            tr = LLVMInt32Type();
+        case VOID:
+            tr = LLVMVoidType();
             break;
-        case SHORT:
-            tr = LLVMInt16Type();
+        case I1:
+            tr = LLVMInt1Type();
             break;
         case CHAR:
             tr = LLVMInt8Type();
             break;
-        case I1:
-            tr = LLVMInt1Type();
+        case SHORT:
+            tr = LLVMInt16Type();
+            break;
+        case INT:
+            tr = LLVMInt32Type();
             break;
         case LONG:
             tr = LLVMInt64Type();
@@ -157,7 +160,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                 argc = fnode->decl.args->size;
 
                 // Define function type with correct parameters
-                params = malloc(sizeof(LLVMTypeRef)*argc); // TODO: This must be freed!!
+                params = malloc(sizeof(LLVMTypeRef)*argc);
                 for (int i = 0; i < argc; i++)
                     params[i] = type2LLVMType(fnode->decl.args->args[i].ts);
 
@@ -182,6 +185,8 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                     LLVMBuildStore(b, LLVMGetParam(fun, i), param_alloca);
                     assoc(scope_env, fnode->decl.args->args[i].id, (union association_v){ .llvmref = param_alloca });
                 }
+
+            free(params); // No longer needed;
 
 
             compile(m, b, ((function_node_t*)node)->body, scope_env, ((function_node_t*)node)->ts /* update current function type */);
@@ -395,7 +400,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             LLVMPositionBuilderAtEnd(b, merge_block);
             if (node->type == IF)
-                return NULL; // TODO: this could be a problem? however, this is a statement, it shouldn't return any value
+                return NULL;
             else if (node->type == CONDITIONAL) {
 
                 LLVMPositionBuilderAtEnd(b, merge_block);
@@ -407,10 +412,12 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             }
 
         }
-
+        case UNIT:
+            // Do nothing
+            return NULL;
     }
 
-    fprintf(stderr, "ERROR: Undefined eval for operation %d\n!", node->type);
+    fprintf(stderr, "ERROR: Undefined compilation for operation %d\n!", node->type);
     exit(1);
 }
 

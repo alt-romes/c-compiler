@@ -37,7 +37,7 @@ enum type {
     IS_REFERENCE = 0xF000, // type & IS_REFERENCE to get if value is a reference
 
     /* Qualifiers */
-    CONST = 0x80000000
+    CONST = 0x40000000
 }; 
 
 int is_int_type_unsigned(enum type t);

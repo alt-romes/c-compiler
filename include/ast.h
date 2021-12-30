@@ -105,7 +105,8 @@ typedef enum node_type {
 
     CAST,
     BLOCK,
-    FUNCTION
+    FUNCTION,
+    UNIT
 } node_type_t;
 
 typedef struct node {

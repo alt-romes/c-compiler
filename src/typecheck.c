@@ -118,8 +118,10 @@ enum type typecheck(struct node* node, struct environment* e) {
         case AND_ASSIGN:
         case XOR_ASSIGN:
         case OR_ASSIGN: {
-            typecheck(((binary_node_t*)node)->left, e);
-            // TODO: what can i assert here...
+            t = typecheck(((binary_node_t*)node)->left, e);
+            if (t & CONST)
+                puts("Cannot assign to a variable qualified as `const`!");
+            assert(!(t & CONST)); // What else can i assert here? they both have the same time but can be cast i guess
             t = typecheck(((binary_node_t*)node)->right, e);
             break;
         }
@@ -200,7 +202,9 @@ enum type typecheck(struct node* node, struct environment* e) {
             // TODO: Assert then is castable to the same type as else
             break;
         }
-
+        case UNIT:
+            t = VOID;
+            break;
     }
 
     node->ts = t; // assign typechecked type to self
