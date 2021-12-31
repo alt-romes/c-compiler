@@ -41,7 +41,7 @@ type_t ref_of(type_t t) {
 
 type_t deref(type_t t) {
     
-    // TODO: Where free
+    // TODO: where free?
     return ((pointer_type_t)t)->pointed;
 }
 
@@ -102,3 +102,31 @@ type_t extend_base_type(type_t t, enum type e) {
 
 }
 
+
+/* void free_type(type_t t) { */
+
+/*     switch (t->t & (POINTER | FUNCTION_TYPE)) { */
+/*         case POINTER: */
+/*             free_type(((pointer_type_t)t)->pointed); */
+/*             break; */
+/*         case FUNCTION_TYPE: */
+/*             free_type(((function_type_t)t)->ret); */
+
+/*             // Free args list */
+/*             for (int i = ((function_type_t)t)->args->size; i --> 0;) { */
+/*                 free_type(((function_type_t)t)->args->args[i].ts); */
+/*                 free(((function_type_t)t)->args->args[i].id); */
+/*             } */
+
+/*             if (((function_type_t)t)->args->args != NULL) */
+/*                 free(((function_type_t)t)->args->args); */
+
+/*             free(((function_type_t)t)->args); */
+
+/*             break; */
+/*         default: */
+/*             break; */
+/*     } */
+
+/*     free(t); */
+/* } */

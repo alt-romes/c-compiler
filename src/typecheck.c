@@ -14,7 +14,7 @@ type_t typecheck(struct node* node, struct environment* e) {
 
             environment_t* scope_env = beginScope(e);
 
-            if (((function_node_t*)node)->decl.args != NULL) // If function has parameters (same as above)
+            if (((function_node_t*)node)->decl.args != NULL) // If function has parameters
                 // Add params types to environment
                 for (int i = 0; i < ((function_node_t*)node)->decl.args->size; i++)
                     assoc(scope_env, ((function_node_t*)node)->decl.args->args[i].id, (union association_v){ .type = ((function_node_t*)node)->decl.args->args[i].ts });

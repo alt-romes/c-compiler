@@ -55,16 +55,30 @@ LLVMTypeRef type2LLVMType(type_t ts) {
             break;
         case POINTER:
             tr = LLVMPointerType(type2LLVMType(((pointer_type_t)ts)->pointed), 0 /* TODO: LLVM ADDRESS SPACE */);
-        case FUNCTION_TYPE:
-            // TODO: ...
             break;
+        case FUNCTION_TYPE: {
+
+            function_type_t fts = (function_type_t)ts;
+            LLVMTypeRef ret_type = type2LLVMType(fts->ret);
+
+            // Create function with parameters when it has been defined with them vvvv
+            int argc = fts->args->size;
+            LLVMTypeRef* params = malloc(sizeof(LLVMTypeRef)*argc);
+
+            // Define function type with correct parameters
+            for (int i = 0; i < argc; i++)
+                params[i] = type2LLVMType(fts->args->args[i].ts);
+
+            tr = LLVMFunctionType(ret_type, params, argc, 0);
+
+            free(params); // No longer needed;
+
+            break;
+        }
         default:
             fprintf(stderr, "type2LLVM undefined for ts: %d\n", ts->t);
             exit(1);
     }
-
-    /* for (int i = 0; i < reference_chain_length(ts); i++) */
-    /*     tr = LLVMPointerType(tr, 0 /1* ADDRESSSPACE (TODO BETTER?) *1/ ); */
 
     return tr;
 
@@ -154,6 +168,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
         case FUNCTION: {
             function_node_t* fnode = (function_node_t*)node;
+
             LLVMTypeRef ret_type = type2LLVMType(((function_type_t)node->ts)->ret);
 
             // Create function with parameters when it has been defined with them vvvv

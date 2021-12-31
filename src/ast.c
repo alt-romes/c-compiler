@@ -200,9 +200,16 @@ void free_ast(node_t* node) {
             // Free declaration id and args list
             free(((function_node_t*)node)->decl.id);
 
-            /* if (((function_node_t*)node)->decl.args != NULL && ((function_node_t*)node)->decl.args->args != NULL) */
-            /*     free(((function_node_t*)node)->decl.args->args); */
-            /* free(((function_node_t*)node)->decl.args); */
+            /* TODO when freeing types: */
+            /* if (((function_node_t*)node)->decl.args != NULL) { */
+            /*     for (int i = ((function_node_t*)node)->decl.args->size; i --> 0;) */
+            /*         free(((function_node_t*)node)->decl.args->args[i].id); // Free all arguments ids */
+
+            /*     if (((function_node_t*)node)->decl.args->args != NULL) */
+            /*         free(((function_node_t*)node)->decl.args->args); */
+
+            /*     free(((function_node_t*)node)->decl.args); */
+            /* } */
 
             free_ast(((function_node_t*)node)->body);
             break;

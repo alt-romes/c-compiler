@@ -32,6 +32,16 @@ enum type {
     UNDEFINED = -1
 }; 
 
+/*
+ * Type structures are heap allocated.
+ * A global structure is kept with all allocated types.
+ * Simple types are to be reused,
+ * while complex types such as POINTER and FUNCTION_TYPE,
+ * should be allocated new everytime.
+ * To free the types, call `free_all_types` that goes over the
+ * global structure and frees all allocated types.
+ */
+
 typedef struct type_s {
     enum type t;
 } * type_t;
@@ -69,5 +79,7 @@ type_t create_type_function(enum type function_type_and_qualifiers, struct args_
 type_t set_base_type(type_t, type_t);
 type_t extend_base_type(type_t, enum type);
 enum type get_base_type(type_t);
+
+void free_all_types();
 
 #endif
