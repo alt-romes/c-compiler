@@ -103,6 +103,11 @@ type_t extend_base_type(type_t t, enum type e) {
 }
 
 
+void free_all_types() {
+
+    // TODO:
+}
+
 /* void free_type(type_t t) { */
 
 /*     switch (t->t & (POINTER | FUNCTION_TYPE)) { */

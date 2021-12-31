@@ -134,7 +134,7 @@ LLVMValueRef llvmInt2BoolI1(LLVMBuilderRef b, LLVMValueRef a, type_t a_type) {
  * There is no conflict when we assume that a return node will never be present in a NO_AUTO_DEREF situation,
  * so the only time the parameter is -1, the possibly encoded type isn't needed because no return statement will be cast
  */
-struct type_s NO_AUTO_DEREF = { -1 };
+#define NO_AUTO_DEREF type_from(UNDEFINED)
 LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         environment_t* e, type_t cftoads) {
 
@@ -222,7 +222,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
         case ID: {
             LLVMValueRef alloca = find(e, ((id_node_t*)node)->value).llvmref;
-            if (cftoads->t != NO_AUTO_DEREF.t)
+            if (cftoads->t != NO_AUTO_DEREF->t)
                 return LLVMBuildLoad2(b, LLVMGetAllocatedType(alloca), alloca, "loadtmp");
             else
                 return alloca;
@@ -269,7 +269,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         case AND_ASSIGN:
         case XOR_ASSIGN:
         case OR_ASSIGN: {
-            LLVMValueRef lhs = compile(m, b, ((binary_node_t*)node)->left, e, &NO_AUTO_DEREF);
+            LLVMValueRef lhs = compile(m, b, ((binary_node_t*)node)->left, e, NO_AUTO_DEREF);
             LLVMValueRef rhs = compile(m, b, ((binary_node_t*)node)->right, e, cftoads);
             LLVMValueRef rhsX = cast(b, ((binary_node_t*)node)->left->ts, ((binary_node_t*)node)->right->ts, rhs);
             LLVMBuildStore(b, rhsX, lhs);
@@ -351,7 +351,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             return LLVMBuildLoad2(b, type2LLVMType(node->ts), alloca, "loadtmp");
         }
         case REFOF:
-            return compile(m, b, ((unary_node_t*)node)->child, e, &NO_AUTO_DEREF); // Compile without auto deref :)
+            return compile(m, b, ((unary_node_t*)node)->child, e, NO_AUTO_DEREF); // Compile without auto deref :)
 
         case UPLUS:
             return compile(m, b, ((unary_node_t*)node)->child, e, cftoads);
@@ -458,14 +458,15 @@ int main(int argc, char *argv[]) {
 
     environment_t* env = newEnvironment();
 
-    struct type_s voidt = { VOID };
+    type_t voidt = type_from(VOID);
 
     printf("[ Compiling ]\n");
-    compile(module, builder, root, env, &voidt);
+    compile(module, builder, root, env, voidt);
 
     printf("[ Cleaning ]\n");
     free(env);
     free_ast(root);
+    free_all_types();
 
     printf("[ Printing ]\n");
     char* module_string = LLVMPrintModuleToString(module);
