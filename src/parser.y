@@ -18,8 +18,7 @@ void yyerror();
     struct declaration_list* declaration_list_v;
     struct statement_list* statement_list_v;
     struct declaration declaration_v;
-    struct type_s declaration_specifiers_v;
-    struct type_s struct_type_v;
+    struct type_s* struct_type_v;
     enum type enum_type_v;
     struct declarator declarator_v;
     struct args_list* args_list_v;
@@ -40,9 +39,8 @@ void yyerror();
 %type <declaration_list_v> declaration_list declaration init_declarator_list
 %type <statement_list_v> statement_list
 %type <declaration_v> init_declarator
-%type <declaration_specifiers_v> type_name
 %type <enum_type_v> declaration_specifiers specifier_qualifier_list type_specifier type_qualifier type_qualifier_list
-%type <struct_type_v> pointer abstract_declarator
+%type <struct_type_v> pointer abstract_declarator type_name
 %type <node_type_v> unary_operator assignment_operator
 %type <args_list_v> parameter_type_list parameter_list
 
@@ -79,7 +77,7 @@ declaration_list
 
 declaration
     : declaration_specifiers ';'                      { $$ = create_declaration_list(); /* does nothing */ }
-    | declaration_specifiers init_declarator_list ';' { $$ = add_declaration_specifiers($2, $1); }
+    | declaration_specifiers init_declarator_list ';' { $$ = add_declaration_specifiers($2, type_from($1)); }
 
 declaration_specifiers
     /* : storage_class_specifier */
@@ -157,11 +155,11 @@ init_declarator_list
     | init_declarator_list ',' init_declarator        { $$ = declaration_list_assoc($1, $3); }
 
 init_declarator
-    : declarator                                      { $$ = (struct declaration){ .id = $1.id, $1.ts, .node = NULL }; }
-    | declarator '=' initializer                      { $$ = (struct declaration){ .id = $1.id, $1.ts, .node = $3 }; }
+    : declarator                                      { $$ = (struct declaration){ $1.id, $1.ts, .node = NULL }; }
+    | declarator '=' initializer                      { $$ = (struct declaration){ $1.id, $1.ts, .node = $3 }; }
 
 declarator
-	: pointer direct_declarator                       { $$ = (struct declarator){ .id = $2.id, .ts = set_base_type($2.ts, $1) }; }
+	: pointer direct_declarator                       { $2.ts = set_base_type($2.ts, $1); $$ = $2; }
 	| direct_declarator                               { $$ = $1; }
 
 pointer
@@ -175,13 +173,19 @@ type_qualifier_list
 	| type_qualifier_list type_qualifier { $$ = (enum type)($1 | $2); }
 
 direct_declarator
-    : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = type_from(UNDEFINED) }; }
+    : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = type_from(UNDEFINED), .args = NULL }; }
     | '(' declarator ')'                              { $$ = $2; }
 	/* | direct_declarator '[' constant_expression ']' */
 	/* | direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; } */
-	| direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
+	| direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3));
+                                                        $1.args = $1.args == NULL ? $3 : $1.args; // inner-most declator is the one defining the function name and arguments
+                                                        $$ = $1; }
 	/* | direct_declarator '(' identifier_list ')' */
-	| direct_declarator '(' ')' { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, create_args_list())); $$ = $1; }
+	| direct_declarator '(' ')' { { struct args_list* args_list = create_args_list();
+                                    $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, args_list));
+                                    $1.args = $1.args == NULL ? args_list : $1.args;
+                                    $$ = $1;
+                                  } }
 
 parameter_type_list
 	: parameter_list { $$ = $1; }
@@ -192,7 +196,7 @@ parameter_list
 	| parameter_list ',' parameter_declaration { $$ = args_list_add($1, $3); }
 
 parameter_declaration
-	: declaration_specifiers declarator { $2.ts = set_base_type($2.ts, $1); $$ = $1; }
+	: declaration_specifiers declarator { $2.ts = set_base_type($2.ts, type_from($1)); $$ = $2; }
 	/* | declaration_specifiers abstract_declarator */
 	/* | declaration_specifiers */
 
@@ -312,7 +316,7 @@ cast_expression
 
 type_name
 	: specifier_qualifier_list { $$ = type_from($1); }
-	| specifier_qualifier_list abstract_declarator { $$ = set_base_type($2, $1); }
+	| specifier_qualifier_list abstract_declarator { $$ = set_base_type($2, type_from($1)); }
 
 specifier_qualifier_list
 	: type_specifier specifier_qualifier_list { $$ = (enum type)($1 | $2); }
@@ -368,8 +372,8 @@ postfix_expression
 /* 	| argument_expression_list ',' assignment_expression */
 
 primary_expression
-    : _IDENTIFIER                                     { $$ = create_node_literal(ID, -1, $1); }
-    | _NUM                                            { $$ = create_node_literal(NUM, INT /* int32 by default, overriden by declaration type */, (void*)(intptr_t)$1); }
+    : _IDENTIFIER                                     { $$ = create_node_literal(ID, type_from(UNDEFINED), $1); }
+    | _NUM                                            { $$ = create_node_literal(NUM, type_from(INT) /* int32 by default, overriden by declaration type */, (void*)(intptr_t)$1); }
 	/* | CONSTANT instead of NUM ...? */
 	/* | STRING_LITERAL */
 	| '(' expression ')' { $$ = $2; }

@@ -76,7 +76,7 @@ node_t* new_node(node_type_t type) {
     }
 
     node->type = type;
-    node->ts = VOID;
+    node->ts = type_from(UNDEFINED);
 
     return node;
 }
@@ -179,7 +179,6 @@ node_t* create_node_block(node_type_t type, declaration_list_t* declaration_list
 node_t* create_node_function(node_type_t type, struct declarator decl, node_t* b) {
 
     function_node_t* node = (function_node_t*)new_node(type);
-    node->ts = ts;
     node->decl = decl;
     node->body = b;
     return (node_t*)node;
@@ -201,9 +200,9 @@ void free_ast(node_t* node) {
             // Free declaration id and args list
             free(((function_node_t*)node)->decl.id);
 
-            if (((function_node_t*)node)->decl.args != NULL && ((function_node_t*)node)->decl.args->args != NULL)
-                free(((function_node_t*)node)->decl.args->args);
-            free(((function_node_t*)node)->decl.args);
+            /* if (((function_node_t*)node)->decl.args != NULL && ((function_node_t*)node)->decl.args->args != NULL) */
+            /*     free(((function_node_t*)node)->decl.args->args); */
+            /* free(((function_node_t*)node)->decl.args); */
 
             free_ast(((function_node_t*)node)->body);
             break;
@@ -334,7 +333,7 @@ declaration_list_t* declaration_list_merge(declaration_list_t* src, declaration_
 
 declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, type_t et) {
     
-    for (struct declaration* d = decs->declarations, * lim = d + decs->size; d < lim; d++) d->et |= et;
+    for (struct declaration* d = decs->declarations, * lim = d + decs->size; d < lim; d++) d->et = set_base_type(d->et, et);
 
     return decs;
 }

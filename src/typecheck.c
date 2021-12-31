@@ -4,8 +4,8 @@
 #include <assert.h>
 #include "typecheck.h"
 
-enum type typecheck(struct node* node, struct environment* e) {
-    enum type t;
+type_t typecheck(struct node* node, struct environment* e) {
+    type_t t;
     switch (node->type) {
         case FUNCTION: {
             // TODO ... 
@@ -14,10 +14,10 @@ enum type typecheck(struct node* node, struct environment* e) {
 
             environment_t* scope_env = beginScope(e);
 
-            if (((function_node_t*)node)->decl.args != NULL) // If function has parameters (same as above)
-                // Add params types to environment
-                for (int i = 0; i < ((function_node_t*)node)->decl.args->size; i++)
-                    assoc(scope_env, ((function_node_t*)node)->decl.args->args[i].id, (union association_v){ .type = ((function_node_t*)node)->decl.args->args[i].ts });
+            /* if (((function_node_t*)node)->decl.args != NULL) // If function has parameters (same as above) */
+            /*     // Add params types to environment */
+            /*     for (int i = 0; i < ((function_node_t*)node)->decl.args->size; i++) */
+            /*         assoc(scope_env, ((function_node_t*)node)->decl.args->args[i].id, (union association_v){ .type = ((function_node_t*)node)->decl.args->args[i].ts }); */
 
 
             typecheck(((function_node_t*)node)->body, scope_env);
@@ -56,14 +56,14 @@ enum type typecheck(struct node* node, struct environment* e) {
 
             endScope(scope_env); // free the scope environment and its association array
 
-            t = VOID;
+            t = type_from(VOID);
 
             break;
         }
         case NUM:
             // TODO: Just Min required value to hold this number, ignore node->ts
             /* t = node->ts == 0 ? INT : node->ts; // Use already assigned type for num (on declaration) if available */
-            t = INT;
+            t = type_from(INT);
             break;
 
         // All these operations are applied on numeric types that nust 
@@ -74,26 +74,26 @@ enum type typecheck(struct node* node, struct environment* e) {
         case ADD:
         case SUB:
         case MUL: {
-            enum type l = typecheck(((binary_node_t*)node)->left, e);
-            enum type r = typecheck(((binary_node_t*)node)->right, e);
+            type_t l = typecheck(((binary_node_t*)node)->left, e);
+            type_t r = typecheck(((binary_node_t*)node)->right, e);
             // TODO: assert both types are numeric?
             t = type_compare(l, r) < 0 ? r : l;
             break;
         }
         case REM:
         case DIV: {
-            enum type l = typecheck(((binary_node_t*)node)->left, e);
-            enum type r = typecheck(((binary_node_t*)node)->right, e);
-            assert((l & UNSIGNED) == (r & UNSIGNED)); // For division either both values or unsigned or none is
+            type_t l = typecheck(((binary_node_t*)node)->left, e);
+            type_t r = typecheck(((binary_node_t*)node)->right, e);
+            assert(is_type_unsigned(l) == is_type_unsigned(r)); // For division either both values or unsigned or none is
             t = type_compare(l, r) < 0 ? r : l;
             break;
         }
 
         case RIGHT_SHIFT: {
-            enum type l = typecheck(((binary_node_t*)node)->left, e);
-            enum type r = typecheck(((binary_node_t*)node)->right, e);
+            type_t l = typecheck(((binary_node_t*)node)->left, e);
+            type_t r = typecheck(((binary_node_t*)node)->right, e);
             // For right shift do sign-extended if lhs is signed, zero fill otherwise
-            t = (type_compare(l, r) < 0 ? r : l) | (l & UNSIGNED);
+            t = extend_base_type((type_compare(l, r) < 0 ? r : l), (is_type_unsigned(l) ? UNSIGNED : SIGNED));
             break;
         }
 
@@ -119,9 +119,8 @@ enum type typecheck(struct node* node, struct environment* e) {
         case XOR_ASSIGN:
         case OR_ASSIGN: {
             t = typecheck(((binary_node_t*)node)->left, e);
-            if (t & CONST)
-                puts("Cannot assign to a variable qualified as `const`!");
-            assert(!(t & CONST)); // What else can i assert here? they both have the same time but can be cast i guess
+            if (is_type_const(t)) puts("Cannot assign to a variable qualified as `const`!");
+            assert(!is_type_const(t)); // What else can i assert here? they both have the same time but can be cast i guess
             t = typecheck(((binary_node_t*)node)->right, e);
             break;
         }
@@ -130,10 +129,10 @@ enum type typecheck(struct node* node, struct environment* e) {
         case GT:
         case LE:
         case GE: {
-            enum type l = typecheck(((binary_node_t*)node)->left, e);
-            enum type r = typecheck(((binary_node_t*)node)->right, e);
-            assert((l & UNSIGNED) == (r & UNSIGNED)); // Both types must be the same
-            t = I1 | (l & UNSIGNED); // Return boolean encoded in char. If values are unsigned do unsigned comparison
+            type_t l = typecheck(((binary_node_t*)node)->left, e);
+            type_t r = typecheck(((binary_node_t*)node)->right, e);
+            assert(is_type_unsigned(l) == is_type_unsigned(r)); // Both types must be the same
+            t = type_from(I1 | (is_type_unsigned(l) ? UNSIGNED : SIGNED)); // Return boolean encoded in char. If values are unsigned do unsigned comparison
             break;
         }
         case EQ:
@@ -142,19 +141,19 @@ enum type typecheck(struct node* node, struct environment* e) {
             /* enum type r = */ typecheck(((binary_node_t*)node)->right, e);
             // Correction to the below: types can be ints with different size that will be promoted
             /* assert(type_compare(l, r) == 0); // Both types must be the same */
-            t = I1; // I1 boolean
+            t = type_from(I1); // I1 boolean
             break;
         case LOR:
         case LAND:
             /* enum type l = */ typecheck(((binary_node_t*)node)->left, e);
             /* enum type r = */ typecheck(((binary_node_t*)node)->right, e);
             /* assert both types are boolean ... numeric? */
-            t = I1; // I1 boolean
+            t = type_from(I1); // I1 boolean
             break;
         case LOGICAL_NOT:
             typecheck(((unary_node_t*)node)->child, e);
             /* assert child t is numeric? all numbers are booleans? */
-            t = I1; // boolean values are represented with I1
+            t = type_from(I1); // boolean values are represented with I1
             break;
         case BNOT:
         case UPLUS:
@@ -171,7 +170,7 @@ enum type typecheck(struct node* node, struct environment* e) {
             break;
         case DEREF:
             t = typecheck(((unary_node_t*)node)->child, e);
-            assert(t & IS_REFERENCE); // Assert t is a reference
+            assert(is_type_pointer(t)); // Assert t is a reference
             t = deref(t);
             break;
 
@@ -179,7 +178,7 @@ enum type typecheck(struct node* node, struct environment* e) {
             if (((unary_node_t*)node)->child != NULL)
                 t = typecheck(((unary_node_t*)node)->child, e);
             else
-                t = VOID;
+                t = type_from(VOID);
             break;
         case CAST:
             t = node->ts;
@@ -187,7 +186,7 @@ enum type typecheck(struct node* node, struct environment* e) {
             // TODO: Assert child type is castable to cast type
             break;
         case IF:
-            t = VOID;
+            t = type_from(VOID);
             typecheck(((if_node_t*)node)->cond, e);
             // Assert condition is bool or castable to bool? ...
             typecheck(((if_node_t*)node)->thenst, e);
@@ -203,7 +202,7 @@ enum type typecheck(struct node* node, struct environment* e) {
             break;
         }
         case UNIT:
-            t = VOID;
+            t = type_from(VOID);
             break;
     }
 

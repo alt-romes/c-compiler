@@ -8,7 +8,7 @@
 
 union association_v {
     struct node* node;
-    enum type type;
+    type_t type;
     LLVMValueRef llvmref;
     int integer;
 };
