@@ -1,4 +1,4 @@
-int main {
+int main() {
     int x = 254, y = 255;
     return x >= y;
 }

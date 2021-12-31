@@ -1,4 +1,4 @@
-int main {
+int main() {
     short y = 2;
     char z = y;
     return y != z;

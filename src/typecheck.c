@@ -10,14 +10,14 @@ type_t typecheck(struct node* node, struct environment* e) {
         case FUNCTION: {
             // TODO ... 
             /* this doesn't need to be, only make sure that its castable from one to another assert((t = node->ts) == typecheck(((function_node_t*)node)->body, e)); */
-            t = node->ts; // function type is its return value... quite wrong but ..
+            t = ((function_node_t*)node)->decl.ts; // function type is its own declarator type
 
             environment_t* scope_env = beginScope(e);
 
-            /* if (((function_node_t*)node)->decl.args != NULL) // If function has parameters (same as above) */
-            /*     // Add params types to environment */
-            /*     for (int i = 0; i < ((function_node_t*)node)->decl.args->size; i++) */
-            /*         assoc(scope_env, ((function_node_t*)node)->decl.args->args[i].id, (union association_v){ .type = ((function_node_t*)node)->decl.args->args[i].ts }); */
+            if (((function_node_t*)node)->decl.args != NULL) // If function has parameters (same as above)
+                // Add params types to environment
+                for (int i = 0; i < ((function_node_t*)node)->decl.args->size; i++)
+                    assoc(scope_env, ((function_node_t*)node)->decl.args->args[i].id, (union association_v){ .type = ((function_node_t*)node)->decl.args->args[i].ts });
 
 
             typecheck(((function_node_t*)node)->body, scope_env);

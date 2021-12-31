@@ -1,4 +1,4 @@
-int main {
+int main() {
     const int x = 5, y = 2, z = 6;
     const int i = 4;
     return ( x * y - (-z) ) / i;

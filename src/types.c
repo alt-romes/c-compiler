@@ -65,34 +65,34 @@ type_t create_type_function(enum type function_type_and_qualifiers, struct args_
 /* (Recursively) Set the base type of an "in-construction" type.
  * Setting the base type of a...
  *  POINTER -> is setting the pointed to type
- *  FUNCTION -> is setting the return type
+ *  FUNCTION_TYPE -> is setting the return type
  *  UNDEFINED -> is setting the type directly
  */
 type_t set_base_type(type_t t, type_t b) {
 
-    switch (t->t & (POINTER | FUNCTION | UNDEFINED)) {
+    switch (t->t & (POINTER | FUNCTION_TYPE | UNDEFINED)) {
         case UNDEFINED:
-            /* TDOO: free(t); */
+            free(t);
             return b;
         case POINTER:
             ((pointer_type_t)t)->pointed = set_base_type(((pointer_type_t)t)->pointed, b);
             return t;
-        case FUNCTION:
+        case FUNCTION_TYPE:
             ((function_type_t)t)->ret = set_base_type(((function_type_t)t)->ret, b);
             return t;
         default:
-            fprintf(stderr, "Cannot set base type of type %d to %d!\n", t->t, b->t);
+            fprintf(stderr, "Cannot set base type of type %x to %x!\n", t->t, b->t);
             exit(31);
     }
 }
 
 type_t extend_base_type(type_t t, enum type e) {
 
-    switch (t->t & (POINTER | FUNCTION)) {
+    switch (t->t & (POINTER | FUNCTION_TYPE)) {
         case POINTER:
             ((pointer_type_t)t)->pointed = extend_base_type(((pointer_type_t)t)->pointed, e);
             return t;
-        case FUNCTION:
+        case FUNCTION_TYPE:
             ((function_type_t)t)->ret = extend_base_type(((function_type_t)t)->ret, e);
             return t;
         default:

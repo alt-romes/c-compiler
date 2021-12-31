@@ -1,4 +1,4 @@
-char main {
+char main() {
     const unsigned char x = 255;
     short y = 1;
     return x + y;

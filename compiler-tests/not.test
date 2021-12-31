@@ -1,4 +1,4 @@
-char main {
+char main() {
 
     return ~1;
 }

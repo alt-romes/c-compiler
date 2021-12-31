@@ -1,4 +1,4 @@
-int main {
+int main() {
     char x = 100, y = 255, z = 0;
     return (x > y) != 0;
 }

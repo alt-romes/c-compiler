@@ -1,3 +1,5 @@
 long long wouldn't work --> fix: 2 bits for long
 
+free types
+
 porque nos outputs llvm é sempre alocado e posto 0 no início

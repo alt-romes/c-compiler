@@ -1,4 +1,4 @@
-int main {
+int main() {
 
     int x = 6;
     x ^= 2;

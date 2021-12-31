@@ -8,6 +8,12 @@
 int yylex(); // defined by lex
 void yyerror();
 
+void fail(char* s) {
+
+    fprintf(stderr, "[Failed] %s\n", s);
+    exit(-2);
+}
+
 %}
 
 %union {
@@ -62,8 +68,10 @@ init
 	/* | declaration */
 
 function_definition
-    : declaration_specifiers declarator compound_statement { $2.ts = set_base_type($2.ts, type_from($1)), $$ = create_node_function(FUNCTION, $2, $3); }
-	| declarator compound_statement { $1.ts = set_base_type($1.ts, type_from(INT)), $$ = create_node_function(FUNCTION, $1, $2); }
+    : declaration_specifiers declarator compound_statement { if ($2.ts->t == UNDEFINED || !($2.ts->t & FUNCTION_TYPE)) fail("Function declarator does not define a function!");
+                                                             $2.ts = set_base_type($2.ts, type_from($1));
+                                                             $$ = create_node_function(FUNCTION, $2, $3); }
+	| declarator compound_statement { $1.ts = set_base_type($1.ts, type_from(INT)); $$ = create_node_function(FUNCTION, $1, $2); }
 
 compound_statement
     : '{' '}'                                         { $$ = create_node_literal(UNIT, type_from(VOID), NULL); }
@@ -185,7 +193,7 @@ direct_declarator
                                     $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, args_list));
                                     $1.args = $1.args == NULL ? args_list : $1.args;
                                     $$ = $1;
-                                  } }
+                                } }
 
 parameter_type_list
 	: parameter_list { $$ = $1; }

@@ -1,4 +1,4 @@
-short main {
+short main() {
     unsigned char x = 255;
     short y = 1;
     return x + y;

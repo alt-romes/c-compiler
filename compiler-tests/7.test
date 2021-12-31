@@ -1,4 +1,4 @@
-int main {
+int main() {
     char y = 255;
     unsigned char x = -127;
     return (y >> 2) + (x >> 2);

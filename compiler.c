@@ -53,8 +53,9 @@ LLVMTypeRef type2LLVMType(type_t ts) {
         case LONG:
             tr = LLVMInt64Type();
             break;
-
-        case FUNCTION:
+        case POINTER:
+            tr = LLVMPointerType(type2LLVMType(((pointer_type_t)ts)->pointed), 0 /* TODO: LLVM ADDRESS SPACE */);
+        case FUNCTION_TYPE:
             // TODO: ...
             break;
         default:
@@ -153,7 +154,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
         case FUNCTION: {
             function_node_t* fnode = (function_node_t*)node;
-            LLVMTypeRef ret_type = type2LLVMType(node->ts);
+            LLVMTypeRef ret_type = type2LLVMType(((function_type_t)node->ts)->ret);
 
             // Create function with parameters when it has been defined with them vvvv
             int argc = 0;
@@ -177,7 +178,6 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fun, "entry");
             LLVMPositionBuilderAtEnd(b, entry);
 
-
             environment_t* scope_env = beginScope(e);
 
 
@@ -192,9 +192,7 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             free(params); // No longer needed;
 
-
-            compile(m, b, ((function_node_t*)node)->body, scope_env, ((function_node_t*)node)->ts /* update current function type */);
-
+            compile(m, b, ((function_node_t*)node)->body, scope_env, ((function_type_t)node->ts)->ret /* update current function return type */);
 
             endScope(scope_env); // free the scope environment and its association array
 
