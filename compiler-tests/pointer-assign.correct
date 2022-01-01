@@ -1,0 +1,19 @@
+[ Parsing ]
+[ Type Checking ]
+[ Setup ]
+[ Compiling ]
+[ Cleaning ]
+[ Printing ]
+[ Module ]
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i32 @main(i32 %0, i8** %1) {
+entry:
+  %loadlhstmp2 = load i8*, i8** %1, align 8
+  store i8 1, i8* %loadlhstmp2, align 1
+  %loadrhstmp = load i8*, i8** %1, align 8
+  %loadrhstmp3 = load i8, i8* %loadrhstmp, align 1
+  %extsrctmp = sext i8 %loadrhstmp3 to i32
+  ret i32 %extsrctmp
+}

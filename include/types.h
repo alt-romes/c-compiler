@@ -29,7 +29,7 @@ enum type {
     CONST = 0x40000000,
 
     /* Undefined :P */
-    UNDEFINED = -1
+    UNDEFINED = 0x80000000
 }; 
 
 /*

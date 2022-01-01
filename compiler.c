@@ -13,6 +13,8 @@
 #include <debug.h>
 /* #include "llvm.h" */
 
+#define NODEBUG
+#define VERIFY_FUNCTION
 #define OPTIMIZE
 
 #ifdef OPTIMIZE
@@ -202,8 +204,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             endScope(scope_env); // free the scope environment and its association array
 
-
+#ifdef VERIFY_FUNCTION
             LLVMVerifyFunction(fun, LLVMAbortProcessAction);
+#endif
 #ifdef OPTIMIZE
             // Run optimizations!
             LLVMRunFunctionPassManager(pass_manager, fun);
@@ -338,8 +341,15 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                     "andtmp");
 
         case DEREF: {
+            /* debug_type("Loading", node->ts); */
             LLVMValueRef alloca = compile(m, b, ((unary_node_t*)node)->child, e, cftoads);
-            return LLVMBuildLoad2(b, type2LLVMType(node->ts), alloca, "loadtmp");
+            if (cftoads->t != NO_AUTO_DEREF->t)
+                // Dereference on the right side -> get final value
+                return LLVMBuildLoad2(b, type2LLVMType(node->ts), alloca, "loadrhstmp");
+            else
+                // Dereference on the left side -> get reference of final value (because the Id won't be dereferenced, this is actually transparent, we just need to make sure we load the correct types)
+                return LLVMBuildLoad2(b, LLVMGetElementType(LLVMTypeOf(alloca)), alloca, "loadlhstmp");
+                
         }
         case REFOF:
             return compile(m, b, ((unary_node_t*)node)->child, e, NO_AUTO_DEREF); // Compile without auto deref :)

@@ -4,6 +4,5 @@ int main() {
     int* z = &y;
     int * const * x = &z;
     **x = 4;
-    *x = &z;
     return **x;
 }
