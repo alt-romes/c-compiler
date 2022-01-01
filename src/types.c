@@ -4,6 +4,21 @@
 #include "ast.h"
 #include "types.h"
 
+
+struct {
+    type_t* types;
+    int size;
+} __allocated_types
+= { 0, 0 };
+
+void add_allocated_type(type_t t) {
+
+    if (!(__allocated_types.size % DEFAULT_ENVIRONMENT_SIZE))
+        __allocated_types.types = realloc(__allocated_types.types, (__allocated_types.size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(type_t));
+
+    __allocated_types.types[__allocated_types.size++] = t;
+}
+
 int is_type_unsigned(type_t t) {
 
     /* return get_base_type(t) & UNSIGNED; */
@@ -30,6 +45,9 @@ int type_compare(type_t l, type_t r) {
 
 type_t type_from(enum type t) {
     type_t x = malloc(sizeof(struct type_s));
+
+    add_allocated_type(x);
+
     x->t = t;
     return x;
 }
@@ -41,13 +59,15 @@ type_t ref_of(type_t t) {
 
 type_t deref(type_t t) {
     
-    // TODO: where free?
     return ((pointer_type_t)t)->pointed;
 }
 
 type_t create_type_pointer(enum type pointer_type_and_qualifiers) {
     
     pointer_type_t p = malloc(sizeof(struct pointer_type));
+
+    add_allocated_type((type_t)p);
+
     p->t = pointer_type_and_qualifiers;
     p->pointed = type_from(UNDEFINED);
     return (type_t)p;
@@ -56,6 +76,9 @@ type_t create_type_pointer(enum type pointer_type_and_qualifiers) {
 type_t create_type_function(enum type function_type_and_qualifiers, struct args_list* args) {
 
     function_type_t f = malloc(sizeof(struct function_type));
+
+    add_allocated_type((type_t)f);
+
     f->t = function_type_and_qualifiers;
     f->args = args;
     f->ret = type_from(UNDEFINED);
@@ -72,7 +95,6 @@ type_t set_base_type(type_t t, type_t b) {
 
     switch (t->t & (POINTER | FUNCTION_TYPE | UNDEFINED)) {
         case UNDEFINED:
-            free(t);
             return b;
         case POINTER:
             ((pointer_type_t)t)->pointed = set_base_type(((pointer_type_t)t)->pointed, b);
@@ -102,36 +124,10 @@ type_t extend_base_type(type_t t, enum type e) {
 
 }
 
-
 void free_all_types() {
 
-    // TODO:
+    for (int i = 0; i < __allocated_types.size; i++)
+        free(__allocated_types.types[i]);
+
 }
 
-/* void free_type(type_t t) { */
-
-/*     switch (t->t & (POINTER | FUNCTION_TYPE)) { */
-/*         case POINTER: */
-/*             free_type(((pointer_type_t)t)->pointed); */
-/*             break; */
-/*         case FUNCTION_TYPE: */
-/*             free_type(((function_type_t)t)->ret); */
-
-/*             // Free args list */
-/*             for (int i = ((function_type_t)t)->args->size; i --> 0;) { */
-/*                 free_type(((function_type_t)t)->args->args[i].ts); */
-/*                 free(((function_type_t)t)->args->args[i].id); */
-/*             } */
-
-/*             if (((function_type_t)t)->args->args != NULL) */
-/*                 free(((function_type_t)t)->args->args); */
-
-/*             free(((function_type_t)t)->args); */
-
-/*             break; */
-/*         default: */
-/*             break; */
-/*     } */
-
-/*     free(t); */
-/* } */

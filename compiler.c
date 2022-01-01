@@ -458,10 +458,8 @@ int main(int argc, char *argv[]) {
 
     environment_t* env = newEnvironment();
 
-    type_t voidt = type_from(VOID);
-
     printf("[ Compiling ]\n");
-    compile(module, builder, root, env, voidt);
+    compile(module, builder, root, env, type_from(VOID));
 
     printf("[ Cleaning ]\n");
     free(env);

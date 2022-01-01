@@ -28,7 +28,7 @@ environment_t* endScope(environment_t* e) {
 }
 
 environment_t* assoc(environment_t* e, char* id, union association_v val) {
-    if (!e->size % DEFAULT_ENVIRONMENT_SIZE) {
+    if (!(e->size % DEFAULT_ENVIRONMENT_SIZE)) {
         struct association* new_associations = realloc(e->associations, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct association));
         e->associations = new_associations;
     }

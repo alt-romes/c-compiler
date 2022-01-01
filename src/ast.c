@@ -318,7 +318,7 @@ declaration_list_t* create_declaration_list() {
 
 declaration_list_t* declaration_list_assoc(declaration_list_t* e, struct declaration d) {
 
-    if (!e->size % DEFAULT_ENVIRONMENT_SIZE)
+    if (!(e->size % DEFAULT_ENVIRONMENT_SIZE))
         // CAREFUL: e->declarations must be initially NULL for realloc to behave as malloc!
         e->declarations = realloc(e->declarations, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct declaration));
 
@@ -356,7 +356,7 @@ statement_list_t* create_statement_list() {
 
 statement_list_t* statement_list_add(statement_list_t * e, node_t* node) {
 
-    if (!e->size % DEFAULT_ENVIRONMENT_SIZE)
+    if (!(e->size % DEFAULT_ENVIRONMENT_SIZE))
         // CAREFUL: e->declarations must be initially NULL for realloc to behave as malloc!
         e->statements = realloc(e->statements, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(node_t*));
 
@@ -375,7 +375,7 @@ struct args_list* create_args_list() {
 
 struct args_list* args_list_add(struct args_list* e, struct declarator v) {
 
-    if (!e->size % DEFAULT_ENVIRONMENT_SIZE)
+    if (!(e->size % DEFAULT_ENVIRONMENT_SIZE))
         e->args = realloc(e->args, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct declarator));
 
     e->args[e->size++] = v;
