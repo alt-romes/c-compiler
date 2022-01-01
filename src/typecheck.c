@@ -21,37 +21,11 @@ type_t typecheck(struct node* node, struct environment* e) {
             function_type_t fts = (function_type_t)t;
             int argc = fts->args->size;
 
-            for (int i = 0; i < argc; i++) {
-                debug("1");
-                struct declarator* args = fts->args->args;
-                debug("2");
-                struct declarator arg = args[i];
-                debug("3");
-                char* id = arg.id;
-                debug("4");
-                union association_v val = (union association_v){ .type = fts->args->args[i].ts };
-                debug("5");
-                assoc(scope_env, id, val);
-                debug("6");
-            }
-
-            /* debug("loopi"); */
-            /* if (((function_node_t*)node)->decl.args != NULL) // If function has parameters */
-            /*     // Add params types to environment */
-            /*     for (int i = 0; i < ((function_node_t*)node)->decl.args->size; i++) { */
-            /*         debug("loopi"); */
-            /*         assoc(scope_env, ((function_node_t*)node)->decl.args->args[i].id, (union association_v){ .type = ((function_node_t*)node)->decl.args->args[i].ts }); */
-            /*         fprintf(stderr, "%s\n", scope_env->associations[i].id); */
-            /*     } */
-
-            debug("Typecheck: printing typechecking environment");
-            fprintf(stderr, "%d\n", scope_env->size);
-            for (int i=0; i<scope_env->size; i++)
-                fprintf(stderr, "%s\n", scope_env->associations[i].id);
-            debug("Typecheck: done");
+            for (int i = 0; i < argc; i++)
+                assoc(scope_env, fts->args->args[i].id,
+                        (union association_v){ .type = fts->args->args[i].ts });
 
             typecheck(((function_node_t*)node)->body, scope_env);
-
 
             endScope(scope_env); // free the scope environment and its association array
 

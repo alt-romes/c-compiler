@@ -434,24 +434,6 @@ int main(int argc, char *argv[]) {
     printf("[ Parsing ]\n");
     node_t* root = parse_root();
 
-    function_type_t fts = (function_type_t)((function_node_t*)root)->decl.ts;
-    int argc2 = fts->args->size;
-
-    fprintf(stderr, "argc: %d\n", argc2);
-    for (int i = 0; i < argc2; i++) {
-        debug("1");
-        struct declarator* args = fts->args->args;
-        debug("2");
-        struct declarator arg = args[i];
-        debug("3");
-        char* id = arg.id;
-        debug("4");
-        fprintf(stderr, "id: %s\n", id);
-        debug("5");
-        union association_v val = (union association_v){ .type = fts->args->args[i].ts };
-        debug("6");
-    }
-
     printf("[ Type Checking ]\n");
     environment_t* typing_env = newEnvironment();
     typecheck(root, typing_env);

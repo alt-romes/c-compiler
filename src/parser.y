@@ -68,15 +68,13 @@ init
 	/* | declaration */
 
 function_definition
-    : declaration_specifiers declarator compound_statement { /* if ($2.ts->t == UNDEFINED || !($2.ts->t & FUNCTION_TYPE)) fail("Function declarator does not define a function!"); */
-                                                             for (int i = 0; $2.ts->t == FUNCTION_TYPE && i < ((function_type_t)$2.ts)->args->size; i++)
-                                                                 fprintf(stderr, "arg %d is %d\n", i, ((function_type_t)$2.ts)->args->args[i].ts->t);
+    : declaration_specifiers declarator compound_statement { if ($2.ts->t == UNDEFINED || !($2.ts->t & FUNCTION_TYPE)) fail("Function declarator does not define a function!");
                                                              $2.ts = set_base_type($2.ts, type_from($1));
                                                              $$ = create_node_function(FUNCTION, $2, $3); }
 	| declarator compound_statement { $1.ts = set_base_type($1.ts, type_from(INT)); $$ = create_node_function(FUNCTION, $1, $2); }
 
 compound_statement
-    : '{' '}'                                         { $$ = create_node_literal(UNIT, type_from(VOID), NULL); }
+    : '{' '}'                                         { $$ = create_node_unit(UNIT, type_from(VOID)); }
     | '{' statement_list '}'                          { $$ = create_node_block(BLOCK, create_declaration_list() /* empty by default */ , $2); }
     | '{' declaration_list '}'                        { $$ = create_node_block(BLOCK, $2, create_statement_list() /* empty by default */); }
     | '{' declaration_list statement_list '}'         { $$ = create_node_block(BLOCK, $2, $3); }
@@ -170,10 +168,7 @@ init_declarator
 
 declarator
 	: pointer direct_declarator                       { $2.ts = set_base_type($2.ts, $1); $$ = $2; }
-	| direct_declarator                               { $$ = $1;
-                                                         for (int i = 0; $1.ts->t == FUNCTION_TYPE && i < ((function_type_t)$1.ts)->args->size; i++)
-                                                             fprintf(stderr, "in declarator arg %d is %s\n", i, ((function_type_t)$1.ts)->args->args[i].id);
-                                                        }
+	| direct_declarator                               { $$ = $1; }
 
 pointer
 	: '*' { $$ = create_type_pointer(POINTER); }
@@ -190,11 +185,7 @@ direct_declarator
     | '(' declarator ')'                              { $$ = $2; }
 	/* | direct_declarator '[' constant_expression ']' */
 	/* | direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; } */
-	| direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3));
-                                                        $$ = $1;
-                                                         for (int i = 0; i < ((function_type_t)$1.ts)->args->size; i++)
-                                                             fprintf(stderr, "in direct declarator arg %d is %s\n", i, ((function_type_t)$1.ts)->args->args[i].id);
-                                                        }
+	| direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
 	/* | direct_declarator '(' identifier_list ')' */
 	| direct_declarator '(' ')' { { struct args_list* args_list = create_args_list();
                                     $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, args_list));
@@ -245,7 +236,7 @@ statement
 /* 	| _DEFAULT ':' statement */
 
 expression_statement
-	: ';'            { $$ = create_node_literal(UNIT, type_from(VOID), NULL); }
+	: ';'            { $$ = create_node_unit(UNIT, type_from(VOID)); }
 	| expression ';' { $$ = $1; }
 
 constant_expression
@@ -386,8 +377,8 @@ postfix_expression
 /* 	| argument_expression_list ',' assignment_expression */
 
 primary_expression
-    : _IDENTIFIER                                     { $$ = create_node_literal(ID, type_from(UNDEFINED), $1); }
-    | _NUM                                            { $$ = create_node_literal(NUM, type_from(INT) /* int32 by default, overriden by declaration type */, (void*)(intptr_t)$1); }
+    : _IDENTIFIER                                     { $$ = create_node_id(ID, type_from(UNDEFINED), $1); }
+    | _NUM                                            { $$ = create_node_num(NUM, type_from(INT) /* int32 by default, overriden by declaration type */, $1); }
 	/* | CONSTANT instead of NUM ...? */
 	/* | STRING_LITERAL */
 	| '(' expression ')' { $$ = $2; }

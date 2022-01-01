@@ -160,7 +160,9 @@ typedef struct if_node {
     struct node* elsest;
 } if_node_t;
 
-node_t* create_node_literal(node_type_t, type_t, void* literal_value);
+node_t* create_node_num(node_type_t, type_t, int);
+node_t* create_node_id(node_type_t, type_t, char*);
+node_t* create_node_unit(node_type_t, type_t);
 node_t* create_node1(node_type_t, node_t*);
 node_t* create_node2(node_type_t, node_t*, node_t*);
 node_t* create_node_block(node_type_t, declaration_list_t*, statement_list_t*);

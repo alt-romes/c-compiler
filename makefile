@@ -9,7 +9,7 @@ INCLUDE_DIR=./include
 CFLAGS=`llvm-config --cflags`
 CXXFLAGS=`llvm-config --cxxflags`
 LDFLAGS=`llvm-config --ldflags --system-libs --libs core`
-CPPFLAGS=-Wall -I$(INCLUDE_DIR)
+CPPFLAGS=-Wall -I$(INCLUDE_DIR) -fsanitize=address
 
 HEADERS := $(shell find $(INCLUDE_DIR) -name '*.h')
 SRCS := $(shell find $(SRC_DIR) -name '*.c')

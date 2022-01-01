@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <environment.h>
+#include <debug.h>
 #include <ast.h>
 
 node_t* new_node(node_type_t type) {
@@ -67,7 +68,7 @@ node_t* new_node(node_type_t type) {
             break;
         case NUM:
         case UNIT:
-            node = malloc(sizeof(node_t));
+            node = malloc(sizeof(num_node_t));
             break;
         case IF:
         case CONDITIONAL:
@@ -81,27 +82,31 @@ node_t* new_node(node_type_t type) {
     return node;
 }
 
-node_t* create_node_literal(node_type_t type, type_t ts, void* literal_value) {
-    
-    node_t* node = new_node(type);
-    node->ts = ts;
-    
-    switch (type) {
-        case NUM: {
-            ((num_node_t*)node)->value = (int)(intptr_t)literal_value;
-            break;
-        }
-        case ID:
-            ((id_node_t*)node)->value = (char*)literal_value;
-            break;
-        case UNIT:
-            break;
-        default:
-            fprintf(stderr, "ERROR: Literal node should have type NUM, BOOL or ID!\n");
-            exit(1);
-    }
+node_t* create_node_num(node_type_t type, type_t ts, int num) {
 
-    return node;
+    num_node_t* node = (num_node_t*)new_node(type);
+    node->ts = ts;
+    node->value = num;
+
+    return (node_t*)node;
+}
+
+node_t* create_node_id(node_type_t type, type_t ts, char* s) {
+
+    id_node_t* node = (id_node_t*)new_node(type);
+    node->ts = ts;
+    node->value = s;
+
+    return (node_t*)node;
+}
+
+node_t* create_node_unit(node_type_t type, type_t ts) {
+
+    num_node_t* node = (num_node_t*)new_node(type);
+    node->ts = ts;
+    /* node->value has NOTHING; */
+
+    return (node_t*)node;
 }
 
 node_t* create_node1(node_type_t type, node_t* n) {
@@ -112,16 +117,16 @@ node_t* create_node1(node_type_t type, node_t* n) {
     /* Desugaring */
     switch (type) {
         case PRE_INC:
-            node->child = create_node2(ADD_ASSIGN, node->child, create_node_literal(NUM, node->ts, (void*)(intptr_t)1));
+            node->child = create_node2(ADD_ASSIGN, node->child, create_node_num(NUM, node->ts, 1));
             break;
         case PRE_DEC:
-            node->child = create_node2(SUB_ASSIGN, node->child, create_node_literal(NUM, node->ts, (void*)(intptr_t)1));
+            node->child = create_node2(SUB_ASSIGN, node->child, create_node_num(NUM, node->ts, 1));
             break;
         case POST_INC:
-            node->child = create_node2(SUB, create_node2(ADD_ASSIGN, node->child, create_node_literal(NUM, node->ts, (void*)(intptr_t)1)), create_node_literal(NUM, node->ts, (void*)(intptr_t)1));
+            node->child = create_node2(SUB, create_node2(ADD_ASSIGN, node->child, create_node_num(NUM, node->ts, 1)), create_node_num(NUM, node->ts, 1));
             break;
         case POST_DEC:
-            node->child = create_node2(ADD, create_node2(SUB_ASSIGN, node->child, create_node_literal(NUM, node->ts, (void*)(intptr_t)1)), create_node_literal(NUM, node->ts, (void*)(intptr_t)1));
+            node->child = create_node2(ADD, create_node2(SUB_ASSIGN, node->child, create_node_num(NUM, node->ts, 1)), create_node_num(NUM, node->ts, 1));
             break;
         
         default: break;
@@ -375,17 +380,10 @@ struct args_list* create_args_list() {
 
 struct args_list* args_list_add(struct args_list* e, struct declarator v) {
 
-    fprintf(stderr, "Adding to args list %s\n", v.id);
-
     if (!(e->size % DEFAULT_ENVIRONMENT_SIZE))
         e->args = realloc(e->args, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct declarator));
 
     e->args[e->size++] = v;
-
-    fprintf(stderr, "Arg added\n");
-
-    for(int i = 0; i < e->size; i++)
-        fprintf(stderr, "Arg %d: %s of type %x\n", i, e->args[i].id, e->args[i].ts->t);
 
     return e;
 }
