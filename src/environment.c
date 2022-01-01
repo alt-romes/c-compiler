@@ -1,7 +1,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "environment.h"
+#include <debug.h>
+#include <environment.h>
 
 environment_t* newEnvironment() { 
     environment_t* e = malloc(sizeof(environment_t));
@@ -21,6 +22,7 @@ environment_t* beginScope(environment_t* e) {
 environment_t* endScope(environment_t* e) {
     environment_t* p = e->parent;
 
+    //TODO also free all declarators?
     free(e->associations);
     free(e);
 
@@ -28,11 +30,17 @@ environment_t* endScope(environment_t* e) {
 }
 
 environment_t* assoc(environment_t* e, char* id, union association_v val) {
+    debug(".5");
+    /* char buff[2048]; */
+    /* sprintf(buff, "Environment: Associating value to %s", id); */
+    /* debug(buff); */
     if (!(e->size % DEFAULT_ENVIRONMENT_SIZE)) {
         struct association* new_associations = realloc(e->associations, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct association));
         e->associations = new_associations;
     }
     e->associations[e->size++] = (struct association){ .id = id, .val = val };
+
+    debug("Environment: association done");
 
     return e;
 }

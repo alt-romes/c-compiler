@@ -2,23 +2,53 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
-#include "typecheck.h"
+#include <typecheck.h>
+#include <debug.h>
 
 type_t typecheck(struct node* node, struct environment* e) {
     type_t t;
     switch (node->type) {
         case FUNCTION: {
-            // TODO ... 
+
+            debug("Typecheck: function");
+
             /* this doesn't need to be, only make sure that its castable from one to another assert((t = node->ts) == typecheck(((function_node_t*)node)->body, e)); */
             t = ((function_node_t*)node)->decl.ts; // function type is its own declarator type
 
+            debug("Typecheck: function, begin scope");
             environment_t* scope_env = beginScope(e);
 
-            if (((function_node_t*)node)->decl.args != NULL) // If function has parameters
-                // Add params types to environment
-                for (int i = 0; i < ((function_node_t*)node)->decl.args->size; i++)
-                    assoc(scope_env, ((function_node_t*)node)->decl.args->args[i].id, (union association_v){ .type = ((function_node_t*)node)->decl.args->args[i].ts });
+            function_type_t fts = (function_type_t)t;
+            int argc = fts->args->size;
 
+            for (int i = 0; i < argc; i++) {
+                debug("1");
+                struct declarator* args = fts->args->args;
+                debug("2");
+                struct declarator arg = args[i];
+                debug("3");
+                char* id = arg.id;
+                debug("4");
+                union association_v val = (union association_v){ .type = fts->args->args[i].ts };
+                debug("5");
+                assoc(scope_env, id, val);
+                debug("6");
+            }
+
+            /* debug("loopi"); */
+            /* if (((function_node_t*)node)->decl.args != NULL) // If function has parameters */
+            /*     // Add params types to environment */
+            /*     for (int i = 0; i < ((function_node_t*)node)->decl.args->size; i++) { */
+            /*         debug("loopi"); */
+            /*         assoc(scope_env, ((function_node_t*)node)->decl.args->args[i].id, (union association_v){ .type = ((function_node_t*)node)->decl.args->args[i].ts }); */
+            /*         fprintf(stderr, "%s\n", scope_env->associations[i].id); */
+            /*     } */
+
+            debug("Typecheck: printing typechecking environment");
+            fprintf(stderr, "%d\n", scope_env->size);
+            for (int i=0; i<scope_env->size; i++)
+                fprintf(stderr, "%s\n", scope_env->associations[i].id);
+            debug("Typecheck: done");
 
             typecheck(((function_node_t*)node)->body, scope_env);
 
@@ -28,10 +58,13 @@ type_t typecheck(struct node* node, struct environment* e) {
             break;
         }
         case ID:
+            debug("Typecheck: ID");
             // Set this node's type to the one found in the environment
             t = find(e, ((id_node_t*)node)->value).type;
             break;
         case BLOCK: {
+
+            debug("Typecheck: block");
 
             environment_t* scope_env = beginScope(e);
 
@@ -118,6 +151,7 @@ type_t typecheck(struct node* node, struct environment* e) {
         case AND_ASSIGN:
         case XOR_ASSIGN:
         case OR_ASSIGN: {
+            debug("Typecheck: assign");
             t = typecheck(((binary_node_t*)node)->left, e);
             if (is_type_const(t)) puts("Cannot assign to a variable qualified as `const`!");
             assert(!is_type_const(t)); // What else can i assert here? they both have the same time but can be cast i guess
@@ -129,7 +163,10 @@ type_t typecheck(struct node* node, struct environment* e) {
         case GT:
         case LE:
         case GE: {
+            debug("Typecheck: LT, GT, LE, or GE");
+            debug("Typecheck: left");
             type_t l = typecheck(((binary_node_t*)node)->left, e);
+            debug("Typecheck: right");
             type_t r = typecheck(((binary_node_t*)node)->right, e);
             assert(is_type_unsigned(l) == is_type_unsigned(r)); // Both types must be the same
             t = type_from(I1 | (is_type_unsigned(l) ? UNSIGNED : SIGNED)); // Return boolean encoded in char. If values are unsigned do unsigned comparison
@@ -166,30 +203,38 @@ type_t typecheck(struct node* node, struct environment* e) {
             // TODO: assert type is numeric...
             break;
         case REFOF:
+            debug("Typecheck: ref of");
             t = ref_of(typecheck(((unary_node_t*)node)->child, e));
             break;
         case DEREF:
+            debug("Typecheck: deref");
             t = typecheck(((unary_node_t*)node)->child, e);
             assert(is_type_pointer(t)); // Assert t is a reference
             t = deref(t);
             break;
 
         case RETURN:
+            debug("Typecheck: return");
             if (((unary_node_t*)node)->child != NULL)
                 t = typecheck(((unary_node_t*)node)->child, e);
             else
                 t = type_from(VOID);
             break;
         case CAST:
+            debug("Typecheck: cast");
             t = node->ts;
             typecheck(((unary_node_t*)node)->child, e);
             // TODO: Assert child type is castable to cast type
             break;
         case IF:
+            debug("Typecheck: if");
             t = type_from(VOID);
+            debug("Typecheck: cond");
             typecheck(((if_node_t*)node)->cond, e);
             // Assert condition is bool or castable to bool? ...
+            debug("Typecheck: then");
             typecheck(((if_node_t*)node)->thenst, e);
+            debug("Typecheck: else?");
             if (((if_node_t*)node)->elsest != NULL)
                 typecheck(((if_node_t*)node)->elsest, e);
             break;

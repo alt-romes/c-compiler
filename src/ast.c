@@ -375,10 +375,17 @@ struct args_list* create_args_list() {
 
 struct args_list* args_list_add(struct args_list* e, struct declarator v) {
 
+    fprintf(stderr, "Adding to args list %s\n", v.id);
+
     if (!(e->size % DEFAULT_ENVIRONMENT_SIZE))
         e->args = realloc(e->args, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct declarator));
 
     e->args[e->size++] = v;
+
+    fprintf(stderr, "Arg added\n");
+
+    for(int i = 0; i < e->size; i++)
+        fprintf(stderr, "Arg %d: %s of type %x\n", i, e->args[i].id, e->args[i].ts->t);
 
     return e;
 }

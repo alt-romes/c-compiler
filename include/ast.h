@@ -15,7 +15,6 @@ struct args_list* args_list_add(struct args_list*, struct declarator);
 struct declarator {
     char* id;
     type_t ts;
-    struct args_list* args;
 };
 
 /* Declaration List */

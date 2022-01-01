@@ -68,7 +68,9 @@ init
 	/* | declaration */
 
 function_definition
-    : declaration_specifiers declarator compound_statement { if ($2.ts->t == UNDEFINED || !($2.ts->t & FUNCTION_TYPE)) fail("Function declarator does not define a function!");
+    : declaration_specifiers declarator compound_statement { /* if ($2.ts->t == UNDEFINED || !($2.ts->t & FUNCTION_TYPE)) fail("Function declarator does not define a function!"); */
+                                                             for (int i = 0; $2.ts->t == FUNCTION_TYPE && i < ((function_type_t)$2.ts)->args->size; i++)
+                                                                 fprintf(stderr, "arg %d is %d\n", i, ((function_type_t)$2.ts)->args->args[i].ts->t);
                                                              $2.ts = set_base_type($2.ts, type_from($1));
                                                              $$ = create_node_function(FUNCTION, $2, $3); }
 	| declarator compound_statement { $1.ts = set_base_type($1.ts, type_from(INT)); $$ = create_node_function(FUNCTION, $1, $2); }
@@ -168,7 +170,10 @@ init_declarator
 
 declarator
 	: pointer direct_declarator                       { $2.ts = set_base_type($2.ts, $1); $$ = $2; }
-	| direct_declarator                               { $$ = $1; }
+	| direct_declarator                               { $$ = $1;
+                                                         for (int i = 0; $1.ts->t == FUNCTION_TYPE && i < ((function_type_t)$1.ts)->args->size; i++)
+                                                             fprintf(stderr, "in declarator arg %d is %s\n", i, ((function_type_t)$1.ts)->args->args[i].id);
+                                                        }
 
 pointer
 	: '*' { $$ = create_type_pointer(POINTER); }
@@ -181,17 +186,18 @@ type_qualifier_list
 	| type_qualifier_list type_qualifier { $$ = (enum type)($1 | $2); }
 
 direct_declarator
-    : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = type_from(UNDEFINED), .args = NULL }; }
+    : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = type_from(UNDEFINED) }; }
     | '(' declarator ')'                              { $$ = $2; }
 	/* | direct_declarator '[' constant_expression ']' */
 	/* | direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; } */
 	| direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3));
-                                                        $1.args = $1.args == NULL ? $3 : $1.args; // inner-most declator is the one defining the function name and arguments
-                                                        $$ = $1; }
+                                                        $$ = $1;
+                                                         for (int i = 0; i < ((function_type_t)$1.ts)->args->size; i++)
+                                                             fprintf(stderr, "in direct declarator arg %d is %s\n", i, ((function_type_t)$1.ts)->args->args[i].id);
+                                                        }
 	/* | direct_declarator '(' identifier_list ')' */
 	| direct_declarator '(' ')' { { struct args_list* args_list = create_args_list();
                                     $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, args_list));
-                                    $1.args = $1.args == NULL ? args_list : $1.args;
                                     $$ = $1;
                                 } }
 

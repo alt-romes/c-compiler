@@ -10,6 +10,7 @@
 #include <ast.h>
 #include <typecheck.h>
 #include <parse_utils.h>
+#include <debug.h>
 /* #include "llvm.h" */
 
 #define OPTIMIZE
@@ -172,22 +173,15 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             LLVMTypeRef ret_type = type2LLVMType(((function_type_t)node->ts)->ret);
 
             // Create function with parameters when it has been defined with them vvvv
-            int argc = 0;
-            LLVMTypeRef* params = NULL;
-            LLVMTypeRef fun_type;
-            if (fnode->decl.args != NULL) { // If function declaration was done with () or ( parameter_type_list )
+            struct args_list* args_list = ((function_type_t)fnode->decl.ts)->args;
+            int argc = args_list->size;
 
-                argc = fnode->decl.args->size;
+            // Define function type with correct parameters
+            LLVMTypeRef* params = malloc(sizeof(LLVMTypeRef)*argc);
+            for (int i = 0; i < argc; i++)
+                params[i] = type2LLVMType(args_list->args[i].ts);
 
-                // Define function type with correct parameters
-                params = malloc(sizeof(LLVMTypeRef)*argc);
-                for (int i = 0; i < argc; i++)
-                    params[i] = type2LLVMType(fnode->decl.args->args[i].ts);
-
-
-            } // Else, function declaration without parameters syntax (e.g. int main {})
-
-            fun_type = LLVMFunctionType(ret_type, params, argc, 0);
+            LLVMTypeRef fun_type = LLVMFunctionType(ret_type, params, argc, 0);
 
             LLVMValueRef fun = LLVMAddFunction(m, ((function_node_t*)node)->decl.id, fun_type);
             LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fun, "entry");
@@ -195,15 +189,12 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             environment_t* scope_env = beginScope(e);
 
-
-            if (fnode->decl.args != NULL) // If function has parameters (same as above)
-
-                // Add params to environment
-                for (int i = 0; i < argc; i++) {
-                    LLVMValueRef param_alloca = LLVMBuildAlloca(b, params[i], "allocatmp");
-                    LLVMBuildStore(b, LLVMGetParam(fun, i), param_alloca);
-                    assoc(scope_env, fnode->decl.args->args[i].id, (union association_v){ .llvmref = param_alloca });
-                }
+            // Add params to environment
+            for (int i = 0; i < argc; i++) {
+                LLVMValueRef param_alloca = LLVMBuildAlloca(b, params[i], "allocatmp");
+                LLVMBuildStore(b, LLVMGetParam(fun, i), param_alloca);
+                assoc(scope_env, args_list->args[i].id, (union association_v){ .llvmref = param_alloca });
+            }
 
             free(params); // No longer needed;
 
@@ -442,6 +433,24 @@ int main(int argc, char *argv[]) {
 
     printf("[ Parsing ]\n");
     node_t* root = parse_root();
+
+    function_type_t fts = (function_type_t)((function_node_t*)root)->decl.ts;
+    int argc2 = fts->args->size;
+
+    fprintf(stderr, "argc: %d\n", argc2);
+    for (int i = 0; i < argc2; i++) {
+        debug("1");
+        struct declarator* args = fts->args->args;
+        debug("2");
+        struct declarator arg = args[i];
+        debug("3");
+        char* id = arg.id;
+        debug("4");
+        fprintf(stderr, "id: %s\n", id);
+        debug("5");
+        union association_v val = (union association_v){ .type = fts->args->args[i].ts };
+        debug("6");
+    }
 
     printf("[ Type Checking ]\n");
     environment_t* typing_env = newEnvironment();
