@@ -482,15 +482,15 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
 int main(int argc, char *argv[]) {
 
-    printf("[ Parsing ]\n");
+    debug("[ Parsing ]");
     node_t* root = parse_root();
 
-    printf("[ Type Checking ]\n");
+    debug("[ Type Checking ]");
     environment_t* typing_env = newEnvironment();
     typecheck(root, typing_env);
     free(typing_env);
 
-    printf("[ Setup ]\n");
+    debug("[ Setup ]");
     LLVMModuleRef module = LLVMModuleCreateWithName("llvm!"); // new, empty module in the global context
     LLVMBuilderRef builder = LLVMCreateBuilder();          // builder in the global context starting at entry
 
@@ -500,17 +500,18 @@ int main(int argc, char *argv[]) {
 
     environment_t* env = newEnvironment();
 
-    printf("[ Compiling ]\n");
+    debug("[ Compiling ]");
     compile(module, builder, root, env, type_from(VOID));
 
-    printf("[ Cleaning ]\n");
+    debug("[ Cleaning ]");
     free(env);
     free_ast(root);
     free_all_types();
 
-    printf("[ Printing ]\n");
+    debug("[ Printing ]");
     char* module_string = LLVMPrintModuleToString(module);
-    printf("[ Module ]\n%s", module_string);
+    debug("[ Module ]");
+    printf("%s", module_string);
 
     char *error = NULL;
     LLVMVerifyModule(module, LLVMAbortProcessAction, &error);
