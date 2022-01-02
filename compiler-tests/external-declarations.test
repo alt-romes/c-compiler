@@ -1,0 +1,14 @@
+const long pi = 3;
+int globalX = 1, globalY;
+
+int transform(int x, int y) {
+
+    return (x*globalX + y*globalY) * pi;
+}
+
+int main(int argc, char** argv) {
+
+    globalY = 2;
+
+    return 0;
+}

@@ -28,3 +28,13 @@ void debug_type(char* s, type_t t) {
 #endif
 
 }
+
+void debugf1(char* f, char* s) {
+
+#ifdef DEBUG
+    fprintf(stderr, "[DEBUG] ");
+    fprintf(stderr, f, s);
+    fprintf(stderr, "\n");
+#endif
+
+}

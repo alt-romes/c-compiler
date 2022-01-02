@@ -214,11 +214,19 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         }
 
         case ID: {
+            debugf1("Compile ID %s", ((id_node_t*)node)->value);
             LLVMValueRef alloca = find(e, ((id_node_t*)node)->value).llvmref;
-            if (cftoads->t != NO_AUTO_DEREF->t)
-                return LLVMBuildLoad2(b, LLVMGetAllocatedType(alloca), alloca, "loadtmp");
-            else
+            debugf1("Found ID %s", ((id_node_t*)node)->value);
+            if (cftoads->t != NO_AUTO_DEREF->t) {
+                debugf1("Variable: %s", LLVMPrintValueToString(alloca));
+                debugf1("Variable type: %s", LLVMPrintTypeToString(type2LLVMType(node->ts)));
+                debug("Load ID");
+                return LLVMBuildLoad2(b, type2LLVMType(node->ts), alloca, "loadtmp");
+            }
+            else {
+                debug("ID without load");
                 return alloca;
+            }
         }
 
         case GLOBAL_BLOCK:
@@ -238,17 +246,19 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                 debug("Block is global");
                 for (int i = 0; i < dae->size; i++) {
 
+                    // Function nodes are added functions to the module
                     if (dae->declarations[i].et->t & FUNCTION_TYPE)
                         compile(m, b, dae->declarations[i].node, scope_env, cftoads);
 
                     else {
 
                         LLVMValueRef alloca = LLVMAddGlobal(m, type2LLVMType(dae->declarations[i].et), dae->declarations[i].id);
-                        LLVMValueRef assignment_val = NULL;
-                        if (dae->declarations[i].node != NULL) {
-                            assignment_val = compile(m, b, dae->declarations[i].node, scope_env, cftoads);
-                            LLVMBuildStore(b, cast(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
-                        }
+                        LLVMValueRef assignment_val = LLVMConstInt(type2LLVMType(dae->declarations[i].et), 0, 1);
+                        if (dae->declarations[i].node != NULL)
+                            assignment_val = cast(b, dae->declarations[i].et, dae->declarations[i].node->ts, compile(m, b, dae->declarations[i].node, scope_env, cftoads));
+                        LLVMSetInitializer(alloca, assignment_val);
+                        if (dae->declarations[i].et->t & CONST)
+                            LLVMSetGlobalConstant(alloca, 1);
                         assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
                     }
                 }

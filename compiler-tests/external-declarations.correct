@@ -1,0 +1,30 @@
+[ Parsing ]
+[ Type Checking ]
+[ Setup ]
+[ Compiling ]
+[ Cleaning ]
+[ Printing ]
+[ Module ]
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+@pi = constant i64 3
+@globalX = global i32 1
+@globalY = global i32 0
+
+define i32 @transform(i32 %0, i32 %1) {
+entry:
+  %loadtmp2 = load i32, i32* @globalX, align 4
+  %multmp = mul i32 %loadtmp2, %0
+  %loadtmp4 = load i32, i32* @globalY, align 4
+  %multmp5 = mul i32 %loadtmp4, %1
+  %addtmp = add i32 %multmp5, %multmp
+  %multmp7 = mul i32 %addtmp, 3
+  ret i32 %multmp7
+}
+
+define i32 @main(i32 %0, i8** %1) {
+entry:
+  store i32 2, i32* @globalY, align 4
+  ret i32 0
+}
