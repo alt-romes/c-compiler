@@ -26,7 +26,11 @@ enum type {
     UNSIGNED = 0x10000,
 
     /* Qualifiers */
-    CONST = 0x40000000,
+    VOLATILE = 0x10000000,
+    CONST = 0x20000000,
+
+    /* Global */
+    GLOBAL = 0x40000000,
 
     /* Undefined :P */
     UNDEFINED = 0x80000000

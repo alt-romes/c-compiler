@@ -17,6 +17,7 @@ extern YYSTYPE yylval;
 "signed"   return _SIGNED;
 "unsigned"   return _UNSIGNED;
 "const"   return _CONST;
+"volatile"   return _VOLATILE;
 "=="      return _EQ_OP;
 "!="      return _NE_OP;
 ">="      return _GE_OP;

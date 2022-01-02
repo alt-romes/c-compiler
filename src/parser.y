@@ -31,7 +31,7 @@ void fail(char* s) {
 }
 
 %token _VOID _CHAR _SHORT _INT _LONG _UNSIGNED _SIGNED
-%token _CONST
+%token _CONST _VOLATILE
 %token _NUM
 %token _IDENTIFIER
 %token _EQ_OP _NE_OP _LE_OP _GE_OP _OR_OP _AND_OP _LEFT_OP _RIGHT_OP
@@ -41,10 +41,10 @@ void fail(char* s) {
 %type <int_v> _NUM
 %type <string_v> _IDENTIFIER // string is malloc'd and needs to be freed by the ast destructor
 %type <declarator_v> declarator direct_declarator parameter_declaration
-%type <node_v> initializer compound_statement function_definition expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement selection_statement constant_expression
-%type <declaration_list_v> declaration_list declaration init_declarator_list
+%type <node_v> initializer compound_statement expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement selection_statement constant_expression
+%type <declaration_list_v> declaration_list declaration init_declarator_list translation_unit external_declaration
 %type <statement_list_v> statement_list
-%type <declaration_v> init_declarator
+%type <declaration_v> init_declarator function_definition
 %type <enum_type_v> declaration_specifiers specifier_qualifier_list type_specifier type_qualifier type_qualifier_list
 %type <struct_type_v> pointer abstract_declarator type_name
 %type <node_type_v> unary_operator assignment_operator
@@ -57,21 +57,22 @@ void fail(char* s) {
 %%
 
 init
-    : function_definition                             { *root = $1; }
+    : translation_unit          { *root = create_node_block(GLOBAL_BLOCK, extend_declaration_specifiers($1, GLOBAL), create_statement_list()); }
 
-/* translation_unit */
-/* 	: external_declaration */
-	/* | translation_unit external_declaration */
+translation_unit
+	: external_declaration { $$ = $1; }
+	| translation_unit external_declaration { $$ = declaration_list_merge($2, $1); }
 
-/* external_declaration */
-/* 	: function_definition */
-	/* | declaration */
+external_declaration
+	: function_definition { $$ = declaration_list_assoc(create_declaration_list(), $1); }
+	| declaration { $$ = $1; }
 
 function_definition
     : declaration_specifiers declarator compound_statement { if ($2.ts->t == UNDEFINED || !($2.ts->t & FUNCTION_TYPE)) fail("Function declarator does not define a function!");
                                                              $2.ts = set_base_type($2.ts, type_from($1));
-                                                             $$ = create_node_function(FUNCTION, $2, $3); }
-	| declarator compound_statement { $1.ts = set_base_type($1.ts, type_from(INT)); $$ = create_node_function(FUNCTION, $1, $2); }
+                                                             $$ = (struct declaration) { $2.id, $2.ts, create_node_function(FUNCTION, $2, $3) }; }
+	| declarator compound_statement { $1.ts = set_base_type($1.ts, type_from(INT));
+                                      $$ = (struct declaration) { $1.id, $1.ts, create_node_function(FUNCTION, $1, $2) }; }
 
 compound_statement
     : '{' '}'                                         { $$ = create_node_unit(UNIT, type_from(VOID)); }
@@ -104,7 +105,7 @@ declaration_specifiers
 
 type_qualifier
     : _CONST                                          { $$ = CONST; }
-    /* | VOLATILE */
+    /* | _VOLATILE                                        { $$ = VOLATILE; } */
 
 type_specifier
     : _VOID                                           { $$ = VOID;      }

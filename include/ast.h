@@ -33,7 +33,8 @@ typedef struct declaration_list {
 declaration_list_t* create_declaration_list();
 declaration_list_t* declaration_list_assoc(declaration_list_t* e, struct declaration d);
 declaration_list_t* declaration_list_merge(declaration_list_t* src, declaration_list_t* dst); // merge two environments by copying all associations from src to dst, freeing src, and keeping dst's parent
-declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, type_t ds);
+declaration_list_t* add_declaration_specifiers(declaration_list_t*, type_t);
+declaration_list_t* extend_declaration_specifiers(declaration_list_t*, enum type);
 
 /* Statement List */
 
@@ -104,6 +105,7 @@ typedef enum node_type {
 
     CAST,
     BLOCK,
+    GLOBAL_BLOCK,
     FUNCTION,
     UNIT
 } node_type_t;

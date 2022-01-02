@@ -36,6 +36,7 @@ type_t typecheck(struct node* node, struct environment* e) {
             // Set this node's type to the one found in the environment
             t = find(e, ((id_node_t*)node)->value).type;
             break;
+        case GLOBAL_BLOCK:
         case BLOCK: {
 
             debug("Typecheck: block");

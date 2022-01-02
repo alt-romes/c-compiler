@@ -1,0 +1,14 @@
+int add(int x, int y) {
+
+    return x + y;
+}
+
+void print(char* s) {
+
+    return;
+}
+
+int main(int argc, char** argv) {
+
+    return 0;
+}

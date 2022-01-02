@@ -14,6 +14,7 @@ node_t* new_node(node_type_t type) {
         case FUNCTION:
             node = malloc(sizeof(function_node_t));
             break;
+        case GLOBAL_BLOCK:
         case BLOCK:
             node = malloc(sizeof(block_node_t));
             break;
@@ -219,11 +220,13 @@ void free_ast(node_t* node) {
             free_ast(((function_node_t*)node)->body);
             break;
         }
+        case GLOBAL_BLOCK:
         case BLOCK: {
             declaration_list_t* dae = ((block_node_t*)node)->declaration_list;
             statement_list_t* stmtl = ((block_node_t*)node)->statement_list;
             for (int i = 0; i < dae->size; i++) {
-                free(dae->declarations[i].id);
+                if (!(dae->declarations[i].et->t & FUNCTION_TYPE)) // The function nodes free their own declarators since they also have them
+                    free(dae->declarations[i].id);
                 if (dae->declarations[i].node != NULL)
                     free_ast(dae->declarations[i].node);
             }
@@ -350,6 +353,12 @@ declaration_list_t* add_declaration_specifiers(declaration_list_t* decs, type_t 
     return decs;
 }
 
+declaration_list_t* extend_declaration_specifiers(declaration_list_t* decs, enum type et) {
+    
+    for (struct declaration* d = decs->declarations, * lim = d + decs->size; d < lim; d++) d->et = extend_base_type(d->et, et);
+
+    return decs;
+}
 
 /* Statement List */
 statement_list_t* create_statement_list() {

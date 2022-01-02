@@ -13,7 +13,6 @@
 #include <debug.h>
 /* #include "llvm.h" */
 
-#define NODEBUG
 #define VERIFY_FUNCTION
 #define OPTIMIZE
 
@@ -222,27 +221,59 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                 return alloca;
         }
 
+        case GLOBAL_BLOCK:
         case BLOCK: {
+
             environment_t* scope_env = beginScope(e);
+
+            debug("Block begin scope");
             
             block_node_t* bnode = (block_node_t*)node;
             declaration_list_t* dae  = bnode->declaration_list;  // this id->ast_node environment is freed when the whole ast is freed
                                                                 // NOTE: the ids will be freed with the ast (they were allocated with it, so they should be deallocated with it)
 
-            // For each declaration in this scope create an association in this scope's evaluation environment
-            for (int i = 0; i < dae->size; i++) {
-                LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].et), "allocatmp");
-                LLVMValueRef assignment_val = NULL;
-                if (dae->declarations[i].node != NULL) {
-                    assignment_val = compile(m, b, dae->declarations[i].node, scope_env, cftoads);
-                    LLVMBuildStore(b, cast(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
-                }
-                assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
-            }
+            debug_type("Block type", node->ts);
+            if (node->type == GLOBAL_BLOCK) { // Is this the global "pseudo" block
 
-            statement_list_t* statement_list = ((block_node_t*)node)->statement_list;
-            for (int i = 0; i < statement_list->size; i++)
-                compile(m, b, statement_list->statements[i], scope_env, cftoads);
+                debug("Block is global");
+                for (int i = 0; i < dae->size; i++) {
+
+                    if (dae->declarations[i].et->t & FUNCTION_TYPE)
+                        compile(m, b, dae->declarations[i].node, scope_env, cftoads);
+
+                    else {
+
+                        LLVMValueRef alloca = LLVMAddGlobal(m, type2LLVMType(dae->declarations[i].et), dae->declarations[i].id);
+                        LLVMValueRef assignment_val = NULL;
+                        if (dae->declarations[i].node != NULL) {
+                            assignment_val = compile(m, b, dae->declarations[i].node, scope_env, cftoads);
+                            LLVMBuildStore(b, cast(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
+                        }
+                        assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
+                    }
+                }
+
+            }
+            else {
+
+                debug("Block is NOT global");
+
+                // For each declaration in this scope create an association in this scope's evaluation environment
+                for (int i = 0; i < dae->size; i++) {
+                    LLVMValueRef alloca = LLVMBuildAlloca(b, type2LLVMType(dae->declarations[i].et), "allocatmp");
+                    LLVMValueRef assignment_val = NULL;
+                    if (dae->declarations[i].node != NULL) {
+                        assignment_val = compile(m, b, dae->declarations[i].node, scope_env, cftoads);
+                        LLVMBuildStore(b, cast(b, dae->declarations[i].et, dae->declarations[i].node->ts, assignment_val) /* cast value to id type */, alloca);
+                    }
+                    assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = alloca });
+                }
+
+                statement_list_t* statement_list = ((block_node_t*)node)->statement_list;
+                for (int i = 0; i < statement_list->size; i++)
+                    compile(m, b, statement_list->statements[i], scope_env, cftoads);
+
+            }
 
             endScope(scope_env); // free the scope environment and its association array
 

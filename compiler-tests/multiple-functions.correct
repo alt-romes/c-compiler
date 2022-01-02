@@ -1,0 +1,25 @@
+[ Parsing ]
+[ Type Checking ]
+[ Setup ]
+[ Compiling ]
+[ Cleaning ]
+[ Printing ]
+[ Module ]
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i32 @add(i32 %0, i32 %1) {
+entry:
+  %addtmp = add i32 %1, %0
+  ret i32 %addtmp
+}
+
+define void @print(i8* %0) {
+entry:
+  ret void
+}
+
+define i32 @main(i32 %0, i8** %1) {
+entry:
+  ret i32 0
+}
