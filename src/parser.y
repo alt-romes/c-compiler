@@ -46,7 +46,7 @@ void fail(char* s) {
 %type <statement_list_v> statement_list
 %type <declaration_v> init_declarator function_definition
 %type <enum_type_v> declaration_specifiers specifier_qualifier_list type_specifier type_qualifier type_qualifier_list
-%type <struct_type_v> pointer abstract_declarator type_name
+%type <struct_type_v> pointer abstract_declarator type_name direct_abstract_declarator
 %type <node_type_v> unary_operator assignment_operator
 %type <args_list_v> parameter_type_list parameter_list identifier_list
 
@@ -185,12 +185,9 @@ direct_declarator
     : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = type_from(UNDEFINED) }; }
     | '(' declarator ')'                              { $$ = $2; }
 	/* | direct_declarator '[' constant_expression ']' */
-	/* | direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; } */
-	| direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
+	/* | direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; } */ | direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
 	| direct_declarator '(' identifier_list ')'       { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
-	| direct_declarator '(' ')' { { struct args_list* args_list = create_args_list();
-                                    $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, args_list));
-                                    $$ = $1; } }
+	| direct_declarator '(' ')' { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, create_args_list())); $$ = $1; }
 
 parameter_type_list
 	: parameter_list { $$ = $1; }
@@ -202,8 +199,8 @@ parameter_list
 
 parameter_declaration
 	: declaration_specifiers declarator { $2.ts = set_base_type($2.ts, type_from($1)); $$ = $2; }
-	/* | declaration_specifiers abstract_declarator */
-	/* | declaration_specifiers */
+	| declaration_specifiers abstract_declarator { $2 = set_base_type($2, type_from($1)); $$ = (struct declarator) { NULL, $2 }; }
+	| declaration_specifiers { $$ = (struct declarator) { NULL, type_from($1) }; }
 
 identifier_list
 	: _IDENTIFIER { { struct declarator dec = { $1, type_from(INT) };
@@ -333,19 +330,19 @@ specifier_qualifier_list
 
 abstract_declarator
 	: pointer { $$ = $1; }
-	/* | direct_abstract_declarator */
-	/* | pointer direct_abstract_declarator */
+	| direct_abstract_declarator { $$ = $1; }
+	| pointer direct_abstract_declarator { $2 = set_base_type($2, $1); $$ = $2; }
 
-/* direct_abstract_declarator */
-/* 	: '(' abstract_declarator ')' */
-/* 	| '[' ']' */
-/* 	| '[' constant_expression ']' */
-/* 	| direct_abstract_declarator '[' ']' */
-/* 	| direct_abstract_declarator '[' constant_expression ']' */
-/* 	| '(' ')' */
-/* 	| '(' parameter_type_list ')' */
-/* 	| direct_abstract_declarator '(' ')' */
-/* 	| direct_abstract_declarator '(' parameter_type_list ')' */
+direct_abstract_declarator
+	: '(' abstract_declarator ')' { $$ = $2; }
+	/* | '[' ']' */
+	/* | '[' constant_expression ']' */
+	/* | direct_abstract_declarator '[' ']' */
+	/* | direct_abstract_declarator '[' constant_expression ']' */
+	| '(' ')' { $$ = create_type_function(FUNCTION_TYPE, create_args_list()); }
+	| '(' parameter_type_list ')' { $$ = create_type_function(FUNCTION_TYPE, $2); }
+	| direct_abstract_declarator '(' ')' { $1 = set_base_type($1, create_type_function(FUNCTION_TYPE, create_args_list())), $$ = $1; }
+	| direct_abstract_declarator '(' parameter_type_list ')' { $1 = set_base_type($1, create_type_function(FUNCTION_TYPE, $3)), $$ = $1; }
 
 
 unary_expression

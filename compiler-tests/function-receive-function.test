@@ -1,0 +1,4 @@
+int fun(int (*f)(int, int (*)(char, char**))) {
+
+    return 0;
+}
