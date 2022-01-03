@@ -48,7 +48,7 @@ void fail(char* s) {
 %type <enum_type_v> declaration_specifiers specifier_qualifier_list type_specifier type_qualifier type_qualifier_list
 %type <struct_type_v> pointer abstract_declarator type_name
 %type <node_type_v> unary_operator assignment_operator
-%type <args_list_v> parameter_type_list parameter_list
+%type <args_list_v> parameter_type_list parameter_list identifier_list
 
 %parse-param {node_t** root}
 
@@ -187,11 +187,10 @@ direct_declarator
 	/* | direct_declarator '[' constant_expression ']' */
 	/* | direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; } */
 	| direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
-	/* | direct_declarator '(' identifier_list ')' */
+	| direct_declarator '(' identifier_list ')'       { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
 	| direct_declarator '(' ')' { { struct args_list* args_list = create_args_list();
                                     $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, args_list));
-                                    $$ = $1;
-                                } }
+                                    $$ = $1; } }
 
 parameter_type_list
 	: parameter_list { $$ = $1; }
@@ -206,12 +205,14 @@ parameter_declaration
 	/* | declaration_specifiers abstract_declarator */
 	/* | declaration_specifiers */
 
-/* identifier_list */
-/* 	: IDENTIFIER */
-/* 	| identifier_list ',' IDENTIFIER */
+identifier_list
+	: _IDENTIFIER { { struct declarator dec = { $1, type_from(INT) };
+                      $$ = args_list_add(create_args_list(), dec); } }
+	| identifier_list ',' _IDENTIFIER { { struct declarator dec = { $3, type_from(INT) };
+                                          $$ = args_list_add($1, dec); } }
 
 initializer
-    : assignment_expression                                             { $$ = $1; }
+    : assignment_expression               { $$ = $1; }
     /* | '{' initializer_list '}' */
     /* | '{' initializer_list ',' '}' */
 

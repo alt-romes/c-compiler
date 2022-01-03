@@ -1,0 +1,8 @@
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i32 @add(i32 %0, i32 %1) {
+entry:
+  %addtmp = add i32 %1, %0
+  ret i32 %addtmp
+}
