@@ -32,9 +32,10 @@ type_t typecheck(struct node* node, struct environment* e) {
             break;
         }
         case ID:
-            debug("Typecheck: ID");
+            debugf1("Typecheck: ID %s", ((id_node_t*)node)->value);
             // Set this node's type to the one found in the environment
             t = find(e, ((id_node_t*)node)->value).type;
+            debug_type("ID has type", t);
             break;
         case GLOBAL_BLOCK:
         case BLOCK: {
@@ -49,6 +50,7 @@ type_t typecheck(struct node* node, struct environment* e) {
 
             // For each declaration in this scope create an association in this scope's evaluation environment
             for (int i = 0; i < dae->size; i++) {
+                debugf1("Typecheck: block declarator %s", dae->declarations[i].id);
                 /* dae->declarations[i].node->ts = dae->declarations[i].et; this isn't needed, a cast should be made when associating a value to an identifier */
                 if (dae->declarations[i].node != NULL)
                     typecheck(dae->declarations[i].node, scope_env); // Must still typecheck all declaration values
@@ -60,7 +62,8 @@ type_t typecheck(struct node* node, struct environment* e) {
             for (int i = 0; i < stmtl->size; i++)
                 // Typecheck each statement
                 typecheck(stmtl->statements[i], scope_env);
-            /* t = typecheck(((block_node_t*)node)->body, scope_env); */
+
+            debug("Typecheck: block done");
 
             endScope(scope_env); // free the scope environment and its association array
 
@@ -190,8 +193,9 @@ type_t typecheck(struct node* node, struct environment* e) {
 
         case RETURN:
             debug("Typecheck: return");
-            if (((unary_node_t*)node)->child != NULL)
+            if (((unary_node_t*)node)->child != NULL) {
                 t = typecheck(((unary_node_t*)node)->child, e);
+            }
             else
                 t = type_from(VOID);
             break;
@@ -223,6 +227,16 @@ type_t typecheck(struct node* node, struct environment* e) {
         }
         case UNIT:
             t = type_from(VOID);
+            break;
+        case CALL:
+            debug("Typecheck: Call");
+            t = typecheck(((binary_node_t*)node)->left, e); // typecheck function name and get function type as a result
+            debug("Typecheck: Call arguments");
+            assert(((function_type_t)t)->args->size == ((statement_list_t*)((binary_node_t*)node)->right)->size);
+            for (int i = 0; i < ((function_type_t)t)->args->size; i++)
+                // assert argument passed is castable to argument expected
+                ; // Do nothing on this for for now
+            t = ((function_type_t)t)->ret; // call type is the return type of the function called
             break;
     }
 

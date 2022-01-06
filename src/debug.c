@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <debug.h>
+#include <ast.h>
 
 void debug(char* s) {
 
@@ -19,6 +20,9 @@ void debug_type(char* s, type_t t) {
             break;
         case FUNCTION_TYPE:
             fprintf(stderr, "[DEBUG TYPE] %s | Function %x\n", s, t->t);
+            fprintf(stderr, "[DEBUG TYPE] With arguments:\n");
+            for (int i = 0; i < ((function_type_t)t)->args->size; i++)
+                debug_type("argument", ((function_type_t)t)->args->args[i].ts);
             debug_type("returning...", ((function_type_t)t)->ret);
             break;
         default:

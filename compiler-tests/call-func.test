@@ -1,0 +1,13 @@
+void launchMissiles(long codes) {
+    return;
+}
+
+int sum(int x, int y, int z) {
+    launchMissiles(42);
+    return x + y + z;
+}
+
+int main(int argc, char** argv) {
+
+    return sum(1, 2, 3);
+}

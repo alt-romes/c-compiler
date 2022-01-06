@@ -43,7 +43,7 @@ void fail(char* s) {
 %type <declarator_v> declarator direct_declarator parameter_declaration
 %type <node_v> initializer compound_statement expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement selection_statement constant_expression
 %type <declaration_list_v> declaration_list declaration init_declarator_list translation_unit external_declaration
-%type <statement_list_v> statement_list
+%type <statement_list_v> statement_list argument_expression_list
 %type <declaration_v> init_declarator function_definition
 %type <enum_type_v> declaration_specifiers specifier_qualifier_list type_specifier type_qualifier type_qualifier_list
 %type <struct_type_v> pointer abstract_declarator type_name direct_abstract_declarator
@@ -185,7 +185,8 @@ direct_declarator
     : _IDENTIFIER                                     { $$ = (struct declarator){ .id = $1, .ts = type_from(UNDEFINED) }; }
     | '(' declarator ')'                              { $$ = $2; }
 	/* | direct_declarator '[' constant_expression ']' */
-	/* | direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; } */ | direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
+	/* | direct_declarator '[' ']'                       { $$ = (struct declarator){ .id = $1.id, .ts = REFERENCE + $1.ts, .args = NULL }; } */
+    | direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
 	| direct_declarator '(' identifier_list ')'       { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
 	| direct_declarator '(' ')' { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, create_args_list())); $$ = $1; }
 
@@ -364,16 +365,16 @@ unary_operator
 postfix_expression
 	: primary_expression { $$ = $1; }
 	/* | postfix_expression '[' expression ']' */
-	/* | postfix_expression '(' ')' */
-	/* | postfix_expression '(' argument_expression_list ')' */
+	| postfix_expression '(' ')' { $$ = create_node2(CALL, $1, (node_t*)create_statement_list()); }
+	| postfix_expression '(' argument_expression_list ')' { $$ = create_node2(CALL, $1, (node_t*)$3); }
 	/* | postfix_expression '.' IDENTIFIER */
 	/* | postfix_expression PTR_OP IDENTIFIER */
 	| postfix_expression _INC_OP { $$ = create_node1(POST_INC, $1); }
 	| postfix_expression _DEC_OP { $$ = create_node1(POST_DEC, $1); }
 
-/* argument_expression_list */
-/* 	: assignment_expression */
-/* 	| argument_expression_list ',' assignment_expression */
+argument_expression_list
+	: assignment_expression { $$ = statement_list_add(create_statement_list(), $1); }
+	| argument_expression_list ',' assignment_expression { $$ = statement_list_add($1, $3); }
 
 primary_expression
     : _IDENTIFIER                                     { $$ = create_node_id(ID, type_from(UNDEFINED), $1); }

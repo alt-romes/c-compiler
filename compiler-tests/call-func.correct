@@ -1,0 +1,21 @@
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define void @launchMissiles(i64 %0) {
+entry:
+  ret void
+}
+
+define i32 @sum(i32 %0, i32 %1, i32 %2) {
+entry:
+  call void @launchMissiles(i64 42)
+  %addtmp = add i32 %1, %0
+  %addtmp5 = add i32 %addtmp, %2
+  ret i32 %addtmp5
+}
+
+define i32 @main(i32 %0, i8** %1) {
+entry:
+  %2 = call i32 @sum(i32 1, i32 2, i32 3)
+  ret i32 %2
+}

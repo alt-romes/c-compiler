@@ -246,9 +246,9 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
                 debug("Block is global");
                 for (int i = 0; i < dae->size; i++) {
 
-                    // Function nodes are added functions to the module
+                    // Function nodes are added as functions to the module
                     if (dae->declarations[i].et->t & FUNCTION_TYPE)
-                        compile(m, b, dae->declarations[i].node, scope_env, cftoads);
+                        assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = compile(m, b, dae->declarations[i].node, scope_env, cftoads) });
 
                     else {
 
@@ -288,6 +288,16 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             endScope(scope_env); // free the scope environment and its association array
 
             return NULL;
+        }
+
+        case CALL: {
+            statement_list_t* args_list = (statement_list_t*)((binary_node_t*)node)->right;
+            node_t* ast_func = ((binary_node_t*)node)->left;
+            LLVMValueRef func = compile(m, b, ast_func, e, NO_AUTO_DEREF);
+            LLVMValueRef* args_values = malloc(args_list->size*sizeof(LLVMValueRef));
+            for (int i = 0; i < args_list->size; i++)
+                args_values[i] = cast(b, ((function_type_t)ast_func->ts)->args->args[i].ts, args_list->statements[i]->ts, compile(m, b, args_list->statements[i], e, cftoads));
+            return LLVMBuildCall2(b, type2LLVMType(ast_func->ts), func, args_values, args_list->size, "");
         }
 
         // All XXX_ASSIGNS have been desugered to an ASSIGN,

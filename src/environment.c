@@ -30,10 +30,7 @@ environment_t* endScope(environment_t* e) {
 }
 
 environment_t* assoc(environment_t* e, char* id, union association_v val) {
-    debug(".5");
-    /* char buff[2048]; */
-    /* sprintf(buff, "Environment: Associating value to %s", id); */
-    /* debug(buff); */
+
     if (!(e->size % DEFAULT_ENVIRONMENT_SIZE)) {
         struct association* new_associations = realloc(e->associations, (e->size+DEFAULT_ENVIRONMENT_SIZE)*sizeof(struct association));
         e->associations = new_associations;

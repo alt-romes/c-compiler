@@ -103,6 +103,7 @@ typedef enum node_type {
     IF,
     CONDITIONAL,
 
+    CALL,
     CAST,
     BLOCK,
     GLOBAL_BLOCK,

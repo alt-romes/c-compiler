@@ -48,6 +48,7 @@ node_t* new_node(node_type_t type) {
         case AND_ASSIGN:
         case XOR_ASSIGN:
         case OR_ASSIGN:
+        case CALL:
             node = malloc(sizeof(binary_node_t));
             break;
         case LOGICAL_NOT:
@@ -206,17 +207,7 @@ void free_ast(node_t* node) {
             // Free declaration id and args list
             free(((function_node_t*)node)->decl.id);
 
-            /* TODO when freeing types: */
-            /* if (((function_node_t*)node)->decl.args != NULL) { */
-            /*     for (int i = ((function_node_t*)node)->decl.args->size; i --> 0;) */
-            /*         free(((function_node_t*)node)->decl.args->args[i].id); // Free all arguments ids */
-
-            /*     if (((function_node_t*)node)->decl.args->args != NULL) */
-            /*         free(((function_node_t*)node)->decl.args->args); */
-
-            /*     free(((function_node_t*)node)->decl.args); */
-            /* } */
-
+            // TODO: Arguments IDs are freed? ai
             free_ast(((function_node_t*)node)->body);
             break;
         }
@@ -281,6 +272,10 @@ void free_ast(node_t* node) {
             // from x *= y to x = x * y, where a pointer to x is on both the left and the right hand side.
             // As such, the left hand side will be automatically freed when teh right hand side is freed.
             free_ast(((binary_node_t*)node)->right);
+            break;
+        case CALL:
+            free_ast(((binary_node_t*)node)->left);
+            // TODO: free statement list on right branch
             break;
         case LOGICAL_NOT:
         case UMINUS:
