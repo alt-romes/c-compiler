@@ -1,0 +1,8 @@
+void puts(char*);
+
+int main() {
+
+    char* s;
+    puts(s);
+    return 0;
+}

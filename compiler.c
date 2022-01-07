@@ -248,8 +248,28 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
                     // Function nodes are added as functions to the module
                     if (dae->declarations[i].et->t & FUNCTION_TYPE)
-                        assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = compile(m, b, dae->declarations[i].node, scope_env, cftoads) });
+                        if (dae->declarations[i].node != NULL)
+                            // Function with body
+                            assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = compile(m, b, dae->declarations[i].node, scope_env, cftoads) });
+                        else {
+                            // Function without body
+                            // Declare prototype (TODO: this should be factored out somewhere)
 
+                            LLVMTypeRef ret_type = type2LLVMType(((function_type_t)dae->declarations[i].et)->ret);
+
+                            struct args_list* args_list = ((function_type_t)dae->declarations[i].et)->args;
+                            int argc = args_list->size;
+                            LLVMTypeRef* params = malloc(sizeof(LLVMTypeRef)*argc);
+                            for (int i = 0; i < argc; i++)
+                                params[i] = type2LLVMType(args_list->args[i].ts);
+
+                            LLVMTypeRef fun_type = LLVMFunctionType(ret_type, params, argc, 0);
+                            free(params);
+
+                            LLVMValueRef fun = LLVMAddFunction(m, dae->declarations[i].id, fun_type);
+                            LLVMSetLinkage(fun, LLVMExternalLinkage);
+                            assoc(scope_env, dae->declarations[i].id, (union association_v){ .llvmref = fun });
+                        }
                     else {
 
                         LLVMValueRef alloca = LLVMAddGlobal(m, type2LLVMType(dae->declarations[i].et), dae->declarations[i].id);

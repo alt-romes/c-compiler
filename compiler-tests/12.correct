@@ -1,0 +1,10 @@
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+declare void @puts(i8*)
+
+define i32 @main() {
+entry:
+  call void @puts(i8* noundef nonnull dereferenceable(1) undef)
+  ret i32 0
+}
