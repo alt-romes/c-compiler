@@ -1,0 +1,33 @@
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i32 @one() {
+entry:
+  ret i32 1
+}
+
+define i32 @e() {
+entry:
+  ret i32 2
+}
+
+define i32 @pi() {
+entry:
+  ret i32 3
+}
+
+define i32 @zero(i32 %0) {
+entry:
+  %1 = call i32 @pi()
+  %2 = call i32 @e()
+  %multmp = mul i32 %2, %1
+  %addtmp = add i32 %multmp, %0
+  ret i32 %addtmp
+}
+
+define i32 @main(i32 %0, i8** %1) {
+entry:
+  %2 = call i32 @one()
+  %3 = call i32 @zero(i32 %2)
+  ret i32 %3
+}

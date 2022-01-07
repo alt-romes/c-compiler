@@ -291,13 +291,27 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
         }
 
         case CALL: {
+            debug("Compiling call");
             statement_list_t* args_list = (statement_list_t*)((binary_node_t*)node)->right;
-            node_t* ast_func = ((binary_node_t*)node)->left;
-            LLVMValueRef func = compile(m, b, ast_func, e, NO_AUTO_DEREF);
+            function_node_t* ast_func = (function_node_t*)((binary_node_t*)node)->left;
+            debug("Compiling id to get function");
+            LLVMValueRef func = compile(m, b, (node_t*)ast_func, e, NO_AUTO_DEREF);
+            debugf1("Got function pseudo alloca %s", ast_func->decl.id);
             LLVMValueRef* args_values = malloc(args_list->size*sizeof(LLVMValueRef));
-            for (int i = 0; i < args_list->size; i++)
-                args_values[i] = cast(b, ((function_type_t)ast_func->ts)->args->args[i].ts, args_list->statements[i]->ts, compile(m, b, args_list->statements[i], e, cftoads));
-            return LLVMBuildCall2(b, type2LLVMType(ast_func->ts), func, args_values, args_list->size, "");
+            for (int i = 0; i < args_list->size; i++) {
+                debugf1("Compile call argument %s", ((function_type_t)ast_func->ts)->args->args[i].id);
+                args_values[i] = compile(m, b, args_list->statements[i], e, cftoads);
+                debug("Casting call argument to expected function type");
+                args_values[i] = cast(b, ((function_type_t)ast_func->ts)->args->args[i].ts, args_list->statements[i]->ts, args_values[i]);
+            }
+            debug("All call arguments compiled");
+            debug("Building llvm call type");
+            debug_type("llvm call type", ast_func->ts);
+            LLVMTypeRef callType = type2LLVMType(ast_func->ts);
+            debug("Building llvm call value");
+            LLVMValueRef callValue = LLVMBuildCall2(b, callType, func, args_values, args_list->size, "");
+            debug("Call value built!");
+            return callValue;
         }
 
         // All XXX_ASSIGNS have been desugered to an ASSIGN,
@@ -492,15 +506,15 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
 int main(int argc, char *argv[]) {
 
-    debug("[ Parsing ]");
+    debug("\n\n\n[ Parsing ]");
     node_t* root = parse_root();
 
-    debug("[ Type Checking ]");
+    debug("\n\n\n[ Type Checking ]");
     environment_t* typing_env = newEnvironment();
     typecheck(root, typing_env);
     free(typing_env);
 
-    debug("[ Setup ]");
+    debug("\n\n\n[ Setup ]");
     LLVMModuleRef module = LLVMModuleCreateWithName("llvm!"); // new, empty module in the global context
     LLVMBuilderRef builder = LLVMCreateBuilder();          // builder in the global context starting at entry
 
@@ -510,17 +524,17 @@ int main(int argc, char *argv[]) {
 
     environment_t* env = newEnvironment();
 
-    debug("[ Compiling ]");
+    debug("\n\n\n[ Compiling ]");
     compile(module, builder, root, env, type_from(VOID));
 
-    debug("[ Cleaning ]");
+    debug("\n\n\n[ Cleaning ]");
     free(env);
     free_ast(root);
     free_all_types();
 
-    debug("[ Printing ]");
+    debug("\n\n\n[ Printing ]");
     char* module_string = LLVMPrintModuleToString(module);
-    debug("[ Module ]");
+    debug("\n\n\n[ Module ]");
     printf("%s", module_string);
 
     char *error = NULL;

@@ -1,0 +1,10 @@
+int one() { return 1; }
+int e() { return 2;}
+int pi() { return 3; }
+
+int zero(int one) { return pi()*e()+one; }
+
+int main(int argc, char** argv) {
+
+    return zero(one());
+}

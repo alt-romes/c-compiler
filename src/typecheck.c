@@ -233,10 +233,13 @@ type_t typecheck(struct node* node, struct environment* e) {
             t = typecheck(((binary_node_t*)node)->left, e); // typecheck function name and get function type as a result
             debug("Typecheck: Call arguments");
             assert(((function_type_t)t)->args->size == ((statement_list_t*)((binary_node_t*)node)->right)->size);
-            for (int i = 0; i < ((function_type_t)t)->args->size; i++)
+            for (int i = 0; i < ((function_type_t)t)->args->size; i++) {
                 // assert argument passed is castable to argument expected
-                ; // Do nothing on this for for now
+                statement_list_t* args_list = (statement_list_t*)((binary_node_t*)node)->right;
+                typecheck(args_list->statements[i], e);
+            }
             t = ((function_type_t)t)->ret; // call type is the return type of the function called
+            debug_type("Typecheck: call type is ret type:", t);
             break;
     }
 
