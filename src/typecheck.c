@@ -15,6 +15,8 @@ type_t typecheck(struct node* node, struct environment* e) {
             /* this doesn't need to be, only make sure that its castable from one to another assert((t = node->ts) == typecheck(((function_node_t*)node)->body, e)); */
             t = ((function_node_t*)node)->decl.ts; // function type is its own declarator type
 
+            debug_type("Function type", t);
+
             debug("Typecheck: function, begin scope");
             environment_t* scope_env = beginScope(e);
 

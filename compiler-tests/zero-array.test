@@ -1,0 +1,7 @@
+int (*arr(int a))[];
+
+int main() {
+
+    arr(2);
+    return 0;
+}

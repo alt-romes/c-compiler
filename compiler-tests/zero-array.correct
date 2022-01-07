@@ -1,0 +1,10 @@
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+declare [0 x i32]* @arr(i32)
+
+define i32 @main() {
+entry:
+  %0 = call [0 x i32]* @arr(i32 2)
+  ret i32 0
+}

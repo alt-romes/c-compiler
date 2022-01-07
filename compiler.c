@@ -77,6 +77,14 @@ LLVMTypeRef type2LLVMType(type_t ts) {
 
             break;
         }
+        case ARRAY_TYPE: {
+            
+            if (((array_type_t)ts)->size == NULL)
+                tr = LLVMArrayType(type2LLVMType(((array_type_t)ts)->elems), 0);
+            else
+                tr = NULL;
+            break;
+        }
         default:
             fprintf(stderr, "type2LLVM undefined for ts: %d\n", ts->t);
             exit(1);

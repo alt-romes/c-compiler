@@ -11,16 +11,17 @@ enum type {
      * the bit OR operation between said different qualifiers-specifiers */
 
     /* Specifiers */
-    VOID = 0,
-    I1 = 0b1,
-    CHAR = 0b10,
-    SHORT = 0b100,
-    INT = 0b1000,
-    LONG = 0b10000,
+    VOID = 0x0,
+    I1 = 0x1,
+    CHAR = 0x2,
+    SHORT = 0x4,
+    INT = 0x8,
+    LONG = 0x10,
 
     POINTER = 0x1000,
 
     FUNCTION_TYPE = 0x2000,
+    ARRAY_TYPE = 0x4000,
 
     SIGNED = 0,
     UNSIGNED = 0x10000,
@@ -61,6 +62,12 @@ typedef struct pointer_type {
     type_t pointed;
 } * pointer_type_t;
 
+typedef struct array_type {
+    enum type t;
+    type_t elems;
+    struct node* size; 
+} * array_type_t;
+
 int is_type_unsigned(type_t t);
 int is_type_const(type_t t);
 int is_type_pointer(type_t t);
@@ -73,6 +80,7 @@ type_t deref(type_t);
 
 type_t create_type_pointer(enum type pointer_type_and_qualifiers);
 type_t create_type_function(enum type function_type_and_qualifiers, struct args_list* args);
+type_t create_type_array(enum type array_type_and_qualifiers, struct node* size);
 
 /* (Recursively) Set the base type of an "in-construction" type.
  * Setting the base type of a...
