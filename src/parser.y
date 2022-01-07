@@ -183,10 +183,10 @@ type_qualifier_list
 	| type_qualifier_list type_qualifier { $$ = (enum type)($1 | $2); }
 
 direct_declarator
-    : _IDENTIFIER                                     { debugf1("Identifier %s", $1); $$ = (struct declarator){ .id = $1, .ts = type_from(UNDEFINED) }; debug("Identifier parsed"); }
+    : _IDENTIFIER                                     { debugf1("Identifier %s", $1); $$ = (struct declarator){ .id = $1, .ts = type_from(UNDEFINED) }; }
     | '(' declarator ')'                              { $$ = $2; }
 	| direct_declarator '[' constant_expression ']'   { $1.ts = set_base_type($1.ts, create_type_array(ARRAY_TYPE, $3)); $$ = $1; }
-	| direct_declarator '[' ']'                       { debug_type("Parseing array2", $1.ts); $1.ts = set_base_type($1.ts, create_type_array(ARRAY_TYPE, NULL)); $$ = $1; debug_type("Parseing array2", $1.ts); }
+	| direct_declarator '[' ']'                       { $1.ts = set_base_type($1.ts, create_type_array(ARRAY_TYPE, NULL)); $$ = $1; }
     | direct_declarator '(' parameter_type_list ')'   { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
 	| direct_declarator '(' identifier_list ')'       { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, $3)); $$ = $1; }
 	| direct_declarator '(' ')' { $1.ts = set_base_type($1.ts, create_type_function(FUNCTION_TYPE, create_args_list())); $$ = $1; }

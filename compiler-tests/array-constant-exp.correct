@@ -1,0 +1,8 @@
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define [6 x i32]* @main() {
+entry:
+  %allocatmp = alloca [6 x i32], align 4
+  ret [6 x i32]* %allocatmp
+}

@@ -2,4 +2,8 @@ long long wouldn't work --> fix: 2 bits for long
 
 free types
 
+reuse global fixed types
+
+variable length array (stacksave and stackrestore)
+
 porque nos outputs llvm é sempre alocado e posto 0 no início

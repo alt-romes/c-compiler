@@ -1,0 +1,5 @@
+int (*main())[6] {
+
+    int arr[0 == 0 ? 3 * 2 : 3 + 2];
+    return &arr;
+}

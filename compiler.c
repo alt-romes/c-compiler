@@ -32,6 +32,60 @@ void create_llvm_pass_manager(LLVMModuleRef module) {
 }
 #endif
 
+int eval_constant_expression(node_t* node, int* error) {
+
+    int (*e)(node_t*, int*) = eval_constant_expression;
+
+    int a = 0, b = 0;
+    switch (node->type) {
+        /* Binary nodes that need same-size type operands in common */
+        case ADD: case SUB: case MUL: case DIV: case REM:
+        case EQ: case NE: case LT: case GT: case LE: case GE:
+        case LOR: case LAND: case BAND: case BOR: case BXOR:
+        case LEFT_SHIFT: case RIGHT_SHIFT:
+            a = e(((binary_node_t*)node)->left, error);
+            b = e(((binary_node_t*)node)->right, error);
+            break;
+        case UPLUS: case UMINUS:
+            a = e(((unary_node_t*)node)->child, error);
+            break;
+        default:
+            break;
+    }
+
+    switch (node->type) {
+        case NUM: return ((num_node_t*)node)->value;
+        case ADD: return a + b;
+        case SUB: return a - b;
+        case MUL: return a * b;
+        case DIV: return a / b;
+        case REM: return a % b;
+        case EQ: return a == b;
+        case NE: return a != b;
+        case LT: return a < b;
+        case GT: return a > b;
+        case LE: return a <= b;
+        case GE: return a >= b;
+        case LOR: return a || b;
+        case LAND: return a && b;
+        case BAND: return a & b;
+        case BOR: return a | b;
+        case BXOR: return a ^ b;
+        case LEFT_SHIFT: return a << b;
+        case RIGHT_SHIFT: return a >> b;
+        case UPLUS: return a;
+        case UMINUS: return -a;
+        case LOGICAL_NOT: return !a;
+        case BNOT: return ~a;
+        case CONDITIONAL: return e(((if_node_t*)node)->cond, error) ? e(((if_node_t*)node)->thenst, error) : e(((if_node_t*)node)->elsest, error);
+        default:
+            // Not a constant expression, so return zero which will be handled
+            *error = 1;
+            return 1;
+    }
+
+}
+
 LLVMTypeRef type2LLVMType(type_t ts) {
 
     LLVMTypeRef tr = NULL;
@@ -78,11 +132,21 @@ LLVMTypeRef type2LLVMType(type_t ts) {
             break;
         }
         case ARRAY_TYPE: {
+
+            // No length arrays are zero length arrays.
+            // Try to eval the constant expression.
+            // If a non constant element is found, the array size isn'ti known at compile time,
+            // and is actually a variable length array: https://gcc.gnu.org/onlinedocs/gcc/Variable-Length.html
             
-            if (((array_type_t)ts)->size == NULL)
-                tr = LLVMArrayType(type2LLVMType(((array_type_t)ts)->elems), 0);
-            else
+            int size = 0, error = 0;
+            if (((array_type_t)ts)->size == NULL ||
+                    ((size = eval_constant_expression(((array_type_t)ts)->size, &error)) && error == 0))
+                // Array has no size or has a constant size that was evaluated
+                tr = LLVMArrayType(type2LLVMType(((array_type_t)ts)->elems), size);
+            else {
+                // Array is a variable length array
                 tr = NULL;
+            }
             break;
         }
         default:
