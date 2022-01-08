@@ -621,7 +621,29 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             return NULL;
         }
-        case DO_WHILE:
+        case DO_WHILE: {
+
+            LLVMValueRef func = LLVMGetBasicBlockParent(LLVMGetInsertBlock(b));
+
+            // Generate true/false expr and merge.
+            LLVMBasicBlockRef loop_body = LLVMAppendBasicBlock(func, "dowhilebody");
+            LLVMBasicBlockRef loop_cond = LLVMAppendBasicBlock(func, "dowhilecond");
+            LLVMBasicBlockRef loop_after = LLVMAppendBasicBlock(func, "afteradowhile");
+
+            LLVMBuildBr(b, loop_body); // Explicit fall through
+
+            LLVMPositionBuilderAtEnd(b, loop_body);
+            compile(m, b, ((binary_node_t*)node)->right, e, cftoads); // Compile body
+            LLVMBuildBr(b, loop_cond); // Always go from body to condition, which will jump out if false
+
+            LLVMPositionBuilderAtEnd(b, loop_cond);
+            LLVMValueRef cond = compile(m, b, ((binary_node_t*)node)->left, e, cftoads);
+            LLVMBuildCondBr(b, cond, loop_body, loop_after); // Go to body if true, end if not
+
+            LLVMPositionBuilderAtEnd(b, loop_after); // Now compile out of loop
+
+            return NULL;
+        }
         case FOR:
             fprintf(stderr, "NO!\n");
             return NULL;;

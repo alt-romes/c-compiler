@@ -393,7 +393,7 @@ jump_statement
 
 iteration_statement
 	: _WHILE '(' expression ')' statement { $$ = create_node2(WHILE, $3, $5); }
-	| _DO statement _WHILE '(' expression ')' ';' { $$ = create_node2(DO_WHILE, $2, $5); }
+	| _DO statement _WHILE '(' expression ')' ';' { $$ = create_node2(DO_WHILE, $5, $2); }
 	| _FOR '(' expression_statement expression_statement ')' statement { $$ = create_node_for(FOR, $3, $4, NULL, $6); }
 	| _FOR '(' expression_statement expression_statement expression ')' statement { $$ = create_node_for(FOR, $3, $4, $5, $7); }
 
