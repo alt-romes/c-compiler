@@ -1,0 +1,19 @@
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i32 @main() {
+entry:
+  br label %whilecond
+
+whilecond:                                        ; preds = %whilebody, %entry
+  %allocatmp.0 = phi i32 [ 0, %entry ], [ %addtmp, %whilebody ]
+  %cmptmp = icmp slt i32 %allocatmp.0, 5
+  br i1 %cmptmp, label %whilebody, label %afterawhile
+
+whilebody:                                        ; preds = %whilecond
+  %addtmp = add i32 %allocatmp.0, 1
+  br label %whilecond
+
+afterawhile:                                      ; preds = %whilecond
+  ret i32 %allocatmp.0
+}

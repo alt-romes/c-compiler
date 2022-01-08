@@ -103,6 +103,10 @@ typedef enum node_type {
     IF,
     CONDITIONAL,
 
+    FOR,
+    WHILE,
+    DO_WHILE,
+
     CALL,
     CAST,
     BLOCK,
@@ -163,6 +167,15 @@ typedef struct if_node {
     struct node* elsest;
 } if_node_t;
 
+typedef struct for_node {
+    node_type_t type;
+    type_t ts;
+    struct node* h1;
+    struct node* h2;
+    struct node* h3;
+    struct node* body;
+} for_node_t;
+
 node_t* create_node_num(node_type_t, type_t, int);
 node_t* create_node_id(node_type_t, type_t, char*);
 node_t* create_node_unit(node_type_t, type_t);
@@ -171,6 +184,7 @@ node_t* create_node2(node_type_t, node_t*, node_t*);
 node_t* create_node_block(node_type_t, declaration_list_t*, statement_list_t*);
 node_t* create_node_function(node_type_t, struct declarator, node_t*);
 node_t* create_node_if(node_type_t, node_t*, node_t*, node_t*);
+node_t* create_node_for(node_type_t, node_t*, node_t*, node_t*, node_t*);
 
 void free_ast(node_t* root);
 

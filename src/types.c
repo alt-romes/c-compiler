@@ -44,6 +44,9 @@ int type_compare(type_t l, type_t r) {
 }
 
 type_t type_from(enum type t) {
+
+    // TODO: global types
+
     type_t x = malloc(sizeof(struct type_s));
 
     add_allocated_type(x);

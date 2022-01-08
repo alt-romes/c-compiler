@@ -37,12 +37,12 @@ void fail(char* s) {
 %token _IDENTIFIER
 %token _EQ_OP _NE_OP _LE_OP _GE_OP _OR_OP _AND_OP _LEFT_OP _RIGHT_OP
 %token _MUL_ASSIGN _DIV_ASSIGN _MOD_ASSIGN _ADD_ASSIGN _SUB_ASSIGN _LEFT_ASSIGN _RIGHT_ASSIGN _AND_ASSIGN _XOR_ASSIGN _OR_ASSIGN _INC_OP _DEC_OP
-%token _RETURN _IF _ELSE
+%token _RETURN _IF _ELSE _WHILE _DO _FOR
 
 %type <int_v> _NUM
 %type <string_v> _IDENTIFIER // string is malloc'd and needs to be freed by the ast destructor
 %type <declarator_v> declarator direct_declarator parameter_declaration
-%type <node_v> initializer compound_statement expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement selection_statement constant_expression
+%type <node_v> initializer compound_statement expression assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression multiplicative_expression cast_expression unary_expression postfix_expression primary_expression statement expression_statement jump_statement selection_statement constant_expression iteration_statement
 %type <declaration_list_v> declaration_list declaration init_declarator_list translation_unit external_declaration
 %type <statement_list_v> statement_list argument_expression_list
 %type <declaration_v> init_declarator function_definition
@@ -228,7 +228,7 @@ statement
 	: compound_statement { $$ = $1; }
 	| expression_statement { $$ = $1; }
 	| selection_statement { $$ = $1; }
-	/* | iteration_statement */
+	| iteration_statement { $$ = $1; }
 	| jump_statement { $$ = $1; }
 
 /* labeled_statement */
@@ -391,11 +391,11 @@ jump_statement
 	: _RETURN ';'             { $$ = create_node1(RETURN, NULL); }
 	| _RETURN expression ';'  { $$ = create_node1(RETURN, $2); }
 
-/* iteration_statement */
-/* 	| WHILE '(' expression ')' statement */
-/* 	: DO statement WHILE '(' expression ')' ';' */
-/* 	| FOR '(' expression_statement expression_statement ')' statement */
-/* 	| FOR '(' expression_statement expression_statement expression ')' statement */
+iteration_statement
+	: _WHILE '(' expression ')' statement { $$ = create_node2(WHILE, $3, $5); }
+	| _DO statement _WHILE '(' expression ')' ';' { $$ = create_node2(DO_WHILE, $2, $5); }
+	| _FOR '(' expression_statement expression_statement ')' statement { $$ = create_node_for(FOR, $3, $4, NULL, $6); }
+	| _FOR '(' expression_statement expression_statement expression ')' statement { $$ = create_node_for(FOR, $3, $4, $5, $7); }
 
 selection_statement
 	: _IF '(' expression ')' statement { $$ = create_node_if(IF, $3, $5, NULL); }

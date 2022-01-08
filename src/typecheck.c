@@ -115,6 +115,12 @@ type_t typecheck(struct node* node, struct environment* e) {
             t = typecheck(((binary_node_t*)node)->right, e);
             break;
         }
+        case WHILE:
+        case DO_WHILE:
+            typecheck(((binary_node_t*)node)->left, e);
+            typecheck(((binary_node_t*)node)->right, e);
+            t = type_from(VOID);
+            break;
         
         
         // All XXX_ASSIGNS have been desugered to an ASSIGN,
@@ -192,7 +198,6 @@ type_t typecheck(struct node* node, struct environment* e) {
             assert(is_type_pointer(t)); // Assert t is a reference
             t = deref(t);
             break;
-
         case RETURN:
             debug("Typecheck: return");
             if (((unary_node_t*)node)->child != NULL) {
@@ -209,7 +214,6 @@ type_t typecheck(struct node* node, struct environment* e) {
             break;
         case IF:
             debug("Typecheck: if");
-            t = type_from(VOID);
             debug("Typecheck: cond");
             typecheck(((if_node_t*)node)->cond, e);
             // Assert condition is bool or castable to bool? ...
@@ -218,6 +222,7 @@ type_t typecheck(struct node* node, struct environment* e) {
             debug("Typecheck: else?");
             if (((if_node_t*)node)->elsest != NULL)
                 typecheck(((if_node_t*)node)->elsest, e);
+            t = type_from(VOID);
             break;
         case CONDITIONAL: {
             typecheck(((if_node_t*)node)->cond, e);
@@ -227,6 +232,14 @@ type_t typecheck(struct node* node, struct environment* e) {
             // TODO: Assert then is castable to the same type as else
             break;
         }
+        case FOR:
+            typecheck(((for_node_t*)node)->h1, e);
+            typecheck(((for_node_t*)node)->h2, e);
+            if (((for_node_t*)node)->h3 != NULL)
+                typecheck(((for_node_t*)node)->h3, e);
+            typecheck(((for_node_t*)node)->body, e);
+            t = type_from(VOID);
+            break;
         case UNIT:
             t = type_from(VOID);
             break;

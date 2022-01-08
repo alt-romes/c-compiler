@@ -49,6 +49,8 @@ node_t* new_node(node_type_t type) {
         case XOR_ASSIGN:
         case OR_ASSIGN:
         case CALL:
+        case WHILE:
+        case DO_WHILE:
             node = malloc(sizeof(binary_node_t));
             break;
         case LOGICAL_NOT:
@@ -75,6 +77,9 @@ node_t* new_node(node_type_t type) {
         case IF:
         case CONDITIONAL:
             node = malloc(sizeof(if_node_t));
+            break;
+        case FOR:
+            node = malloc(sizeof(for_node_t));
             break;
     }
 
@@ -200,6 +205,16 @@ node_t* create_node_if(node_type_t type, node_t* cond, node_t* thenst, node_t* e
     return (node_t*)node;
 }
 
+node_t* create_node_for(node_type_t type, node_t* h1, node_t* h2, node_t* h3, node_t* body) {
+
+    for_node_t* node = (for_node_t*)new_node(type);
+    node->h1 = h1;
+    node->h2 = h2;
+    node->h3 = h3;
+    node->body = body;
+    return (node_t*)node;
+}
+
 void free_ast(node_t* node) {
 
     switch (node->type) {
@@ -255,6 +270,8 @@ void free_ast(node_t* node) {
         case RIGHT_SHIFT:
         case SEQEXP:
         case ASSIGN:
+        case WHILE:
+        case DO_WHILE:
             free_ast(((binary_node_t*)node)->left);
             free_ast(((binary_node_t*)node)->right);
             break;
@@ -304,6 +321,13 @@ void free_ast(node_t* node) {
             free_ast(((if_node_t*)node)->thenst);
             if (((if_node_t*)node)->elsest != NULL)
                 free_ast(((if_node_t*)node)->elsest);
+            break;
+        case FOR:
+            free_ast(((for_node_t*)node)->h1);
+            free_ast(((for_node_t*)node)->h2);
+            if (((for_node_t*)node)->h3 != NULL)
+                free_ast(((for_node_t*)node)->h3);
+            free_ast(((for_node_t*)node)->body);
             break;
     }
 
