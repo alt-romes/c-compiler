@@ -233,11 +233,19 @@ type_t typecheck(struct node* node, struct environment* e) {
         case CALL:
             debug("Typecheck: Call");
             t = typecheck(((binary_node_t*)node)->left, e); // typecheck function name and get function type as a result
+            debug_type("Typecheck: function called type", t);
+            // TODO: Should function definitions declarators have pointer to function type? Makes more sense that those are functions.
+            // Should I be able to call both functions and function pointers? For now, that's what's happening
+            assert((t->t & FUNCTION_TYPE) || (t->t & POINTER && ((pointer_type_t)t)->pointed->t & FUNCTION_TYPE));
+            debug("Calling function pointer as function (auto dereferencing function pointer)");
+            if (t->t & POINTER) // Auto dereference function pointer on call
+                t = ((pointer_type_t)t)->pointed;
             debug("Typecheck: Call arguments");
             assert(((function_type_t)t)->args->size == ((statement_list_t*)((binary_node_t*)node)->right)->size);
+            statement_list_t* args_list = (statement_list_t*)((binary_node_t*)node)->right;
             for (int i = 0; i < ((function_type_t)t)->args->size; i++) {
+                debug("Typecheck: Call argument x");
                 // assert argument passed is castable to argument expected
-                statement_list_t* args_list = (statement_list_t*)((binary_node_t*)node)->right;
                 typecheck(args_list->statements[i], e);
             }
             t = ((function_type_t)t)->ret; // call type is the return type of the function called

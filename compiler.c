@@ -11,7 +11,6 @@
 #include <typecheck.h>
 #include <parse_utils.h>
 #include <debug.h>
-/* #include "llvm.h" */
 
 #define VERIFY_FUNCTION
 #define OPTIMIZE
@@ -145,6 +144,8 @@ LLVMTypeRef type2LLVMType(type_t ts) {
                 tr = LLVMArrayType(type2LLVMType(((array_type_t)ts)->elems), size);
             else {
                 // Array is a variable length array
+                fprintf(stderr, "Variable length arrays are not yet supported\n");
+                exit(83);
                 tr = NULL;
             }
             break;
@@ -388,18 +389,25 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
             function_node_t* ast_func = (function_node_t*)((binary_node_t*)node)->left;
             debug("Compiling id to get function");
             LLVMValueRef func = compile(m, b, (node_t*)ast_func, e, NO_AUTO_DEREF);
+            // TODO: Read related TODO in typecheck CALL
+            function_type_t func_type = ast_func->ts->t & POINTER ? (function_type_t)((pointer_type_t)ast_func->ts)->pointed : (function_type_t)ast_func->ts;
+            if (ast_func->ts->t & POINTER) {
+                debug("Auto dereferencing function pointer");
+                debugf1("Function type %s", LLVMPrintTypeToString(type2LLVMType(ast_func->ts)));
+                func = LLVMBuildLoad2(b, type2LLVMType(ast_func->ts), func, "loadfp");
+            }
             debugf1("Got function pseudo alloca %s", ast_func->decl.id);
             LLVMValueRef* args_values = malloc(args_list->size*sizeof(LLVMValueRef));
             for (int i = 0; i < args_list->size; i++) {
-                debugf1("Compile call argument %s", ((function_type_t)ast_func->ts)->args->args[i].id);
+                debugf1("Compile call argument %s", func_type->args->args[i].id);
                 args_values[i] = compile(m, b, args_list->statements[i], e, cftoads);
                 debug("Casting call argument to expected function type");
-                args_values[i] = cast(b, ((function_type_t)ast_func->ts)->args->args[i].ts, args_list->statements[i]->ts, args_values[i]);
+                args_values[i] = cast(b, func_type->args->args[i].ts, args_list->statements[i]->ts, args_values[i]);
             }
             debug("All call arguments compiled");
             debug("Building llvm call type");
-            debug_type("llvm call type", ast_func->ts);
-            LLVMTypeRef callType = type2LLVMType(ast_func->ts);
+            debug_type("llvm call type", (type_t)func_type);
+            LLVMTypeRef callType = type2LLVMType((type_t)func_type);
             debug("Building llvm call value");
             LLVMValueRef callValue = LLVMBuildCall2(b, callType, func, args_values, args_list->size, "");
             debug("Call value built!");
