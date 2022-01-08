@@ -1,0 +1,21 @@
+; ModuleID = 'llvm!'
+source_filename = "llvm!"
+
+define i32 @main() {
+entry:
+  br label %forcond
+
+forcond:                                          ; preds = %forbody, %entry
+  %allocatmp1.0 = phi i32 [ 0, %entry ], [ %multmp, %forbody ]
+  %allocatmp.0 = phi i32 [ 0, %entry ], [ %addtmp, %forbody ]
+  %cmptmp = icmp slt i32 %allocatmp.0, 4
+  br i1 %cmptmp, label %forbody, label %afterafor
+
+forbody:                                          ; preds = %forcond
+  %multmp = mul i32 %allocatmp1.0, 3
+  %addtmp = add i32 %allocatmp.0, 1
+  br label %forcond
+
+afterafor:                                        ; preds = %forcond
+  ret i32 %allocatmp1.0
+}

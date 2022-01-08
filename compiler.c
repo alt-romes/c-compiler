@@ -602,7 +602,6 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             LLVMValueRef func = LLVMGetBasicBlockParent(LLVMGetInsertBlock(b));
 
-            // Generate true/false expr and merge.
             LLVMBasicBlockRef loop_cond = LLVMAppendBasicBlock(func, "whilecond");
             LLVMBasicBlockRef loop_body = LLVMAppendBasicBlock(func, "whilebody");
             LLVMBasicBlockRef loop_after = LLVMAppendBasicBlock(func, "afterawhile");
@@ -625,7 +624,6 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             LLVMValueRef func = LLVMGetBasicBlockParent(LLVMGetInsertBlock(b));
 
-            // Generate true/false expr and merge.
             LLVMBasicBlockRef loop_body = LLVMAppendBasicBlock(func, "dowhilebody");
             LLVMBasicBlockRef loop_cond = LLVMAppendBasicBlock(func, "dowhilecond");
             LLVMBasicBlockRef loop_after = LLVMAppendBasicBlock(func, "afteradowhile");
@@ -644,9 +642,37 @@ LLVMValueRef compile(LLVMModuleRef m, LLVMBuilderRef b, node_t* node,
 
             return NULL;
         }
-        case FOR:
-            fprintf(stderr, "NO!\n");
+        case FOR: {
+
+            for_node_t* fornode = (for_node_t*)node;
+
+            LLVMValueRef func = LLVMGetBasicBlockParent(LLVMGetInsertBlock(b));
+
+            LLVMBasicBlockRef loop_cond = LLVMAppendBasicBlock(func, "forcond");
+            LLVMBasicBlockRef loop_body = LLVMAppendBasicBlock(func, "forbody");
+            LLVMBasicBlockRef loop_post = LLVMAppendBasicBlock(func, "forpost");
+            LLVMBasicBlockRef loop_after = LLVMAppendBasicBlock(func, "afterafor");
+
+            // Build initialization expression
+            compile(m, b, fornode->h1, e, cftoads);
+            LLVMBuildBr(b, loop_cond); // Explicit fall through
+
+            LLVMPositionBuilderAtEnd(b, loop_cond);
+            LLVMValueRef cond = compile(m, b, fornode->h2, e, cftoads);
+            LLVMBuildCondBr(b, cond, loop_body, loop_after); // Go to body if true, end if not
+
+            LLVMPositionBuilderAtEnd(b, loop_body);
+            compile(m, b, fornode->body, e, cftoads); // Compile body
+            LLVMBuildBr(b, loop_post); // Always go from body to post
+
+            LLVMPositionBuilderAtEnd(b, loop_post);
+            compile(m, b, fornode->h3, e, cftoads); // Compile post iteration operation
+            LLVMBuildBr(b, loop_cond); // Always go from post to condition, which will jump out if false
+
+            LLVMPositionBuilderAtEnd(b, loop_after); // Compile whatever comes next in the after block
+
             return NULL;;
+        }
     }
 
     fprintf(stderr, "ERROR: Undefined compilation for operation %d\n!", node->type);
