@@ -1,0 +1,6 @@
+void* (*f(void* (*(*p)(int (*)[2]))[]))[] {
+
+    int y[2];
+    void* (*x)[] = (void* (*)[])p(&y);
+    return x;
+}

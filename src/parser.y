@@ -337,14 +337,14 @@ abstract_declarator
 
 direct_abstract_declarator
 	: '(' abstract_declarator ')' { $$ = $2; }
-	/* | '[' ']' */
-	/* | '[' constant_expression ']' */
-	/* | direct_abstract_declarator '[' ']' */
-	/* | direct_abstract_declarator '[' constant_expression ']' */
+	| '[' ']' { $$ = create_type_array(ARRAY_TYPE, NULL); }
+	| '[' constant_expression ']' { $$ = create_type_array(ARRAY_TYPE, $2); }
+	| direct_abstract_declarator '[' ']' { $$ = set_base_type($1, create_type_array(ARRAY_TYPE, NULL)); }
+	| direct_abstract_declarator '[' constant_expression ']' { $$ = set_base_type($1, create_type_array(ARRAY_TYPE, $3)); }
 	| '(' ')' { $$ = create_type_function(FUNCTION_TYPE, create_args_list()); }
 	| '(' parameter_type_list ')' { $$ = create_type_function(FUNCTION_TYPE, $2); }
-	| direct_abstract_declarator '(' ')' { $1 = set_base_type($1, create_type_function(FUNCTION_TYPE, create_args_list())), $$ = $1; }
-	| direct_abstract_declarator '(' parameter_type_list ')' { $1 = set_base_type($1, create_type_function(FUNCTION_TYPE, $3)), $$ = $1; }
+	| direct_abstract_declarator '(' ')' { $$ = set_base_type($1, create_type_function(FUNCTION_TYPE, create_args_list())); }
+	| direct_abstract_declarator '(' parameter_type_list ')' { $$ = set_base_type($1, create_type_function(FUNCTION_TYPE, $3)); }
 
 
 unary_expression
